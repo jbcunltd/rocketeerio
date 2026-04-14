@@ -1,0 +1,17 @@
+{
+  "buildCommand": "pnpm run build",
+  "outputDirectory": "dist/public",
+  "framework": "vite",
+  "rewrites": [
+    { "source": "/api/auth/:path*", "destination": "/api/index" },
+    { "source": "/api/trpc/:path*", "destination": "/api/index" },
+    { "source": "/api/cron/:path*", "destination": "/api/index" },
+    { "source": "/(.*)", "destination": "/index.html" }
+  ],
+  "crons": [
+    {
+      "path": "/api/cron/follow-ups",
+      "schedule": "* * * * *"
+    }
+  ]
+}
