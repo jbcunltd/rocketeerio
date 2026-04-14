@@ -18,6 +18,8 @@ async function sendMessengerMessage(pageAccessToken: string, recipientPsid: stri
     messaging_type: "RESPONSE",
   };
 
+  console.log(`[Messenger] Sending reply to ${recipientPsid}, length=${text.length}`);
+
   const res = await fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -29,6 +31,7 @@ async function sendMessengerMessage(pageAccessToken: string, recipientPsid: stri
     console.error("[Messenger] Send failed:", res.status, errText);
     return false;
   }
+  console.log(`[Messenger] Reply sent successfully to ${recipientPsid}`);
   return true;
 }
 
@@ -39,13 +42,17 @@ async function getFacebookUserProfile(psid: string, pageAccessToken: string) {
     const res = await fetch(
       `${FB_GRAPH}/${psid}?fields=first_name,last_name,profile_pic&access_token=${pageAccessToken}`
     );
-    if (!res.ok) return null;
+    if (!res.ok) {
+      console.warn(`[Messenger] Profile fetch failed for ${psid}: ${res.status}`);
+      return null;
+    }
     const data = await res.json();
     return {
       name: [data.first_name, data.last_name].filter(Boolean).join(" ") || null,
       avatarUrl: data.profile_pic || null,
     };
-  } catch {
+  } catch (err) {
+    console.error(`[Messenger] Profile fetch error for ${psid}:`, err);
     return null;
   }
 }
@@ -57,11 +64,12 @@ async function processIncomingMessage(
   senderPsid: string,
   messageText: string
 ) {
-  console.log(`[Webhook] Message from ${senderPsid} to page ${pageEntry.pageId}: "${messageText.substring(0, 50)}..."`);
+  console.log(`[Webhook] Processing message from ${senderPsid} to page ${pageEntry.pageId}: "${messageText.substring(0, 80)}"`);
 
   // 1. Find or create lead
   let lead = await db.getLeadByPsid(senderPsid, pageEntry.dbPageId);
   if (!lead) {
+    console.log(`[Webhook] Creating new lead for PSID ${senderPsid}`);
     const profile = await getFacebookUserProfile(senderPsid, pageEntry.pageAccessToken);
     const leadId = await db.createLead({
       userId: pageEntry.userId,
@@ -74,12 +82,16 @@ async function processIncomingMessage(
     });
     if (!leadId) { console.error("[Webhook] Failed to create lead"); return; }
     lead = await db.getLeadById(leadId);
-    if (!lead) return;
+    if (!lead) { console.error("[Webhook] Failed to fetch newly created lead"); return; }
+    console.log(`[Webhook] Created lead id=${leadId}, name=${lead.name}`);
+  } else {
+    console.log(`[Webhook] Found existing lead id=${lead.id}, name=${lead.name}`);
   }
 
   // 2. Find or create conversation
   let conv = await db.getConversationByLeadId(lead.id);
   if (!conv) {
+    console.log(`[Webhook] Creating new conversation for lead ${lead.id}`);
     const convId = await db.createConversation({
       userId: pageEntry.userId,
       pageId: pageEntry.dbPageId,
@@ -90,7 +102,10 @@ async function processIncomingMessage(
     });
     if (!convId) { console.error("[Webhook] Failed to create conversation"); return; }
     conv = await db.getConversationByLeadId(lead.id);
-    if (!conv) return;
+    if (!conv) { console.error("[Webhook] Failed to fetch newly created conversation"); return; }
+    console.log(`[Webhook] Created conversation id=${convId}`);
+  } else {
+    console.log(`[Webhook] Found existing conversation id=${conv.id}`);
   }
 
   // 3. Save incoming message
@@ -100,6 +115,7 @@ async function processIncomingMessage(
     sender: "lead",
     messageType: "text",
   });
+  console.log(`[Webhook] Saved lead message to conversation ${conv.id}`);
 
   // 4. Check if AI is active for this conversation
   if (!conv.isAiActive) {
@@ -110,8 +126,10 @@ async function processIncomingMessage(
   // 5. Get conversation history
   const history = await db.getMessagesByConversation(conv.id);
   const historyForAI = history.map(m => ({ sender: m.sender, content: m.content }));
+  console.log(`[Webhook] Loaded ${history.length} messages for AI context`);
 
   // 6. Generate AI response
+  console.log(`[Webhook] Calling OpenAI for AI response...`);
   const convDetail = await db.getConversationById(conv.id);
   const aiResponse = await generateAIResponse(
     pageEntry.userId,
@@ -119,6 +137,7 @@ async function processIncomingMessage(
     lead.name,
     convDetail?.page?.pageName ?? "Our Business"
   );
+  console.log(`[Webhook] AI response generated, length=${aiResponse.length}`);
 
   // 7. Save AI response
   await db.createMessage({
@@ -127,10 +146,14 @@ async function processIncomingMessage(
     sender: "ai",
     messageType: "text",
   });
+  console.log(`[Webhook] Saved AI message to conversation ${conv.id}`);
 
   // 8. Send reply via Messenger
   if (pageEntry.pageAccessToken) {
-    await sendMessengerMessage(pageEntry.pageAccessToken, senderPsid, aiResponse);
+    const sent = await sendMessengerMessage(pageEntry.pageAccessToken, senderPsid, aiResponse);
+    console.log(`[Webhook] Messenger send result: ${sent}`);
+  } else {
+    console.warn(`[Webhook] No page access token, cannot send Messenger reply`);
   }
 
   // 9. Update conversation
@@ -140,54 +163,65 @@ async function processIncomingMessage(
     messageCount: history.length + 2,
   });
 
-  // 10. Score lead
-  const allMessages = [...historyForAI, { sender: "ai", content: aiResponse }];
-  const scoreResult = await scoreLead(allMessages);
+  // 10. Score lead (non-critical — wrap in try/catch so it doesn't block the reply)
+  try {
+    const allMessages = [...historyForAI, { sender: "ai", content: aiResponse }];
+    const scoreResult = await scoreLead(allMessages);
 
-  await db.updateLead(lead.id, {
-    score: scoreResult.score,
-    classification: scoreResult.classification,
-    budgetScore: scoreResult.budgetScore,
-    authorityScore: scoreResult.authorityScore,
-    needScore: scoreResult.needScore,
-    timelineScore: scoreResult.timelineScore,
-    budgetNotes: scoreResult.budgetNotes,
-    authorityNotes: scoreResult.authorityNotes,
-    needNotes: scoreResult.needNotes,
-    timelineNotes: scoreResult.timelineNotes,
-  });
-
-  // 11. Notify if hot lead
-  if (scoreResult.classification === "hot" && !lead.notifiedAt) {
-    await notifyOwner({
-      title: `Hot Lead Detected: ${lead.name || "Unknown"}`,
-      content: `Score: ${scoreResult.score}/100\nLast message: ${messageText}\n\nBudget: ${scoreResult.budgetNotes}\nNeed: ${scoreResult.needNotes}\nTimeline: ${scoreResult.timelineNotes}`,
+    await db.updateLead(lead.id, {
+      score: scoreResult.score,
+      classification: scoreResult.classification,
+      budgetScore: scoreResult.budgetScore,
+      authorityScore: scoreResult.authorityScore,
+      needScore: scoreResult.needScore,
+      timelineScore: scoreResult.timelineScore,
+      budgetNotes: scoreResult.budgetNotes,
+      authorityNotes: scoreResult.authorityNotes,
+      needNotes: scoreResult.needNotes,
+      timelineNotes: scoreResult.timelineNotes,
     });
-    await db.updateLead(lead.id, { notifiedAt: new Date() });
-  }
 
-  // 12. Auto-schedule follow-ups on first contact
-  const leadMessages = history.filter(m => m.sender === "lead");
-  if (leadMessages.length <= 1) {
-    const now = Date.now();
-    const delays = [30, 120, 720];
-    const followUpMessages = [
-      "Hi! Just checking in — did you have any other questions about what we discussed?",
-      "Hey! I wanted to follow up on our conversation. Is there anything else I can help you with?",
-      "Hi there! I noticed we chatted earlier. I'd love to help you move forward — feel free to ask me anything!",
-    ];
-    for (let i = 0; i < delays.length; i++) {
-      await db.createFollowUp({
-        conversationId: conv.id,
-        leadId: lead.id,
-        delayMinutes: delays[i],
-        scheduledAt: now + delays[i] * 60 * 1000,
-        messageContent: followUpMessages[i],
+    // 11. Notify if hot lead
+    if (scoreResult.classification === "hot" && !lead.notifiedAt) {
+      await notifyOwner({
+        title: `Hot Lead Detected: ${lead.name || "Unknown"}`,
+        content: `Score: ${scoreResult.score}/100\nLast message: ${messageText}\n\nBudget: ${scoreResult.budgetNotes}\nNeed: ${scoreResult.needNotes}\nTimeline: ${scoreResult.timelineNotes}`,
       });
+      await db.updateLead(lead.id, { notifiedAt: new Date() });
     }
+
+    console.log(`[Webhook] Lead scored: ${scoreResult.score}/100 (${scoreResult.classification})`);
+  } catch (scoreErr) {
+    console.error("[Webhook] Lead scoring failed (non-critical):", scoreErr);
   }
 
-  console.log(`[Webhook] Replied to ${senderPsid} with AI response (score: ${scoreResult.score})`);
+  // 12. Auto-schedule follow-ups on first contact (non-critical)
+  try {
+    const leadMessages = history.filter(m => m.sender === "lead");
+    if (leadMessages.length <= 1) {
+      const now = Date.now();
+      const delays = [30, 120, 720];
+      const followUpMessages = [
+        "Hi! Just checking in — did you have any other questions about what we discussed?",
+        "Hey! I wanted to follow up on our conversation. Is there anything else I can help you with?",
+        "Hi there! I noticed we chatted earlier. I'd love to help you move forward — feel free to ask me anything!",
+      ];
+      for (let i = 0; i < delays.length; i++) {
+        await db.createFollowUp({
+          conversationId: conv.id,
+          leadId: lead.id,
+          delayMinutes: delays[i],
+          scheduledAt: now + delays[i] * 60 * 1000,
+          messageContent: followUpMessages[i],
+        });
+      }
+      console.log(`[Webhook] Scheduled ${delays.length} follow-ups for lead ${lead.id}`);
+    }
+  } catch (followUpErr) {
+    console.error("[Webhook] Follow-up scheduling failed (non-critical):", followUpErr);
+  }
+
+  console.log(`[Webhook] ✅ Fully processed message from ${senderPsid} (lead=${lead.id}, conv=${conv.id})`);
 }
 
 // ─── Register Facebook Routes ────────────────────────────────────────
@@ -331,16 +365,25 @@ export function registerFacebookRoutes(app: Express) {
   });
 
   // ─── Messenger Webhook: Incoming Messages ──────────────────────────
+  // IMPORTANT: We must await ALL processing before sending the 200 response.
+  // On Vercel (especially Hobby plan), the serverless function is terminated
+  // immediately after the response is sent. Fire-and-forget async work will
+  // be killed. Facebook allows up to 20 seconds for the webhook response.
   app.post("/api/webhook/messenger", async (req: Request, res: Response) => {
-    // Facebook expects a 200 response within 20 seconds
-    res.sendStatus(200);
+    console.log("[Webhook] POST /api/webhook/messenger received");
 
     try {
       const body = req.body;
-      if (body.object !== "page") return;
+      if (body.object !== "page") {
+        console.warn("[Webhook] Ignoring non-page object:", body.object);
+        return res.sendStatus(200);
+      }
+
+      console.log(`[Webhook] Processing ${(body.entry || []).length} entry(ies)`);
 
       for (const entry of body.entry || []) {
         const pageId = entry.id;
+        console.log(`[Webhook] Entry for page ${pageId}, messaging events: ${(entry.messaging || []).length}`);
 
         // Look up the page in our database
         const page = await db.getPageByFacebookId(pageId);
@@ -351,26 +394,38 @@ export function registerFacebookRoutes(app: Express) {
 
         for (const event of entry.messaging || []) {
           const senderPsid = event.sender?.id;
-          if (!senderPsid || senderPsid === pageId) continue; // Skip messages from the page itself
+          if (!senderPsid || senderPsid === pageId) {
+            console.log(`[Webhook] Skipping event: sender=${senderPsid}, pageId=${pageId}`);
+            continue;
+          }
 
           if (event.message?.text) {
-            // Process text message
-            processIncomingMessage(
-              {
-                pageId: page.pageId,
-                pageAccessToken: page.pageAccessToken,
-                userId: page.userId,
-                dbPageId: page.id,
-              },
-              senderPsid,
-              event.message.text
-            ).catch(err => console.error("[Webhook] Process error:", err));
+            // Process text message — AWAIT it so it completes before we return 200
+            try {
+              await processIncomingMessage(
+                {
+                  pageId: page.pageId,
+                  pageAccessToken: page.pageAccessToken,
+                  userId: page.userId,
+                  dbPageId: page.id,
+                },
+                senderPsid,
+                event.message.text
+              );
+            } catch (err) {
+              console.error(`[Webhook] processIncomingMessage failed for sender=${senderPsid}:`, err);
+            }
+          } else {
+            console.log(`[Webhook] Non-text event from ${senderPsid}, skipping`);
           }
         }
       }
     } catch (error) {
-      console.error("[Webhook] Error processing:", error);
+      console.error("[Webhook] Top-level error processing webhook:", error);
     }
+
+    // Return 200 AFTER all processing is complete
+    return res.sendStatus(200);
   });
 
   // ─── API: Get Facebook OAuth URL (for frontend) ────────────────────

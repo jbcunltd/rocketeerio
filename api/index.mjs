@@ -956,6 +956,7 @@ async function sendMessengerMessage(pageAccessToken, recipientPsid, text2) {
     message: { text: text2 },
     messaging_type: "RESPONSE"
   };
+  console.log(`[Messenger] Sending reply to ${recipientPsid}, length=${text2.length}`);
   const res = await fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -966,6 +967,7 @@ async function sendMessengerMessage(pageAccessToken, recipientPsid, text2) {
     console.error("[Messenger] Send failed:", res.status, errText);
     return false;
   }
+  console.log(`[Messenger] Reply sent successfully to ${recipientPsid}`);
   return true;
 }
 async function getFacebookUserProfile(psid, pageAccessToken) {
@@ -973,20 +975,25 @@ async function getFacebookUserProfile(psid, pageAccessToken) {
     const res = await fetch(
       `${FB_GRAPH}/${psid}?fields=first_name,last_name,profile_pic&access_token=${pageAccessToken}`
     );
-    if (!res.ok) return null;
+    if (!res.ok) {
+      console.warn(`[Messenger] Profile fetch failed for ${psid}: ${res.status}`);
+      return null;
+    }
     const data = await res.json();
     return {
       name: [data.first_name, data.last_name].filter(Boolean).join(" ") || null,
       avatarUrl: data.profile_pic || null
     };
-  } catch {
+  } catch (err) {
+    console.error(`[Messenger] Profile fetch error for ${psid}:`, err);
     return null;
   }
 }
 async function processIncomingMessage(pageEntry, senderPsid, messageText) {
-  console.log(`[Webhook] Message from ${senderPsid} to page ${pageEntry.pageId}: "${messageText.substring(0, 50)}..."`);
+  console.log(`[Webhook] Processing message from ${senderPsid} to page ${pageEntry.pageId}: "${messageText.substring(0, 80)}"`);
   let lead = await getLeadByPsid(senderPsid, pageEntry.dbPageId);
   if (!lead) {
+    console.log(`[Webhook] Creating new lead for PSID ${senderPsid}`);
     const profile = await getFacebookUserProfile(senderPsid, pageEntry.pageAccessToken);
     const leadId = await createLead({
       userId: pageEntry.userId,
@@ -1002,10 +1009,17 @@ async function processIncomingMessage(pageEntry, senderPsid, messageText) {
       return;
     }
     lead = await getLeadById(leadId);
-    if (!lead) return;
+    if (!lead) {
+      console.error("[Webhook] Failed to fetch newly created lead");
+      return;
+    }
+    console.log(`[Webhook] Created lead id=${leadId}, name=${lead.name}`);
+  } else {
+    console.log(`[Webhook] Found existing lead id=${lead.id}, name=${lead.name}`);
   }
   let conv = await getConversationByLeadId(lead.id);
   if (!conv) {
+    console.log(`[Webhook] Creating new conversation for lead ${lead.id}`);
     const convId = await createConversation({
       userId: pageEntry.userId,
       pageId: pageEntry.dbPageId,
@@ -1019,7 +1033,13 @@ async function processIncomingMessage(pageEntry, senderPsid, messageText) {
       return;
     }
     conv = await getConversationByLeadId(lead.id);
-    if (!conv) return;
+    if (!conv) {
+      console.error("[Webhook] Failed to fetch newly created conversation");
+      return;
+    }
+    console.log(`[Webhook] Created conversation id=${convId}`);
+  } else {
+    console.log(`[Webhook] Found existing conversation id=${conv.id}`);
   }
   await createMessage({
     conversationId: conv.id,
@@ -1027,12 +1047,15 @@ async function processIncomingMessage(pageEntry, senderPsid, messageText) {
     sender: "lead",
     messageType: "text"
   });
+  console.log(`[Webhook] Saved lead message to conversation ${conv.id}`);
   if (!conv.isAiActive) {
     console.log(`[Webhook] AI disabled for conversation ${conv.id}, skipping auto-reply`);
     return;
   }
   const history = await getMessagesByConversation(conv.id);
   const historyForAI = history.map((m) => ({ sender: m.sender, content: m.content }));
+  console.log(`[Webhook] Loaded ${history.length} messages for AI context`);
+  console.log(`[Webhook] Calling OpenAI for AI response...`);
   const convDetail = await getConversationById(conv.id);
   const aiResponse = await generateAIResponse(
     pageEntry.userId,
@@ -1040,66 +1063,81 @@ async function processIncomingMessage(pageEntry, senderPsid, messageText) {
     lead.name,
     convDetail?.page?.pageName ?? "Our Business"
   );
+  console.log(`[Webhook] AI response generated, length=${aiResponse.length}`);
   await createMessage({
     conversationId: conv.id,
     content: aiResponse,
     sender: "ai",
     messageType: "text"
   });
+  console.log(`[Webhook] Saved AI message to conversation ${conv.id}`);
   if (pageEntry.pageAccessToken) {
-    await sendMessengerMessage(pageEntry.pageAccessToken, senderPsid, aiResponse);
+    const sent = await sendMessengerMessage(pageEntry.pageAccessToken, senderPsid, aiResponse);
+    console.log(`[Webhook] Messenger send result: ${sent}`);
+  } else {
+    console.warn(`[Webhook] No page access token, cannot send Messenger reply`);
   }
   await updateConversation(conv.id, {
     lastMessagePreview: aiResponse.substring(0, 200),
     lastMessageAt: /* @__PURE__ */ new Date(),
     messageCount: history.length + 2
   });
-  const allMessages = [...historyForAI, { sender: "ai", content: aiResponse }];
-  const scoreResult = await scoreLead(allMessages);
-  await updateLead(lead.id, {
-    score: scoreResult.score,
-    classification: scoreResult.classification,
-    budgetScore: scoreResult.budgetScore,
-    authorityScore: scoreResult.authorityScore,
-    needScore: scoreResult.needScore,
-    timelineScore: scoreResult.timelineScore,
-    budgetNotes: scoreResult.budgetNotes,
-    authorityNotes: scoreResult.authorityNotes,
-    needNotes: scoreResult.needNotes,
-    timelineNotes: scoreResult.timelineNotes
-  });
-  if (scoreResult.classification === "hot" && !lead.notifiedAt) {
-    await notifyOwner({
-      title: `Hot Lead Detected: ${lead.name || "Unknown"}`,
-      content: `Score: ${scoreResult.score}/100
+  try {
+    const allMessages = [...historyForAI, { sender: "ai", content: aiResponse }];
+    const scoreResult = await scoreLead(allMessages);
+    await updateLead(lead.id, {
+      score: scoreResult.score,
+      classification: scoreResult.classification,
+      budgetScore: scoreResult.budgetScore,
+      authorityScore: scoreResult.authorityScore,
+      needScore: scoreResult.needScore,
+      timelineScore: scoreResult.timelineScore,
+      budgetNotes: scoreResult.budgetNotes,
+      authorityNotes: scoreResult.authorityNotes,
+      needNotes: scoreResult.needNotes,
+      timelineNotes: scoreResult.timelineNotes
+    });
+    if (scoreResult.classification === "hot" && !lead.notifiedAt) {
+      await notifyOwner({
+        title: `Hot Lead Detected: ${lead.name || "Unknown"}`,
+        content: `Score: ${scoreResult.score}/100
 Last message: ${messageText}
 
 Budget: ${scoreResult.budgetNotes}
 Need: ${scoreResult.needNotes}
 Timeline: ${scoreResult.timelineNotes}`
-    });
-    await updateLead(lead.id, { notifiedAt: /* @__PURE__ */ new Date() });
-  }
-  const leadMessages = history.filter((m) => m.sender === "lead");
-  if (leadMessages.length <= 1) {
-    const now = Date.now();
-    const delays = [30, 120, 720];
-    const followUpMessages = [
-      "Hi! Just checking in \u2014 did you have any other questions about what we discussed?",
-      "Hey! I wanted to follow up on our conversation. Is there anything else I can help you with?",
-      "Hi there! I noticed we chatted earlier. I'd love to help you move forward \u2014 feel free to ask me anything!"
-    ];
-    for (let i = 0; i < delays.length; i++) {
-      await createFollowUp({
-        conversationId: conv.id,
-        leadId: lead.id,
-        delayMinutes: delays[i],
-        scheduledAt: now + delays[i] * 60 * 1e3,
-        messageContent: followUpMessages[i]
       });
+      await updateLead(lead.id, { notifiedAt: /* @__PURE__ */ new Date() });
     }
+    console.log(`[Webhook] Lead scored: ${scoreResult.score}/100 (${scoreResult.classification})`);
+  } catch (scoreErr) {
+    console.error("[Webhook] Lead scoring failed (non-critical):", scoreErr);
   }
-  console.log(`[Webhook] Replied to ${senderPsid} with AI response (score: ${scoreResult.score})`);
+  try {
+    const leadMessages = history.filter((m) => m.sender === "lead");
+    if (leadMessages.length <= 1) {
+      const now = Date.now();
+      const delays = [30, 120, 720];
+      const followUpMessages = [
+        "Hi! Just checking in \u2014 did you have any other questions about what we discussed?",
+        "Hey! I wanted to follow up on our conversation. Is there anything else I can help you with?",
+        "Hi there! I noticed we chatted earlier. I'd love to help you move forward \u2014 feel free to ask me anything!"
+      ];
+      for (let i = 0; i < delays.length; i++) {
+        await createFollowUp({
+          conversationId: conv.id,
+          leadId: lead.id,
+          delayMinutes: delays[i],
+          scheduledAt: now + delays[i] * 60 * 1e3,
+          messageContent: followUpMessages[i]
+        });
+      }
+      console.log(`[Webhook] Scheduled ${delays.length} follow-ups for lead ${lead.id}`);
+    }
+  } catch (followUpErr) {
+    console.error("[Webhook] Follow-up scheduling failed (non-critical):", followUpErr);
+  }
+  console.log(`[Webhook] \u2705 Fully processed message from ${senderPsid} (lead=${lead.id}, conv=${conv.id})`);
 }
 function registerFacebookRoutes(app2) {
   app2.get("/api/auth/facebook", async (req, res) => {
@@ -1207,12 +1245,17 @@ function registerFacebookRoutes(app2) {
     return res.sendStatus(403);
   });
   app2.post("/api/webhook/messenger", async (req, res) => {
-    res.sendStatus(200);
+    console.log("[Webhook] POST /api/webhook/messenger received");
     try {
       const body = req.body;
-      if (body.object !== "page") return;
+      if (body.object !== "page") {
+        console.warn("[Webhook] Ignoring non-page object:", body.object);
+        return res.sendStatus(200);
+      }
+      console.log(`[Webhook] Processing ${(body.entry || []).length} entry(ies)`);
       for (const entry of body.entry || []) {
         const pageId = entry.id;
+        console.log(`[Webhook] Entry for page ${pageId}, messaging events: ${(entry.messaging || []).length}`);
         const page = await getPageByFacebookId(pageId);
         if (!page || !page.pageAccessToken) {
           console.warn(`[Webhook] Received message for unknown/unconfigured page: ${pageId}`);
@@ -1220,24 +1263,34 @@ function registerFacebookRoutes(app2) {
         }
         for (const event of entry.messaging || []) {
           const senderPsid = event.sender?.id;
-          if (!senderPsid || senderPsid === pageId) continue;
+          if (!senderPsid || senderPsid === pageId) {
+            console.log(`[Webhook] Skipping event: sender=${senderPsid}, pageId=${pageId}`);
+            continue;
+          }
           if (event.message?.text) {
-            processIncomingMessage(
-              {
-                pageId: page.pageId,
-                pageAccessToken: page.pageAccessToken,
-                userId: page.userId,
-                dbPageId: page.id
-              },
-              senderPsid,
-              event.message.text
-            ).catch((err) => console.error("[Webhook] Process error:", err));
+            try {
+              await processIncomingMessage(
+                {
+                  pageId: page.pageId,
+                  pageAccessToken: page.pageAccessToken,
+                  userId: page.userId,
+                  dbPageId: page.id
+                },
+                senderPsid,
+                event.message.text
+              );
+            } catch (err) {
+              console.error(`[Webhook] processIncomingMessage failed for sender=${senderPsid}:`, err);
+            }
+          } else {
+            console.log(`[Webhook] Non-text event from ${senderPsid}, skipping`);
           }
         }
       }
     } catch (error) {
-      console.error("[Webhook] Error processing:", error);
+      console.error("[Webhook] Top-level error processing webhook:", error);
     }
+    return res.sendStatus(200);
   });
   app2.get("/api/facebook/auth-url", async (req, res) => {
     try {
