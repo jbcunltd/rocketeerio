@@ -11,8 +11,7 @@
     "format": "prettier --write .",
     "test": "vitest run",
     "db:push": "drizzle-kit generate && drizzle-kit migrate",
-    "vercel-build": "pnpm run bundle-api && vite build",
-    "bundle-api": "esbuild api/index.ts --bundle --platform=node --target=node18 --format=esm --outfile=api/index.js --external:pg-native --banner:js='import { createRequire } from \"module\"; const require = createRequire(import.meta.url);'"
+    "vercel-build": "vite build"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
