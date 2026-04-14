@@ -378,6 +378,7 @@ function AiSettingsForm({ pageId }: { pageId: number }) {
   const [responseLength, setResponseLength] = useState("short");
   const [useEmojis, setUseEmojis] = useState(true);
   const [primaryGoal, setPrimaryGoal] = useState("site_visit");
+  const [customGoal, setCustomGoal] = useState("");
   const [customInstructions, setCustomInstructions] = useState("");
   const [initialized, setInitialized] = useState(false);
 
@@ -388,6 +389,7 @@ function AiSettingsForm({ pageId }: { pageId: number }) {
       setResponseLength(settings.responseLength);
       setUseEmojis(settings.useEmojis);
       setPrimaryGoal(settings.primaryGoal);
+      setCustomGoal(settings.customGoal || "");
       setCustomInstructions(settings.customInstructions || "");
       setInitialized(true);
     } else if (settings === null && !isLoading) {
@@ -397,6 +399,7 @@ function AiSettingsForm({ pageId }: { pageId: number }) {
       setResponseLength("short");
       setUseEmojis(true);
       setPrimaryGoal("site_visit");
+      setCustomGoal("");
       setCustomInstructions("");
       setInitialized(true);
     }
@@ -411,6 +414,7 @@ function AiSettingsForm({ pageId }: { pageId: number }) {
         responseLength: responseLength as any,
         useEmojis,
         primaryGoal: primaryGoal as any,
+        customGoal: customGoal.trim() || undefined,
         customInstructions: customInstructions.trim() || undefined,
       });
       utils.aiSettings.get.invalidate({ pageId });
@@ -512,10 +516,32 @@ function AiSettingsForm({ pageId }: { pageId: number }) {
               <SelectItem value="booking">Push toward Booking</SelectItem>
               <SelectItem value="quote_request">Push toward Quote Request</SelectItem>
               <SelectItem value="general_support">General Support</SelectItem>
+              <SelectItem value="order_purchase">Push toward Order / Purchase</SelectItem>
+              <SelectItem value="reservation">Push toward Reservation</SelectItem>
+              <SelectItem value="appointment">Push toward Appointment</SelectItem>
+              <SelectItem value="collect_lead_info">Collect Lead Info</SelectItem>
+              <SelectItem value="signup_registration">Push toward Sign-Up / Registration</SelectItem>
+              <SelectItem value="custom_goal">Custom Goal</SelectItem>
             </SelectContent>
           </Select>
         </div>
       </div>
+
+      {/* Custom Goal (conditionally shown) */}
+      {primaryGoal === "custom_goal" && (
+        <div className="bg-white rounded-lg border p-5 border-blue-200 bg-blue-50">
+          <Label className="font-bold text-sm">Custom Goal Description</Label>
+          <p className="text-xs text-muted-foreground mt-0.5 mb-2">
+            Describe what you want the AI to push conversations toward
+          </p>
+          <Textarea
+            value={customGoal}
+            onChange={e => setCustomGoal(e.target.value)}
+            placeholder="e.g., 'Push customers to schedule a free consultation call'"
+            className="min-h-[100px] resize-y"
+          />
+        </div>
+      )}
 
       {/* Custom Instructions */}
       <div className="bg-white rounded-lg border p-5">

@@ -25,7 +25,7 @@ export const followUpStatusEnum = pgEnum("follow_up_status", ["pending", "sent",
 export const aiModeEnum = pgEnum("ai_mode", ["paused", "testing", "live"]);
 export const aiToneEnum = pgEnum("ai_tone", ["casual_taglish", "pure_tagalog", "professional_filipino", "casual_english", "formal_english", "professional_english"]);
 export const aiResponseLengthEnum = pgEnum("ai_response_length", ["short", "medium", "detailed"]);
-export const aiPrimaryGoalEnum = pgEnum("ai_primary_goal", ["site_visit", "booking", "quote_request", "general_support"]);
+export const aiPrimaryGoalEnum = pgEnum("ai_primary_goal", ["site_visit", "booking", "quote_request", "general_support", "order_purchase", "reservation", "appointment", "collect_lead_info", "signup_registration", "custom_goal"]);
 
 // ─── Users ───────────────────────────────────────────────────────────
 export const users = pgTable("users", {
@@ -193,6 +193,7 @@ export const pageAiSettings = pgTable("page_ai_settings", {
   responseLength: aiResponseLengthEnum("responseLength").default("short").notNull(),
   useEmojis: boolean("useEmojis").default(true).notNull(),
   primaryGoal: aiPrimaryGoalEnum("primaryGoal").default("site_visit").notNull(),
+  customGoal: text("customGoal"),
   customInstructions: text("customInstructions"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().notNull(),

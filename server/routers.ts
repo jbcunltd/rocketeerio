@@ -443,10 +443,11 @@ export const appRouter = router({
       .input(z.object({
         pageId: z.number(),
         agentName: z.string().optional(),
-        tone: z.enum(["casual_taglish", "formal_english", "casual_english", "professional_filipino"]).optional(),
+        tone: z.enum(["casual_taglish", "pure_tagalog", "professional_filipino", "casual_english", "formal_english", "professional_english"]).optional(),
         responseLength: z.enum(["short", "medium", "detailed"]).optional(),
         useEmojis: z.boolean().optional(),
-        primaryGoal: z.enum(["site_visit", "booking", "quote_request", "general_support"]).optional(),
+        primaryGoal: z.enum(["site_visit", "booking", "quote_request", "general_support", "order_purchase", "reservation", "appointment", "collect_lead_info", "signup_registration", "custom_goal"]).optional(),
+        customGoal: z.string().optional(),
         customInstructions: z.string().optional(),
       }))
       .mutation(async ({ ctx, input }) => {

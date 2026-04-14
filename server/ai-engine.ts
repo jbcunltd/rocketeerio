@@ -37,7 +37,7 @@ function getResponseLengthInstruction(length: string): string {
 }
 
 /** Map primary goal enum to prompt instructions */
-function getPrimaryGoalInstruction(goal: string): string {
+function getPrimaryGoalInstruction(goal: string, customGoal?: string | null): string {
   switch (goal) {
     case "site_visit":
       return "Your #1 goal is to move every inquiry toward a SITE VISIT or IN-PERSON CONSULTATION. Guide the conversation toward scheduling a visit.";
@@ -47,6 +47,18 @@ function getPrimaryGoalInstruction(goal: string): string {
       return "Your #1 goal is to move every inquiry toward requesting a QUOTE or ESTIMATE. Gather their requirements and offer to prepare a personalized quote.";
     case "general_support":
       return "Your #1 goal is to provide excellent CUSTOMER SUPPORT. Answer questions thoroughly, resolve concerns, and ensure customer satisfaction.";
+    case "order_purchase":
+      return "Your #1 goal is to guide the customer toward placing an ORDER or completing a PURCHASE. Help them understand the product/service, address concerns, and move them to checkout or payment.";
+    case "reservation":
+      return "Your #1 goal is to help the customer make a RESERVATION. Ask for their preferred date, time, party size or room type, and confirm all reservation details before finalizing.";
+    case "appointment":
+      return "Your #1 goal is to schedule an APPOINTMENT. Ask for their preferred date and time, the service they need, and confirm all appointment details.";
+    case "collect_lead_info":
+      return "Your #1 goal is to COLLECT LEAD INFORMATION. Gather their name, contact information (email/phone), and understand their needs. Let them know a human team member will follow up with them soon.";
+    case "signup_registration":
+      return "Your #1 goal is to guide the customer toward SIGNING UP or REGISTERING. Explain the benefits, address any concerns, and help them complete the registration process.";
+    case "custom_goal":
+      return customGoal ? `Your #1 goal is: ${customGoal}` : "Your #1 goal is to move every inquiry toward a SITE VISIT or DESIGN CONSULTATION.";
     default:
       return "Your #1 goal is to move every inquiry toward a SITE VISIT or DESIGN CONSULTATION.";
   }
@@ -88,6 +100,7 @@ export async function generateAIResponse(
   const responseLength = settings?.responseLength ?? "short";
   const useEmojis = settings?.useEmojis ?? true;
   const primaryGoal = settings?.primaryGoal ?? "site_visit";
+  const customGoal = settings?.customGoal || null;
   const agentName = settings?.agentName || null;
   const customInstructions = settings?.customInstructions || null;
 
@@ -111,7 +124,7 @@ YOUR PERSONALITY & STYLE:
 - NEVER start messages with "Hi [name]!" every time — only greet by name on the FIRST message in a conversation
 - Keep messages short and conversational, like real Messenger chat
 - ALWAYS end your message with a question to keep the conversation moving
-- ${getPrimaryGoalInstruction(primaryGoal)}
+- ${getPrimaryGoalInstruction(primaryGoal, customGoal)}
 
 RESPONSE LENGTH:
 - ${getResponseLengthInstruction(responseLength)}
