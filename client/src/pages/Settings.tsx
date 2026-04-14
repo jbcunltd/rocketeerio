@@ -1,5 +1,8 @@
 import { useAuth } from "@/_core/hooks/useAuth";
 import DashboardLayout from "@/components/DashboardLayout";
+import { AiModeToggle, AiModeBadge } from "@/components/AiModeToggle";
+import type { AiMode } from "@/components/AiModeToggle";
+import { TesterManager } from "@/components/TesterManager";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -138,9 +141,9 @@ function NotificationsTab() {
 function PagesTab() {
   const { data: pages, isLoading } = trpc.pages.list.useQuery();
   const deletePage = trpc.pages.delete.useMutation();
-  const togglePage = trpc.pages.update.useMutation();
   const utils = trpc.useUtils();
   const [connecting, setConnecting] = useState(false);
+  const [expandedPageId, setExpandedPageId] = useState<number | null>(null);
 
   // Check URL params for success/error from OAuth callback
   useEffect(() => {
@@ -186,14 +189,6 @@ function PagesTab() {
     } catch { toast.error("Failed to disconnect page"); }
   };
 
-  const handleToggle = async (id: number, isActive: boolean) => {
-    try {
-      await togglePage.mutateAsync({ id, isActive });
-      utils.pages.list.invalidate();
-      toast.success(isActive ? "AI agent activated" : "AI agent paused");
-    } catch { toast.error("Failed to update page"); }
-  };
-
   if (isLoading) return <div className="flex items-center justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-messenger" /></div>;
 
   return (
@@ -229,41 +224,60 @@ function PagesTab() {
           <p className="text-sm text-muted-foreground">Click "Connect a Page" to link your Facebook Page and start capturing leads.</p>
         </div>
       ) : (
-        <div className="space-y-3">
-          {pages.map(page => (
-            <div key={page.id} className="flex items-center justify-between p-4 bg-white rounded-lg border">
-              <div className="flex items-center gap-3">
-                {page.avatarUrl ? (
-                  <img src={page.avatarUrl} alt={page.pageName} className="w-10 h-10 rounded-lg object-cover" />
-                ) : (
-                  <div className="w-10 h-10 bg-messenger-light rounded-lg flex items-center justify-center">
-                    <Facebook className="w-5 h-5 text-messenger" />
+        <div className="space-y-4">
+          {pages.map(page => {
+            const isExpanded = expandedPageId === page.id;
+            return (
+              <div key={page.id} className="bg-white rounded-xl border overflow-hidden">
+                {/* Page Header */}
+                <div className="flex items-center justify-between p-4">
+                  <div className="flex items-center gap-3">
+                    {page.avatarUrl ? (
+                      <img src={page.avatarUrl} alt={page.pageName} className="w-10 h-10 rounded-lg object-cover" />
+                    ) : (
+                      <div className="w-10 h-10 bg-messenger-light rounded-lg flex items-center justify-center">
+                        <Facebook className="w-5 h-5 text-messenger" />
+                      </div>
+                    )}
+                    <div>
+                      <p className="font-medium">{page.pageName}</p>
+                      <div className="flex items-center gap-2">
+                        <p className="text-xs text-muted-foreground">{page.category || "Business"}</p>
+                        {page.followerCount ? (
+                          <p className="text-xs text-muted-foreground">{page.followerCount.toLocaleString()} followers</p>
+                        ) : null}
+                      </div>
+                    </div>
                   </div>
-                )}
-                <div>
-                  <p className="font-medium">{page.pageName}</p>
-                  <div className="flex items-center gap-2">
-                    <p className="text-xs text-muted-foreground">{page.category || "Business"}</p>
-                    {page.followerCount ? (
-                      <p className="text-xs text-muted-foreground">{page.followerCount.toLocaleString()} followers</p>
-                    ) : null}
-                    <span className={`text-xs font-medium flex items-center gap-1 ${page.isActive ? "text-green-600" : "text-amber-600"}`}>
-                      {page.isActive ? <><CheckCircle className="w-3 h-3" /> AI Active</> : "AI Paused"}
-                    </span>
+                  <div className="flex items-center gap-3">
+                    <AiModeToggle
+                      pageId={page.id}
+                      currentMode={(page.aiMode as AiMode) || "testing"}
+                      compact
+                    />
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setExpandedPageId(isExpanded ? null : page.id)}
+                      className="text-xs"
+                    >
+                      {isExpanded ? "Hide Testers" : "Manage Testers"}
+                    </Button>
+                    <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive" onClick={() => handleDelete(page.id)}>
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
                   </div>
                 </div>
+
+                {/* Tester Management (Expandable) */}
+                {isExpanded && (
+                  <div className="border-t bg-gray-50/50 p-4">
+                    <TesterManager pageId={page.id} />
+                  </div>
+                )}
               </div>
-              <div className="flex items-center gap-2">
-                <Switch
-                  checked={page.isActive}
-                  onCheckedChange={(checked) => handleToggle(page.id, checked)}
-                />
-                <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive" onClick={() => handleDelete(page.id)}>
-                  <Trash2 className="w-4 h-4" />
-                </Button>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 

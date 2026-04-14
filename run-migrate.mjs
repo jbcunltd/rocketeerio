@@ -53,6 +53,34 @@ try {
   `);
   console.log("OK: Created page_ai_settings table");
 
+  // Create ai_mode enum
+  try {
+    await sql.unsafe(`CREATE TYPE "ai_mode" AS ENUM ('paused', 'testing', 'live')`);
+    console.log("OK: Created ai_mode enum");
+  } catch (err) {
+    console.log("SKIP ai_mode:", err.message);
+  }
+
+  // Add aiMode column to facebook_pages
+  try {
+    await sql.unsafe(`ALTER TABLE "facebook_pages" ADD COLUMN "aiMode" "ai_mode" NOT NULL DEFAULT 'testing'`);
+    console.log("OK: Added aiMode column to facebook_pages");
+  } catch (err) {
+    console.log("SKIP aiMode column:", err.message);
+  }
+
+  // Create page_testers table
+  await sql.unsafe(`
+    CREATE TABLE IF NOT EXISTS "page_testers" (
+      "id" serial PRIMARY KEY,
+      "pageId" integer NOT NULL,
+      "psid" varchar(128) NOT NULL,
+      "label" varchar(255),
+      "createdAt" timestamp DEFAULT now() NOT NULL
+    )
+  `);
+  console.log("OK: Created page_testers table");
+
   console.log("Migration complete!");
 } catch (err) {
   console.error("Migration failed:", err);

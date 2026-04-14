@@ -1,5 +1,7 @@
 import { useAuth } from "@/_core/hooks/useAuth";
 import DashboardLayout from "@/components/DashboardLayout";
+import { AiModeToggle, AiModeBadge } from "@/components/AiModeToggle";
+import type { AiMode } from "@/components/AiModeToggle";
 import { Button } from "@/components/ui/button";
 import { trpc } from "@/lib/trpc";
 import {
@@ -38,6 +40,9 @@ function DashboardContent() {
   const utils = trpc.useUtils();
 
   const hasData = (stats?.totalConversations ?? 0) > 0;
+
+  // Get the primary page (first active page)
+  const primaryPage = pages?.find((p: any) => p.isActive) || pages?.[0];
 
   const handleSeedDemo = async () => {
     try {
@@ -85,13 +90,44 @@ function DashboardContent() {
           <h1 className="text-2xl font-bold">Dashboard</h1>
           <p className="text-muted-foreground">Welcome back{user?.name ? `, ${user.name}` : ""}! Here's your lead overview.</p>
         </div>
-        {!hasData && (
-          <Button onClick={handleSeedDemo} disabled={seedMutation.isPending} className="bg-messenger hover:bg-messenger-dark">
-            {seedMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Zap className="w-4 h-4 mr-2" />}
-            Load Demo Data
-          </Button>
-        )}
+        <div className="flex items-center gap-3">
+          {!hasData && (
+            <Button onClick={handleSeedDemo} disabled={seedMutation.isPending} className="bg-messenger hover:bg-messenger-dark">
+              {seedMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Zap className="w-4 h-4 mr-2" />}
+              Load Demo Data
+            </Button>
+          )}
+        </div>
       </div>
+
+      {/* AI Mode Toggle Banner */}
+      {primaryPage && (
+        <div className="mb-6">
+          <div className="flex items-center gap-4 flex-wrap">
+            {pages && pages.length > 1 ? (
+              pages.map((page: any) => (
+                <div key={page.id} className="flex-1 min-w-[280px]">
+                  <div className="flex items-center gap-2 mb-1.5">
+                    <div className="w-5 h-5 bg-messenger-light rounded flex items-center justify-center">
+                      <Facebook className="w-3 h-3 text-messenger" />
+                    </div>
+                    <span className="text-xs font-semibold text-muted-foreground truncate">{page.pageName}</span>
+                  </div>
+                  <AiModeToggle
+                    pageId={page.id}
+                    currentMode={(page.aiMode as AiMode) || "testing"}
+                  />
+                </div>
+              ))
+            ) : (
+              <AiModeToggle
+                pageId={primaryPage.id}
+                currentMode={(primaryPage.aiMode as AiMode) || "testing"}
+              />
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Stats Grid */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
@@ -200,9 +236,7 @@ function DashboardContent() {
                         <p className="text-xs text-muted-foreground">{page.category || "Business"}</p>
                       </div>
                     </div>
-                    <span className={`text-xs font-bold px-2 py-1 rounded-full ${page.isActive ? "bg-green-50 text-green-600" : "bg-muted text-muted-foreground"}`}>
-                      {page.isActive ? "Active" : "Paused"}
-                    </span>
+                    <AiModeBadge mode={(page.aiMode as AiMode) || "testing"} />
                   </div>
                 ))}
               </div>

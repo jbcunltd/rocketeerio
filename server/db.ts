@@ -11,6 +11,7 @@ import {
   followUpSequences, InsertFollowUpSequence,
   notificationPreferences, InsertNotificationPreference,
   pageAiSettings, InsertPageAiSetting,
+  pageTesters, InsertPageTester,
 } from "../drizzle/schema";
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -395,4 +396,49 @@ export async function upsertPageAiSettings(pageId: number, userId: number, data:
   } else {
     await db.insert(pageAiSettings).values({ pageId, userId, ...data });
   }
+}
+
+// ─── Page AI Mode ───────────────────────────────────────────────────
+
+export async function updatePageMode(pageId: number, aiMode: "paused" | "testing" | "live") {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(facebookPages).set({ aiMode, updatedAt: new Date() }).where(eq(facebookPages.id, pageId));
+}
+
+export async function getPageMode(pageId: number) {
+  const db = await getDb();
+  if (!db) return null;
+  const result = await db.select({ aiMode: facebookPages.aiMode }).from(facebookPages).where(eq(facebookPages.id, pageId)).limit(1);
+  return result[0]?.aiMode ?? null;
+}
+
+// ─── Page Testers ───────────────────────────────────────────────────
+
+export async function getPageTesters(pageId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(pageTesters).where(eq(pageTesters.pageId, pageId)).orderBy(desc(pageTesters.createdAt));
+}
+
+export async function addPageTester(data: InsertPageTester) {
+  const db = await getDb();
+  if (!db) return null;
+  const result = await db.insert(pageTesters).values(data).returning({ id: pageTesters.id });
+  return result[0]?.id ?? null;
+}
+
+export async function removePageTester(testerId: number) {
+  const db = await getDb();
+  if (!db) return;
+  await db.delete(pageTesters).where(eq(pageTesters.id, testerId));
+}
+
+export async function isTesterPsid(pageId: number, psid: string): Promise<boolean> {
+  const db = await getDb();
+  if (!db) return false;
+  const result = await db.select({ id: pageTesters.id }).from(pageTesters)
+    .where(and(eq(pageTesters.pageId, pageId), eq(pageTesters.psid, psid)))
+    .limit(1);
+  return result.length > 0;
 }

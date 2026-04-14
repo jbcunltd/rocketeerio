@@ -381,6 +381,56 @@ export const appRouter = router({
       }),
   }),
 
+  // ─── Page Mode ─────────────────────────────────────────────────────
+  pageMode: router({
+    get: protectedProcedure
+      .input(z.object({ pageId: z.number() }))
+      .query(async ({ input }) => {
+        return { mode: await db.getPageMode(input.pageId) };
+      }),
+
+    update: protectedProcedure
+      .input(z.object({
+        pageId: z.number(),
+        mode: z.enum(["paused", "testing", "live"]),
+      }))
+      .mutation(async ({ input }) => {
+        await db.updatePageMode(input.pageId, input.mode);
+        return { success: true };
+      }),
+  }),
+
+  // ─── Page Testers ─────────────────────────────────────────────────
+  testers: router({
+    list: protectedProcedure
+      .input(z.object({ pageId: z.number() }))
+      .query(async ({ input }) => {
+        return db.getPageTesters(input.pageId);
+      }),
+
+    add: protectedProcedure
+      .input(z.object({
+        pageId: z.number(),
+        psid: z.string().min(1),
+        label: z.string().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        const id = await db.addPageTester({
+          pageId: input.pageId,
+          psid: input.psid,
+          label: input.label,
+        });
+        return { id };
+      }),
+
+    remove: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input }) => {
+        await db.removePageTester(input.id);
+        return { success: true };
+      }),
+  }),
+
   // ─── AI Personality Settings ───────────────────────────────────────
   aiSettings: router({
     get: protectedProcedure

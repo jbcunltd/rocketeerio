@@ -59,12 +59,39 @@ async function getFacebookUserProfile(psid: string, pageAccessToken: string) {
 
 // ─── Process Incoming Message ────────────────────────────────────────
 
+async function sendTestingModeReply(pageAccessToken: string, recipientPsid: string) {
+  const text = "Thanks for your message! We're currently setting things up and will get back to you shortly.";
+  await sendMessengerMessage(pageAccessToken, recipientPsid, text);
+}
+
 async function processIncomingMessage(
-  pageEntry: { pageId: string; pageAccessToken: string; userId: number; dbPageId: number },
+  pageEntry: { pageId: string; pageAccessToken: string; userId: number; dbPageId: number; aiMode: string },
   senderPsid: string,
   messageText: string
 ) {
   console.log(`[Webhook] Processing message from ${senderPsid} to page ${pageEntry.pageId}: "${messageText.substring(0, 80)}"`);
+
+  // 0. Check page AI mode
+  const mode = pageEntry.aiMode || "testing";
+
+  if (mode === "paused") {
+    console.log(`[Webhook] Page ${pageEntry.pageId} is PAUSED — ignoring message from ${senderPsid}`);
+    return;
+  }
+
+  if (mode === "testing") {
+    const isTester = await db.isTesterPsid(pageEntry.dbPageId, senderPsid);
+    if (!isTester) {
+      console.log(`[Webhook] Page ${pageEntry.pageId} is in TESTING mode — sender ${senderPsid} is NOT a tester, sending courtesy reply`);
+      if (pageEntry.pageAccessToken) {
+        await sendTestingModeReply(pageEntry.pageAccessToken, senderPsid);
+      }
+      return;
+    }
+    console.log(`[Webhook] Page ${pageEntry.pageId} is in TESTING mode — sender ${senderPsid} IS a tester, proceeding`);
+  }
+
+  // mode === "live" or tester in testing mode — proceed normally
 
   // 1. Find or create lead
   let lead = await db.getLeadByPsid(senderPsid, pageEntry.dbPageId);
@@ -409,6 +436,7 @@ export function registerFacebookRoutes(app: Express) {
                   pageAccessToken: page.pageAccessToken,
                   userId: page.userId,
                   dbPageId: page.id,
+                  aiMode: (page as any).aiMode || "testing",
                 },
                 senderPsid,
                 event.message.text

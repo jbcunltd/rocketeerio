@@ -21,6 +21,9 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 
+import { AiModeToggle, AiModeBadge } from "@/components/AiModeToggle";
+import type { AiMode } from "@/components/AiModeToggle";
+import { trpc } from "@/lib/trpc";
 import { useIsMobile } from "@/hooks/useMobile";
 import {
   LayoutDashboard, MessageCircle, Users, Settings,
@@ -120,6 +123,11 @@ function DashboardLayoutContent({
   const activeMenuItem = menuItems.find(item => location.startsWith(item.path));
   const isMobile = useIsMobile();
 
+  // Fetch pages to show AI mode indicator
+  const { data: pages } = trpc.pages.list.useQuery();
+  const primaryPage = pages?.find((p: any) => p.isActive) || pages?.[0];
+  const primaryMode: AiMode = (primaryPage?.aiMode as AiMode) || "testing";
+
   useEffect(() => {
     if (isCollapsed) setIsResizing(false);
   }, [isCollapsed]);
@@ -177,6 +185,22 @@ function DashboardLayoutContent({
           </SidebarHeader>
 
           <SidebarContent className="gap-0">
+            {/* AI Mode Indicator in Sidebar */}
+            {primaryPage && !isCollapsed && (
+              <div className="px-3 py-2">
+                <AiModeToggle
+                  pageId={primaryPage.id}
+                  currentMode={primaryMode}
+                  compact
+                />
+              </div>
+            )}
+            {primaryPage && isCollapsed && (
+              <div className="flex justify-center py-2">
+                <AiModeBadge mode={primaryMode} />
+              </div>
+            )}
+
             <SidebarMenu className="px-2 py-1">
               {menuItems.map(item => {
                 const isActive = location.startsWith(item.path);
@@ -242,6 +266,9 @@ function DashboardLayoutContent({
                 {activeMenuItem?.label ?? "Rocketeer"}
               </span>
             </div>
+            {primaryPage && (
+              <AiModeBadge mode={primaryMode} />
+            )}
           </div>
         )}
         <main className="flex-1 overflow-y-auto p-4 md:p-6">{children}</main>

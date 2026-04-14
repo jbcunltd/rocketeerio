@@ -22,6 +22,7 @@ export const messageTypeEnum = pgEnum("message_type", ["text", "image", "templat
 export const kbCategoryEnum = pgEnum("kb_category", ["product", "pricing", "faq", "policy", "general"]);
 export const kbSourceEnum = pgEnum("kb_source", ["manual", "website", "pdf", "file"]);
 export const followUpStatusEnum = pgEnum("follow_up_status", ["pending", "sent", "cancelled", "failed"]);
+export const aiModeEnum = pgEnum("ai_mode", ["paused", "testing", "live"]);
 export const aiToneEnum = pgEnum("ai_tone", ["casual_taglish", "pure_tagalog", "professional_filipino", "casual_english", "formal_english", "professional_english"]);
 export const aiResponseLengthEnum = pgEnum("ai_response_length", ["short", "medium", "detailed"]);
 export const aiPrimaryGoalEnum = pgEnum("ai_primary_goal", ["site_visit", "booking", "quote_request", "general_support"]);
@@ -55,6 +56,7 @@ export const facebookPages = pgTable("facebook_pages", {
   pageAccessToken: text("pageAccessToken"),
   category: varchar("category", { length: 128 }),
   isActive: boolean("isActive").default(true).notNull(),
+  aiMode: aiModeEnum("aiMode").default("testing").notNull(),
   avatarUrl: text("avatarUrl"),
   followerCount: integer("followerCount").default(0),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
@@ -197,3 +199,15 @@ export const pageAiSettings = pgTable("page_ai_settings", {
 });
 export type PageAiSetting = typeof pageAiSettings.$inferSelect;
 export type InsertPageAiSetting = typeof pageAiSettings.$inferInsert;
+
+// ─── Page Testers ───────────────────────────────────────────────────
+export const pageTesters = pgTable("page_testers", {
+  id: serial("id").primaryKey(),
+  pageId: integer("pageId").notNull(),
+  psid: varchar("psid", { length: 128 }).notNull(),
+  label: varchar("label", { length: 255 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type PageTester = typeof pageTesters.$inferSelect;
+export type InsertPageTester = typeof pageTesters.$inferInsert;

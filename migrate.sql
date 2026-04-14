@@ -34,3 +34,24 @@ CREATE TABLE IF NOT EXISTS "page_ai_settings" (
   "createdAt" timestamp DEFAULT now() NOT NULL,
   "updatedAt" timestamp DEFAULT now() NOT NULL
 );
+
+-- Create ai_mode enum for page AI mode (paused / testing / live)
+DO $$ BEGIN
+  CREATE TYPE "ai_mode" AS ENUM ('paused', 'testing', 'live');
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
+-- Add aiMode column to facebook_pages (default to 'testing')
+DO $$ BEGIN
+  ALTER TABLE "facebook_pages" ADD COLUMN "aiMode" "ai_mode" NOT NULL DEFAULT 'testing';
+EXCEPTION WHEN duplicate_column THEN NULL;
+END $$;
+
+-- Create page_testers table for managing tester accounts per page
+CREATE TABLE IF NOT EXISTS "page_testers" (
+  "id" serial PRIMARY KEY,
+  "pageId" integer NOT NULL,
+  "psid" varchar(128) NOT NULL,
+  "label" varchar(255),
+  "createdAt" timestamp DEFAULT now() NOT NULL
+);
