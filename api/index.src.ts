@@ -24,7 +24,7 @@ registerAuthRoutes(app);
 // Facebook OAuth & Messenger webhook routes
 registerFacebookRoutes(app);
 
-// Knowledge Base import routes (website crawl, PDF upload)
+// Knowledge Base import routes (website crawl, file upload: PDF, DOCX, XLSX, CSV, images, TXT)
 registerKbImportRoutes(app);
 
 // Follow-up cron endpoint

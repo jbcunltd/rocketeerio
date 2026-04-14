@@ -135,7 +135,8 @@ async function processIncomingMessage(
     pageEntry.userId,
     historyForAI,
     lead.name,
-    convDetail?.page?.pageName ?? "Our Business"
+    convDetail?.page?.pageName ?? "Our Business",
+    pageEntry.dbPageId
   );
   console.log(`[Webhook] AI response generated, length=${aiResponse.length}`);
 

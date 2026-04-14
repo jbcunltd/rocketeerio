@@ -1,5 +1,3 @@
-import { createRequire } from "module"; const require = createRequire(import.meta.url);
-
 // api/index.src.ts
 import "dotenv/config";
 import express from "express";
@@ -71,8 +69,11 @@ var conversationStatusEnum = pgEnum("conversation_status", ["open", "closed", "a
 var senderEnum = pgEnum("sender", ["lead", "ai", "human"]);
 var messageTypeEnum = pgEnum("message_type", ["text", "image", "template", "quick_reply"]);
 var kbCategoryEnum = pgEnum("kb_category", ["product", "pricing", "faq", "policy", "general"]);
-var kbSourceEnum = pgEnum("kb_source", ["manual", "website", "pdf"]);
+var kbSourceEnum = pgEnum("kb_source", ["manual", "website", "pdf", "file"]);
 var followUpStatusEnum = pgEnum("follow_up_status", ["pending", "sent", "cancelled", "failed"]);
+var aiToneEnum = pgEnum("ai_tone", ["casual_taglish", "formal_english", "casual_english", "professional_filipino"]);
+var aiResponseLengthEnum = pgEnum("ai_response_length", ["short", "medium", "detailed"]);
+var aiPrimaryGoalEnum = pgEnum("ai_primary_goal", ["site_visit", "booking", "quote_request", "general_support"]);
 var users = pgTable("users", {
   id: serial("id").primaryKey(),
   email: varchar("email", { length: 320 }).notNull().unique(),
@@ -185,6 +186,19 @@ var notificationPreferences = pgTable("notification_preferences", {
   dailyDigest: boolean("dailyDigest").default(true).notNull(),
   smsPhone: varchar("smsPhone", { length: 32 }),
   notificationEmail: varchar("notificationEmail", { length: 320 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().notNull()
+});
+var pageAiSettings = pgTable("page_ai_settings", {
+  id: serial("id").primaryKey(),
+  pageId: integer("pageId").notNull().unique(),
+  userId: integer("userId").notNull(),
+  agentName: varchar("agentName", { length: 128 }),
+  tone: aiToneEnum("tone").default("casual_taglish").notNull(),
+  responseLength: aiResponseLengthEnum("responseLength").default("short").notNull(),
+  useEmojis: boolean("useEmojis").default(true).notNull(),
+  primaryGoal: aiPrimaryGoalEnum("primaryGoal").default("site_visit").notNull(),
+  customInstructions: text("customInstructions"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().notNull()
 });
@@ -456,6 +470,28 @@ async function getLeadActivityByDay(userId, days = 7) {
     cold: sql`SUM(CASE WHEN ${leads.classification} = 'cold' THEN 1 ELSE 0 END)`
   }).from(leads).where(and(eq(leads.userId, userId), gte(leads.createdAt, startDate))).groupBy(sql`DATE(${leads.createdAt})`).orderBy(sql`DATE(${leads.createdAt})`);
   return result;
+}
+async function getPageAiSettings(pageId) {
+  const db = await getDb();
+  if (!db) return null;
+  const result = await db.select().from(pageAiSettings).where(eq(pageAiSettings.pageId, pageId)).limit(1);
+  return result[0] ?? null;
+}
+async function getPageAiSettingsByDbPageId(dbPageId) {
+  const db = await getDb();
+  if (!db) return null;
+  const result = await db.select().from(pageAiSettings).where(eq(pageAiSettings.pageId, dbPageId)).limit(1);
+  return result[0] ?? null;
+}
+async function upsertPageAiSettings(pageId, userId, data) {
+  const db = await getDb();
+  if (!db) return;
+  const existing = await getPageAiSettings(pageId);
+  if (existing) {
+    await db.update(pageAiSettings).set({ ...data, updatedAt: /* @__PURE__ */ new Date() }).where(eq(pageAiSettings.pageId, pageId));
+  } else {
+    await db.insert(pageAiSettings).values({ pageId, userId, ...data });
+  }
 }
 
 // server/_core/env.ts
@@ -774,32 +810,100 @@ async function invokeLLM(params) {
 }
 
 // server/ai-engine.ts
-async function generateAIResponse(userId, conversationHistory, leadName, pageName) {
+function getToneInstruction(tone) {
+  switch (tone) {
+    case "casual_taglish":
+      return `Use casual Filipino-English (Taglish) tone when it feels natural (e.g., "po", "ma'am/sir", mixing Tagalog and English naturally)`;
+    case "formal_english":
+      return "Use formal, polished English. Maintain a professional and courteous tone throughout. Avoid slang or casual abbreviations.";
+    case "casual_english":
+      return "Use casual, friendly English. Keep it conversational and approachable, like chatting with a friend.";
+    case "professional_filipino":
+      return "Use professional Filipino (Tagalog). Maintain a respectful and business-appropriate tone in Filipino language.";
+    default:
+      return `Use casual Filipino-English (Taglish) tone when it feels natural (e.g., "po", "ma'am/sir")`;
+  }
+}
+function getResponseLengthInstruction(length) {
+  switch (length) {
+    case "short":
+      return "Keep responses under 100 words \u2014 short punchy messages like real chat. One message at a time, one question at a time.";
+    case "medium":
+      return "Keep responses between 100-200 words. Be informative but concise. Cover the key points without being too brief or too lengthy.";
+    case "detailed":
+      return "Provide detailed, thorough responses (200-400 words). Include relevant details, examples, and explanations to be as helpful as possible.";
+    default:
+      return "Keep responses under 100 words \u2014 short punchy messages like real chat.";
+  }
+}
+function getPrimaryGoalInstruction(goal) {
+  switch (goal) {
+    case "site_visit":
+      return "Your #1 goal is to move every inquiry toward a SITE VISIT or IN-PERSON CONSULTATION. Guide the conversation toward scheduling a visit.";
+    case "booking":
+      return "Your #1 goal is to move every inquiry toward a BOOKING or APPOINTMENT. Guide the conversation toward confirming a booking.";
+    case "quote_request":
+      return "Your #1 goal is to move every inquiry toward requesting a QUOTE or ESTIMATE. Gather their requirements and offer to prepare a personalized quote.";
+    case "general_support":
+      return "Your #1 goal is to provide excellent CUSTOMER SUPPORT. Answer questions thoroughly, resolve concerns, and ensure customer satisfaction.";
+    default:
+      return "Your #1 goal is to move every inquiry toward a SITE VISIT or DESIGN CONSULTATION.";
+  }
+}
+function getEmojiInstruction(useEmojis) {
+  if (useEmojis) {
+    return "Use emojis sparingly and naturally (\u{1F60A} is fine, don't overdo it)";
+  }
+  return "Do NOT use any emojis in your messages. Keep the tone clean and text-only.";
+}
+async function generateAIResponse(userId, conversationHistory, leadName, pageName, pageDbId) {
   const kbEntries = await getActiveKnowledgeBase(userId);
   const knowledgeContext = kbEntries.map((entry) => `[${entry.category.toUpperCase()}] ${entry.title}:
 ${entry.content}`).join("\n\n---\n\n");
+  let settings = null;
+  if (pageDbId) {
+    settings = await getPageAiSettingsByDbPageId(pageDbId);
+  }
+  const tone = settings?.tone ?? "casual_taglish";
+  const responseLength = settings?.responseLength ?? "short";
+  const useEmojis = settings?.useEmojis ?? true;
+  const primaryGoal = settings?.primaryGoal ?? "site_visit";
+  const agentName = settings?.agentName || null;
+  const customInstructions = settings?.customInstructions || null;
   const historyMessages = conversationHistory.slice(-10).map((msg) => ({
     role: msg.sender === "lead" ? "user" : "assistant",
     content: msg.content
   }));
-  const systemPrompt = `You are Rocketeer AI, a professional and friendly sales assistant for "${pageName}". Your job is to:
+  const identityLine = agentName ? `You are "${agentName}", a real human sales agent for "${pageName}". You chat with customers on Facebook Messenger.` : `You are a real human sales agent for "${pageName}". You chat with customers on Facebook Messenger.`;
+  const systemPrompt = `${identityLine}
 
-1. Greet prospects warmly and professionally
-2. Answer questions about the business using ONLY the provided knowledge base
-3. Qualify leads by naturally asking about their Budget, Authority, Need, and Timeline (BANT)
-4. Guide prospects toward taking action (booking, purchasing, requesting a quote)
-5. Be concise \u2014 keep responses under 3 sentences when possible
+YOUR PERSONALITY & STYLE:
+- You sound like a real person, NOT an AI chatbot
+- Warm, friendly, professional \u2014 like a trusted advisor
+- ${getToneInstruction(tone)}
+- ${getEmojiInstruction(useEmojis)}
+- NEVER start messages with "Hi [name]!" every time \u2014 only greet by name on the FIRST message in a conversation
+- Keep messages short and conversational, like real Messenger chat
+- ALWAYS end your message with a question to keep the conversation moving
+- ${getPrimaryGoalInstruction(primaryGoal)}
 
-KNOWLEDGE BASE:
+RESPONSE LENGTH:
+- ${getResponseLengthInstruction(responseLength)}
+
+KNOWLEDGE BASE & SCRIPTS:
 ${knowledgeContext || "No knowledge base entries available yet. Respond helpfully and offer to connect them with a human representative."}
 
 RULES:
-- NEVER make up information not in the knowledge base
-- If you don't know something, say "Let me connect you with our team for that specific question"
-- Be conversational and natural, not robotic
-- Use the lead's name (${leadName || "there"}) when appropriate
-- Ask one qualifying question at a time, don't overwhelm
-- Keep responses under 150 words`;
+- Follow the scripts and objection handling in the knowledge base closely \u2014 they are proven to work
+- NEVER make up pricing, timelines, or information not in the knowledge base
+- If you don't know something specific, say "Let me check with our team and get back to you on that"
+- Do NOT repeat the customer's name in every message \u2014 only use it occasionally and naturally
+- Do NOT say "I'm an AI" or "As an AI" \u2014 you are a sales agent${agentName ? ` named ${agentName}` : ""}
+- Never sound defensive about pricing \u2014 reframe toward value and design
+- The lead's name is: ${leadName || "there"}${customInstructions ? `
+
+ADDITIONAL INSTRUCTIONS:
+${customInstructions}` : ""}`;
   const result = await invokeLLM({
     messages: [
       { role: "system", content: systemPrompt },
@@ -1061,7 +1165,8 @@ async function processIncomingMessage(pageEntry, senderPsid, messageText) {
     pageEntry.userId,
     historyForAI,
     lead.name,
-    convDetail?.page?.pageName ?? "Our Business"
+    convDetail?.page?.pageName ?? "Our Business",
+    pageEntry.dbPageId
   );
   console.log(`[Webhook] AI response generated, length=${aiResponse.length}`);
   await createMessage({
@@ -1448,16 +1553,16 @@ ${combinedText}`
     return { entries: [], pagesScraped: allContent.length, sourceUrl: url };
   }
 }
-async function structurePdfContent(pdfText, fileName) {
-  if (!pdfText || pdfText.trim().length < 20) {
+async function structureDocumentContent(documentText, fileName) {
+  if (!documentText || documentText.trim().length < 20) {
     return { entries: [] };
   }
-  const truncatedText = pdfText.substring(0, 3e4);
+  const truncatedText = documentText.substring(0, 3e4);
   const result = await invokeLLM({
     messages: [
       {
         role: "system",
-        content: `You are a business information extractor. Analyze the PDF document content and extract structured knowledge base entries. The PDF may be a product catalog, brochure, price list, or specification sheet.
+        content: `You are a business information extractor. Analyze the document content and extract structured knowledge base entries. The document may be a product catalog, brochure, price list, specification sheet, script, SOP, or any business document.
 
 Categories:
 - "product": Products, services, offerings, features, specifications
@@ -1472,7 +1577,7 @@ Return ONLY valid JSON.`
       },
       {
         role: "user",
-        content: `Extract business knowledge from this PDF document "${fileName}":
+        content: `Extract business knowledge from this document "${fileName}":
 
 ${truncatedText}`
       }
@@ -1521,15 +1626,28 @@ ${truncatedText}`
 }
 
 // server/kb-import.ts
+var ALLOWED_MIMES = /* @__PURE__ */ new Set([
+  "application/pdf",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  // .docx
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  // .xlsx
+  "text/csv",
+  "text/plain",
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "image/gif"
+]);
 var upload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 20 * 1024 * 1024 },
   // 20MB
   fileFilter: (_req, file, cb) => {
-    if (file.mimetype === "application/pdf") {
+    if (ALLOWED_MIMES.has(file.mimetype)) {
       cb(null, true);
     } else {
-      cb(new Error("Only PDF files are allowed"));
+      cb(new Error(`File type ${file.mimetype} is not supported. Accepted: PDF, DOCX, XLSX, CSV, TXT, JPG, PNG.`));
     }
   }
 });
@@ -1543,6 +1661,81 @@ async function authenticateRequest(req) {
 async function parsePdf(buffer) {
   const pdfParseFn = (await import("pdf-parse/lib/pdf-parse.js")).default ?? await import("pdf-parse/lib/pdf-parse.js");
   return pdfParseFn(buffer);
+}
+async function parseDocx(buffer) {
+  const mammoth = await import("mammoth");
+  const result = await mammoth.default.extractRawText({ buffer });
+  return result.value;
+}
+async function parseXlsx(buffer) {
+  const XLSX = await import("xlsx");
+  const workbook = XLSX.read(buffer, { type: "buffer" });
+  const lines = [];
+  for (const sheetName of workbook.SheetNames) {
+    const sheet = workbook.Sheets[sheetName];
+    if (!sheet) continue;
+    lines.push(`=== Sheet: ${sheetName} ===`);
+    const csv = XLSX.utils.sheet_to_csv(sheet);
+    lines.push(csv);
+    lines.push("");
+  }
+  return lines.join("\n");
+}
+async function parseImage(buffer, mimeType) {
+  const base64 = buffer.toString("base64");
+  const dataUrl = `data:${mimeType};base64,${base64}`;
+  const result = await invokeLLM({
+    messages: [
+      {
+        role: "system",
+        content: "You are a business document OCR and content extraction assistant. Extract ALL text visible in the image. If the image contains a product, menu, price list, brochure, or any business-related content, describe it in detail including any visible text, prices, product names, and other relevant information. Return the extracted content as plain text."
+      },
+      {
+        role: "user",
+        content: [
+          { type: "text", text: "Extract all text and business information from this image:" },
+          { type: "image_url", image_url: { url: dataUrl, detail: "high" } }
+        ]
+      }
+    ]
+  });
+  const content = result.choices[0]?.message?.content;
+  if (typeof content === "string") return content;
+  if (Array.isArray(content)) {
+    const textPart = content.find((p) => typeof p === "object" && "type" in p && p.type === "text");
+    if (textPart && "text" in textPart) return textPart.text;
+  }
+  return "";
+}
+async function extractTextFromFile(buffer, mimeType, originalName) {
+  switch (mimeType) {
+    case "application/pdf": {
+      const pdfData = await parsePdf(buffer);
+      return pdfData.text;
+    }
+    case "application/vnd.openxmlformats-officedocument.wordprocessingml.document": {
+      return parseDocx(buffer);
+    }
+    case "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": {
+      return parseXlsx(buffer);
+    }
+    case "text/csv":
+    case "text/plain": {
+      return buffer.toString("utf-8");
+    }
+    case "image/jpeg":
+    case "image/png":
+    case "image/webp":
+    case "image/gif": {
+      return parseImage(buffer, mimeType);
+    }
+    default:
+      throw new Error(`Unsupported file type: ${mimeType}`);
+  }
+}
+function getSourceForMime(mimeType) {
+  if (mimeType === "application/pdf") return "pdf";
+  return "file";
 }
 function registerKbImportRoutes(app2) {
   app2.post("/api/kb/import-website", async (req, res) => {
@@ -1589,6 +1782,57 @@ function registerKbImportRoutes(app2) {
       return res.status(500).json({ error: "Failed to crawl website" });
     }
   });
+  app2.post("/api/kb/import-file", upload.single("file"), async (req, res) => {
+    try {
+      const userId = await authenticateRequest(req);
+      if (!userId) return res.status(401).json({ error: "Not authenticated" });
+      const file = req.file;
+      if (!file) {
+        return res.status(400).json({ error: "File is required" });
+      }
+      console.log(`[KB Import] Processing file: ${file.originalname} (${file.mimetype}, ${(file.size / 1024).toFixed(1)}KB) for user ${userId}`);
+      const extractedText = await extractTextFromFile(file.buffer, file.mimetype, file.originalname);
+      if (!extractedText || extractedText.trim().length < 20) {
+        return res.json({
+          success: true,
+          entries: [],
+          message: "Could not extract meaningful text from the file. It may be empty or unreadable."
+        });
+      }
+      const result = await structureDocumentContent(extractedText, file.originalname);
+      if (result.entries.length === 0) {
+        return res.json({
+          success: true,
+          entries: [],
+          message: "No structured content could be extracted from the file."
+        });
+      }
+      const source = getSourceForMime(file.mimetype);
+      const savedEntries = [];
+      for (const entry of result.entries) {
+        const id = await createKnowledgeEntry({
+          userId,
+          title: entry.title,
+          content: entry.content,
+          category: entry.category,
+          source,
+          sourceUrl: file.originalname
+        });
+        if (id) {
+          savedEntries.push({ id, ...entry });
+        }
+      }
+      console.log(`[KB Import] Saved ${savedEntries.length} entries from file: ${file.originalname}`);
+      return res.json({
+        success: true,
+        entries: savedEntries,
+        message: `Extracted ${savedEntries.length} entries from "${file.originalname}".`
+      });
+    } catch (error) {
+      console.error("[KB Import] File import error:", error);
+      return res.status(500).json({ error: "Failed to process file" });
+    }
+  });
   app2.post("/api/kb/import-pdf", upload.single("pdf"), async (req, res) => {
     try {
       const userId = await authenticateRequest(req);
@@ -1597,7 +1841,7 @@ function registerKbImportRoutes(app2) {
       if (!file) {
         return res.status(400).json({ error: "PDF file is required" });
       }
-      console.log(`[KB Import] Processing PDF: ${file.originalname} (${(file.size / 1024).toFixed(1)}KB) for user ${userId}`);
+      console.log(`[KB Import] Processing PDF (legacy): ${file.originalname} (${(file.size / 1024).toFixed(1)}KB) for user ${userId}`);
       const pdfData = await parsePdf(file.buffer);
       const pdfText = pdfData.text;
       if (!pdfText || pdfText.trim().length < 20) {
@@ -1607,7 +1851,7 @@ function registerKbImportRoutes(app2) {
           message: "Could not extract meaningful text from the PDF. It may be image-based."
         });
       }
-      const result = await structurePdfContent(pdfText, file.originalname);
+      const result = await structureDocumentContent(pdfText, file.originalname);
       if (result.entries.length === 0) {
         return res.json({
           success: true,
@@ -1850,7 +2094,8 @@ var appRouter = router({
         ctx.user.id,
         historyForAI,
         conv.lead?.name ?? null,
-        conv.page?.pageName ?? "Our Business"
+        conv.page?.pageName ?? "Our Business",
+        conv.page?.id
       );
       await createMessage({
         conversationId: input.conversationId,
@@ -1994,6 +2239,25 @@ Timeline: ${scoreResult.timelineNotes}`
       notificationEmail: z2.string().optional()
     })).mutation(async ({ ctx, input }) => {
       await upsertNotificationPrefs(ctx.user.id, input);
+      return { success: true };
+    })
+  }),
+  // ─── AI Personality Settings ───────────────────────────────────────
+  aiSettings: router({
+    get: protectedProcedure.input(z2.object({ pageId: z2.number() })).query(async ({ input }) => {
+      return getPageAiSettings(input.pageId);
+    }),
+    update: protectedProcedure.input(z2.object({
+      pageId: z2.number(),
+      agentName: z2.string().optional(),
+      tone: z2.enum(["casual_taglish", "formal_english", "casual_english", "professional_filipino"]).optional(),
+      responseLength: z2.enum(["short", "medium", "detailed"]).optional(),
+      useEmojis: z2.boolean().optional(),
+      primaryGoal: z2.enum(["site_visit", "booking", "quote_request", "general_support"]).optional(),
+      customInstructions: z2.string().optional()
+    })).mutation(async ({ ctx, input }) => {
+      const { pageId, ...data } = input;
+      await upsertPageAiSettings(pageId, ctx.user.id, data);
       return { success: true };
     })
   }),

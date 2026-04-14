@@ -10,6 +10,7 @@ import {
   knowledgeBase, InsertKnowledgeBaseEntry,
   followUpSequences, InsertFollowUpSequence,
   notificationPreferences, InsertNotificationPreference,
+  pageAiSettings, InsertPageAiSetting,
 } from "../drizzle/schema";
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -367,4 +368,31 @@ export async function getLeadActivityByDay(userId: number, days: number = 7) {
     .orderBy(sql`DATE(${leads.createdAt})`);
 
   return result;
+}
+
+// ─── Page AI Settings ────────────────────────────────────────────────
+
+export async function getPageAiSettings(pageId: number) {
+  const db = await getDb();
+  if (!db) return null;
+  const result = await db.select().from(pageAiSettings).where(eq(pageAiSettings.pageId, pageId)).limit(1);
+  return result[0] ?? null;
+}
+
+export async function getPageAiSettingsByDbPageId(dbPageId: number) {
+  const db = await getDb();
+  if (!db) return null;
+  const result = await db.select().from(pageAiSettings).where(eq(pageAiSettings.pageId, dbPageId)).limit(1);
+  return result[0] ?? null;
+}
+
+export async function upsertPageAiSettings(pageId: number, userId: number, data: Partial<InsertPageAiSetting>) {
+  const db = await getDb();
+  if (!db) return;
+  const existing = await getPageAiSettings(pageId);
+  if (existing) {
+    await db.update(pageAiSettings).set({ ...data, updatedAt: new Date() }).where(eq(pageAiSettings.pageId, pageId));
+  } else {
+    await db.insert(pageAiSettings).values({ pageId, userId, ...data });
+  }
 }

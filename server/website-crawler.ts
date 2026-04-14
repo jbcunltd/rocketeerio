@@ -173,22 +173,22 @@ Return ONLY valid JSON.`,
 }
 
 /**
- * Extract and structure content from PDF text.
+ * Extract and structure content from document text (PDF, DOCX, XLSX, CSV, TXT, or image-extracted text).
  */
-export async function structurePdfContent(pdfText: string, fileName: string): Promise<{
+export async function structureDocumentContent(documentText: string, fileName: string): Promise<{
   entries: Array<{ title: string; content: string; category: "product" | "pricing" | "faq" | "policy" | "general" }>;
 }> {
-  if (!pdfText || pdfText.trim().length < 20) {
+  if (!documentText || documentText.trim().length < 20) {
     return { entries: [] };
   }
 
-  const truncatedText = pdfText.substring(0, 30000);
+  const truncatedText = documentText.substring(0, 30000);
 
   const result = await invokeLLM({
     messages: [
       {
         role: "system",
-        content: `You are a business information extractor. Analyze the PDF document content and extract structured knowledge base entries. The PDF may be a product catalog, brochure, price list, or specification sheet.
+        content: `You are a business information extractor. Analyze the document content and extract structured knowledge base entries. The document may be a product catalog, brochure, price list, specification sheet, script, SOP, or any business document.
 
 Categories:
 - "product": Products, services, offerings, features, specifications
@@ -203,7 +203,7 @@ Return ONLY valid JSON.`,
       },
       {
         role: "user",
-        content: `Extract business knowledge from this PDF document "${fileName}":\n\n${truncatedText}`,
+        content: `Extract business knowledge from this document "${fileName}":\n\n${truncatedText}`,
       },
     ],
     response_format: {

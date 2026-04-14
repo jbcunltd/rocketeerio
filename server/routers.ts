@@ -196,12 +196,13 @@ export const appRouter = router({
         const history = await db.getMessagesByConversation(input.conversationId);
         const historyForAI = history.map(m => ({ sender: m.sender, content: m.content }));
 
-        // Generate AI response
+        // Generate AI response (pass page DB id for per-page AI personality)
         const aiResponse = await generateAIResponse(
           ctx.user.id,
           historyForAI,
           conv.lead?.name ?? null,
-          conv.page?.pageName ?? "Our Business"
+          conv.page?.pageName ?? "Our Business",
+          conv.page?.id
         );
 
         // Save AI response
@@ -376,6 +377,31 @@ export const appRouter = router({
       }))
       .mutation(async ({ ctx, input }) => {
         await db.upsertNotificationPrefs(ctx.user.id, input);
+        return { success: true };
+      }),
+  }),
+
+  // ─── AI Personality Settings ───────────────────────────────────────
+  aiSettings: router({
+    get: protectedProcedure
+      .input(z.object({ pageId: z.number() }))
+      .query(async ({ input }) => {
+        return db.getPageAiSettings(input.pageId);
+      }),
+
+    update: protectedProcedure
+      .input(z.object({
+        pageId: z.number(),
+        agentName: z.string().optional(),
+        tone: z.enum(["casual_taglish", "formal_english", "casual_english", "professional_filipino"]).optional(),
+        responseLength: z.enum(["short", "medium", "detailed"]).optional(),
+        useEmojis: z.boolean().optional(),
+        primaryGoal: z.enum(["site_visit", "booking", "quote_request", "general_support"]).optional(),
+        customInstructions: z.string().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const { pageId, ...data } = input;
+        await db.upsertPageAiSettings(pageId, ctx.user.id, data);
         return { success: true };
       }),
   }),

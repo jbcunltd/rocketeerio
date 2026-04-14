@@ -20,8 +20,11 @@ export const conversationStatusEnum = pgEnum("conversation_status", ["open", "cl
 export const senderEnum = pgEnum("sender", ["lead", "ai", "human"]);
 export const messageTypeEnum = pgEnum("message_type", ["text", "image", "template", "quick_reply"]);
 export const kbCategoryEnum = pgEnum("kb_category", ["product", "pricing", "faq", "policy", "general"]);
-export const kbSourceEnum = pgEnum("kb_source", ["manual", "website", "pdf"]);
+export const kbSourceEnum = pgEnum("kb_source", ["manual", "website", "pdf", "file"]);
 export const followUpStatusEnum = pgEnum("follow_up_status", ["pending", "sent", "cancelled", "failed"]);
+export const aiToneEnum = pgEnum("ai_tone", ["casual_taglish", "formal_english", "casual_english", "professional_filipino"]);
+export const aiResponseLengthEnum = pgEnum("ai_response_length", ["short", "medium", "detailed"]);
+export const aiPrimaryGoalEnum = pgEnum("ai_primary_goal", ["site_visit", "booking", "quote_request", "general_support"]);
 
 // ─── Users ───────────────────────────────────────────────────────────
 export const users = pgTable("users", {
@@ -177,3 +180,20 @@ export const notificationPreferences = pgTable("notification_preferences", {
 
 export type NotificationPreference = typeof notificationPreferences.$inferSelect;
 export type InsertNotificationPreference = typeof notificationPreferences.$inferInsert;
+
+// ─── Page AI Settings ────────────────────────────────────────────────
+export const pageAiSettings = pgTable("page_ai_settings", {
+  id: serial("id").primaryKey(),
+  pageId: integer("pageId").notNull().unique(),
+  userId: integer("userId").notNull(),
+  agentName: varchar("agentName", { length: 128 }),
+  tone: aiToneEnum("tone").default("casual_taglish").notNull(),
+  responseLength: aiResponseLengthEnum("responseLength").default("short").notNull(),
+  useEmojis: boolean("useEmojis").default(true).notNull(),
+  primaryGoal: aiPrimaryGoalEnum("primaryGoal").default("site_visit").notNull(),
+  customInstructions: text("customInstructions"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().notNull(),
+});
+export type PageAiSetting = typeof pageAiSettings.$inferSelect;
+export type InsertPageAiSetting = typeof pageAiSettings.$inferInsert;

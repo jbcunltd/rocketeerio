@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { trpc } from "@/lib/trpc";
-import { BookOpen, Plus, Loader2, Trash2, Edit2, Tag, Globe, FileText, Upload, Search, RefreshCw, X } from "lucide-react";
+import { BookOpen, Plus, Loader2, Trash2, Edit2, Tag, Globe, FileText, Upload, Search, RefreshCw, X, File, Image } from "lucide-react";
 import { useState, useRef } from "react";
 import { toast } from "sonner";
 
@@ -20,8 +20,31 @@ const categoryColors: Record<string, string> = {
 const sourceIcons: Record<string, React.ReactNode> = {
   website: <Globe className="w-3 h-3" />,
   pdf: <FileText className="w-3 h-3" />,
+  file: <File className="w-3 h-3" />,
   manual: <Edit2 className="w-3 h-3" />,
 };
+
+const ACCEPTED_FILE_TYPES = ".pdf,.docx,.xlsx,.csv,.txt,.jpg,.jpeg,.png,.webp";
+const ACCEPTED_MIMES = [
+  "application/pdf",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  "text/csv",
+  "text/plain",
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+];
+
+function getFileTypeLabel(mimeType: string): string {
+  if (mimeType === "application/pdf") return "PDF";
+  if (mimeType.includes("wordprocessingml")) return "Word Document";
+  if (mimeType.includes("spreadsheetml")) return "Excel Spreadsheet";
+  if (mimeType === "text/csv") return "CSV";
+  if (mimeType === "text/plain") return "Text File";
+  if (mimeType.startsWith("image/")) return "Image";
+  return "File";
+}
 
 function WebsiteImportSection({ onComplete }: { onComplete: () => void }) {
   const [url, setUrl] = useState("");
@@ -101,17 +124,18 @@ function WebsiteImportSection({ onComplete }: { onComplete: () => void }) {
   );
 }
 
-function PdfImportSection({ onComplete }: { onComplete: () => void }) {
+function FileImportSection({ onComplete }: { onComplete: () => void }) {
   const [isImporting, setIsImporting] = useState(false);
   const [fileName, setFileName] = useState("");
+  const [fileType, setFileType] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (file.type !== "application/pdf") {
-      toast.error("Please select a PDF file");
+    if (!ACCEPTED_MIMES.includes(file.type)) {
+      toast.error("Unsupported file type. Accepted: PDF, DOCX, XLSX, CSV, TXT, JPG, PNG.");
       return;
     }
 
@@ -121,13 +145,14 @@ function PdfImportSection({ onComplete }: { onComplete: () => void }) {
     }
 
     setFileName(file.name);
+    setFileType(getFileTypeLabel(file.type));
     setIsImporting(true);
 
     try {
       const formData = new FormData();
-      formData.append("pdf", file);
+      formData.append("file", file);
 
-      const res = await fetch("/api/kb/import-pdf", {
+      const res = await fetch("/api/kb/import-file", {
         method: "POST",
         credentials: "include",
         body: formData,
@@ -136,21 +161,22 @@ function PdfImportSection({ onComplete }: { onComplete: () => void }) {
       const data = await res.json();
 
       if (!res.ok) {
-        toast.error(data.error || "Failed to process PDF");
+        toast.error(data.error || "Failed to process file");
         return;
       }
 
       if (data.entries?.length > 0) {
-        toast.success(data.message || `Imported ${data.entries.length} entries from PDF`);
+        toast.success(data.message || `Imported ${data.entries.length} entries from file`);
         onComplete();
       } else {
-        toast.error(data.message || "No content could be extracted from the PDF");
+        toast.error(data.message || "No content could be extracted from the file");
       }
     } catch (err) {
-      toast.error("Failed to import PDF");
+      toast.error("Failed to import file");
     } finally {
       setIsImporting(false);
       setFileName("");
+      setFileType("");
       if (fileInputRef.current) fileInputRef.current.value = "";
     }
   };
@@ -159,20 +185,20 @@ function PdfImportSection({ onComplete }: { onComplete: () => void }) {
     <div className="bg-white rounded-xl p-5 card-shadow border border-border/50">
       <div className="flex items-center gap-2 mb-3">
         <div className="w-8 h-8 bg-green-50 rounded-lg flex items-center justify-center">
-          <FileText className="w-4 h-4 text-green-600" />
+          <Upload className="w-4 h-4 text-green-600" />
         </div>
         <div>
-          <h3 className="font-bold text-sm">Upload PDF</h3>
-          <p className="text-xs text-muted-foreground">Extract info from catalogs, brochures, or price lists</p>
+          <h3 className="font-bold text-sm">Upload File</h3>
+          <p className="text-xs text-muted-foreground">PDF, Word, Excel, CSV, images, or text files</p>
         </div>
       </div>
       <input
         ref={fileInputRef}
         type="file"
-        accept="application/pdf"
+        accept={ACCEPTED_FILE_TYPES}
         onChange={handleFileSelect}
         className="hidden"
-        id="pdf-upload"
+        id="file-upload"
       />
       <Button
         onClick={() => fileInputRef.current?.click()}
@@ -183,12 +209,15 @@ function PdfImportSection({ onComplete }: { onComplete: () => void }) {
         {isImporting ? (
           <div className="flex items-center gap-2">
             <Loader2 className="w-4 h-4 animate-spin" />
-            <span>Processing {fileName}...</span>
+            <span>Processing {fileType}: {fileName}...</span>
           </div>
         ) : (
-          <div className="flex items-center gap-2">
-            <Upload className="w-4 h-4" />
-            <span>Click to upload PDF (max 20MB)</span>
+          <div className="flex flex-col items-center gap-1">
+            <div className="flex items-center gap-2">
+              <Upload className="w-4 h-4" />
+              <span>Click to upload a file (max 20MB)</span>
+            </div>
+            <span className="text-xs text-muted-foreground">PDF, DOCX, XLSX, CSV, TXT, JPG, PNG</span>
           </div>
         )}
       </Button>
@@ -260,8 +289,9 @@ function KnowledgeBaseContent() {
     total: entries.length,
     website: entries.filter((e: any) => e.source === "website").length,
     pdf: entries.filter((e: any) => e.source === "pdf").length,
+    file: entries.filter((e: any) => e.source === "file").length,
     manual: entries.filter((e: any) => e.source === "manual").length,
-  } : { total: 0, website: 0, pdf: 0, manual: 0 };
+  } : { total: 0, website: 0, pdf: 0, file: 0, manual: 0 };
 
   const expandedEntry = entries?.find((e: any) => e.id === expandedId);
 
@@ -325,7 +355,7 @@ function KnowledgeBaseContent() {
       {/* Import Methods */}
       <div className="grid gap-4 md:grid-cols-2 mb-6">
         <WebsiteImportSection onComplete={handleImportComplete} />
-        <PdfImportSection onComplete={handleImportComplete} />
+        <FileImportSection onComplete={handleImportComplete} />
       </div>
 
       {/* Stats Bar */}
@@ -355,6 +385,14 @@ function KnowledgeBaseContent() {
                 <FileText className="w-3 h-3" /> PDF ({entryCounts.pdf})
               </button>
             )}
+            {entryCounts.file > 0 && (
+              <button
+                onClick={() => setFilterSource("file")}
+                className={`px-2.5 py-1 rounded-full text-xs font-medium transition-colors flex items-center gap-1 ${filterSource === "file" ? "bg-purple-600 text-white" : "bg-purple-50 text-purple-600 hover:bg-purple-100"}`}
+              >
+                <File className="w-3 h-3" /> File ({entryCounts.file})
+              </button>
+            )}
             {entryCounts.manual > 0 && (
               <button
                 onClick={() => setFilterSource("manual")}
@@ -371,7 +409,7 @@ function KnowledgeBaseContent() {
         <div className="bg-white rounded-xl p-12 card-shadow border border-border/50 text-center">
           <BookOpen className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
           <p className="text-muted-foreground mb-2">No knowledge base entries yet.</p>
-          <p className="text-sm text-muted-foreground">Import from your website, upload a PDF, or add entries manually so the AI can answer questions accurately.</p>
+          <p className="text-sm text-muted-foreground">Import from your website, upload a file (PDF, Word, Excel, CSV, images, or text), or add entries manually so the AI can answer questions accurately.</p>
         </div>
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -388,7 +426,7 @@ function KnowledgeBaseContent() {
                   </span>
                   {entry.source && entry.source !== "manual" && (
                     <span className="text-xs text-muted-foreground flex items-center gap-1">
-                      {sourceIcons[entry.source]} {entry.source === "website" ? "Website" : "PDF"}
+                      {sourceIcons[entry.source] || <File className="w-3 h-3" />} {entry.source === "website" ? "Website" : entry.source === "pdf" ? "PDF" : entry.source === "file" ? "File" : entry.source}
                     </span>
                   )}
                   {!entry.isActive && <span className="text-xs text-muted-foreground">(inactive)</span>}
@@ -432,7 +470,7 @@ function KnowledgeBaseContent() {
                   </span>
                   {expandedEntry.source && expandedEntry.source !== "manual" && (
                     <span className="text-xs text-muted-foreground flex items-center gap-1">
-                      {sourceIcons[expandedEntry.source]} {expandedEntry.source === "website" ? "Website" : "PDF"}
+                      {sourceIcons[expandedEntry.source] || <File className="w-3 h-3" />} {expandedEntry.source === "website" ? "Website" : expandedEntry.source === "pdf" ? "PDF" : expandedEntry.source === "file" ? "File" : expandedEntry.source}
                     </span>
                   )}
                 </div>

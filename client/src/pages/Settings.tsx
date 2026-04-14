@@ -5,8 +5,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import { trpc } from "@/lib/trpc";
-import { User, Bell, CreditCard, Facebook, Loader2, Save, Trash2, CheckCircle, AlertCircle, ExternalLink } from "lucide-react";
+import { User, Bell, CreditCard, Facebook, Loader2, Save, Trash2, CheckCircle, AlertCircle, ExternalLink, Bot } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -286,6 +288,235 @@ function PagesTab() {
   );
 }
 
+function AiPersonalityTab() {
+  const { data: pages, isLoading: pagesLoading } = trpc.pages.list.useQuery();
+  const [selectedPageId, setSelectedPageId] = useState<number | null>(null);
+  const utils = trpc.useUtils();
+
+  // Auto-select first page
+  useEffect(() => {
+    if (pages && pages.length > 0 && selectedPageId === null) {
+      setSelectedPageId(pages[0].id);
+    }
+  }, [pages, selectedPageId]);
+
+  if (pagesLoading) return <div className="flex items-center justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-messenger" /></div>;
+
+  if (!pages || pages.length === 0) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h3 className="text-lg font-bold mb-1">AI Personality</h3>
+          <p className="text-sm text-muted-foreground">Configure how your AI sales agent communicates.</p>
+        </div>
+        <div className="text-center py-12 bg-white rounded-lg border">
+          <Bot className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
+          <p className="text-muted-foreground mb-2">No pages connected yet.</p>
+          <p className="text-sm text-muted-foreground">Connect a Facebook Page first, then configure your AI agent's personality here.</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h3 className="text-lg font-bold mb-1">AI Personality</h3>
+        <p className="text-sm text-muted-foreground">Configure how your AI sales agent communicates for each connected page.</p>
+      </div>
+
+      {/* Page Selector */}
+      {pages.length > 1 && (
+        <div className="flex gap-2 flex-wrap">
+          {pages.map(page => (
+            <button
+              key={page.id}
+              onClick={() => setSelectedPageId(page.id)}
+              className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors border ${
+                selectedPageId === page.id
+                  ? "bg-messenger text-white border-messenger"
+                  : "bg-white text-foreground border-border hover:bg-gray-50"
+              }`}
+            >
+              {page.avatarUrl ? (
+                <img src={page.avatarUrl} alt={page.pageName} className="w-5 h-5 rounded" />
+              ) : (
+                <Facebook className="w-4 h-4" />
+              )}
+              {page.pageName}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {selectedPageId && <AiSettingsForm pageId={selectedPageId} key={selectedPageId} />}
+    </div>
+  );
+}
+
+function AiSettingsForm({ pageId }: { pageId: number }) {
+  const { data: settings, isLoading } = trpc.aiSettings.get.useQuery({ pageId });
+  const updateSettings = trpc.aiSettings.update.useMutation();
+  const utils = trpc.useUtils();
+
+  const [agentName, setAgentName] = useState("");
+  const [tone, setTone] = useState("casual_taglish");
+  const [responseLength, setResponseLength] = useState("short");
+  const [useEmojis, setUseEmojis] = useState(true);
+  const [primaryGoal, setPrimaryGoal] = useState("site_visit");
+  const [customInstructions, setCustomInstructions] = useState("");
+  const [initialized, setInitialized] = useState(false);
+
+  useEffect(() => {
+    if (settings) {
+      setAgentName(settings.agentName || "");
+      setTone(settings.tone);
+      setResponseLength(settings.responseLength);
+      setUseEmojis(settings.useEmojis);
+      setPrimaryGoal(settings.primaryGoal);
+      setCustomInstructions(settings.customInstructions || "");
+      setInitialized(true);
+    } else if (settings === null && !isLoading) {
+      // No settings yet — use defaults
+      setAgentName("");
+      setTone("casual_taglish");
+      setResponseLength("short");
+      setUseEmojis(true);
+      setPrimaryGoal("site_visit");
+      setCustomInstructions("");
+      setInitialized(true);
+    }
+  }, [settings, isLoading]);
+
+  const handleSave = async () => {
+    try {
+      await updateSettings.mutateAsync({
+        pageId,
+        agentName: agentName.trim() || undefined,
+        tone: tone as any,
+        responseLength: responseLength as any,
+        useEmojis,
+        primaryGoal: primaryGoal as any,
+        customInstructions: customInstructions.trim() || undefined,
+      });
+      utils.aiSettings.get.invalidate({ pageId });
+      toast.success("AI personality settings saved");
+    } catch {
+      toast.error("Failed to save AI settings");
+    }
+  };
+
+  if (isLoading || !initialized) {
+    return <div className="flex items-center justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-messenger" /></div>;
+  }
+
+  return (
+    <div className="space-y-5">
+      {/* Agent Name */}
+      <div className="bg-white rounded-lg border p-5">
+        <div className="flex items-center gap-2 mb-3">
+          <div className="w-8 h-8 bg-blue-50 rounded-lg flex items-center justify-center">
+            <Bot className="w-4 h-4 text-messenger" />
+          </div>
+          <div>
+            <p className="font-bold text-sm">Agent Name</p>
+            <p className="text-xs text-muted-foreground">The name your AI uses when chatting (e.g. "Kat" instead of generic agent)</p>
+          </div>
+        </div>
+        <Input
+          value={agentName}
+          onChange={e => setAgentName(e.target.value)}
+          placeholder="Leave empty for natural chat (no name)"
+          className="max-w-sm"
+        />
+      </div>
+
+      {/* Tone & Response Length */}
+      <div className="grid gap-5 sm:grid-cols-2">
+        <div className="bg-white rounded-lg border p-5">
+          <Label className="font-bold text-sm">Tone</Label>
+          <p className="text-xs text-muted-foreground mb-2">How the AI communicates with leads</p>
+          <Select value={tone} onValueChange={setTone}>
+            <SelectTrigger className="w-full">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="casual_taglish">Casual Taglish</SelectItem>
+              <SelectItem value="formal_english">Formal English</SelectItem>
+              <SelectItem value="casual_english">Casual English</SelectItem>
+              <SelectItem value="professional_filipino">Professional Filipino</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="bg-white rounded-lg border p-5">
+          <Label className="font-bold text-sm">Response Length</Label>
+          <p className="text-xs text-muted-foreground mb-2">How long the AI's messages should be</p>
+          <Select value={responseLength} onValueChange={setResponseLength}>
+            <SelectTrigger className="w-full">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="short">Short & Punchy</SelectItem>
+              <SelectItem value="medium">Medium</SelectItem>
+              <SelectItem value="detailed">Detailed</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      {/* Emojis & Primary Goal */}
+      <div className="grid gap-5 sm:grid-cols-2">
+        <div className="bg-white rounded-lg border p-5">
+          <div className="flex items-center justify-between">
+            <div>
+              <Label className="font-bold text-sm">Use Emojis</Label>
+              <p className="text-xs text-muted-foreground mt-0.5">Allow the AI to use emojis in messages</p>
+            </div>
+            <Switch checked={useEmojis} onCheckedChange={setUseEmojis} />
+          </div>
+        </div>
+
+        <div className="bg-white rounded-lg border p-5">
+          <Label className="font-bold text-sm">Primary Goal</Label>
+          <p className="text-xs text-muted-foreground mb-2">What the AI should push conversations toward</p>
+          <Select value={primaryGoal} onValueChange={setPrimaryGoal}>
+            <SelectTrigger className="w-full">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="site_visit">Push toward Site Visit</SelectItem>
+              <SelectItem value="booking">Push toward Booking</SelectItem>
+              <SelectItem value="quote_request">Push toward Quote Request</SelectItem>
+              <SelectItem value="general_support">General Support</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      {/* Custom Instructions */}
+      <div className="bg-white rounded-lg border p-5">
+        <Label className="font-bold text-sm">Custom Instructions</Label>
+        <p className="text-xs text-muted-foreground mt-0.5 mb-2">
+          Free-form instructions for the AI (e.g. "never discount, always reframe toward value", "always end with a question")
+        </p>
+        <Textarea
+          value={customInstructions}
+          onChange={e => setCustomInstructions(e.target.value)}
+          placeholder="Add any special instructions for your AI agent..."
+          className="min-h-[120px] resize-y"
+        />
+      </div>
+
+      {/* Save Button */}
+      <Button onClick={handleSave} disabled={updateSettings.isPending} className="bg-messenger hover:bg-messenger-dark">
+        {updateSettings.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}
+        Save AI Settings
+      </Button>
+    </div>
+  );
+}
+
 function BillingTab() {
   const { user } = useAuth();
   const plans = [
@@ -338,11 +569,13 @@ export default function Settings() {
             <TabsTrigger value="profile"><User className="w-4 h-4 mr-1.5" />Profile</TabsTrigger>
             <TabsTrigger value="notifications"><Bell className="w-4 h-4 mr-1.5" />Notifications</TabsTrigger>
             <TabsTrigger value="pages"><Facebook className="w-4 h-4 mr-1.5" />Pages</TabsTrigger>
+            <TabsTrigger value="ai-personality"><Bot className="w-4 h-4 mr-1.5" />AI Personality</TabsTrigger>
             <TabsTrigger value="billing"><CreditCard className="w-4 h-4 mr-1.5" />Billing</TabsTrigger>
           </TabsList>
           <TabsContent value="profile"><ProfileTab /></TabsContent>
           <TabsContent value="notifications"><NotificationsTab /></TabsContent>
           <TabsContent value="pages"><PagesTab /></TabsContent>
+          <TabsContent value="ai-personality"><AiPersonalityTab /></TabsContent>
           <TabsContent value="billing"><BillingTab /></TabsContent>
         </Tabs>
       </div>
