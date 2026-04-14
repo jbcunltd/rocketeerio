@@ -233,7 +233,7 @@ function DashboardLayoutContent({
         />
       </div>
 
-      <SidebarInset className="flex flex-col overflow-hidden">
+      <SidebarInset className="flex flex-col overflow-hidden h-svh">
         {isMobile && (
           <div className="flex border-b h-14 items-center justify-between bg-white/95 px-2 backdrop-blur sticky top-0 z-40">
             <div className="flex items-center gap-2">
