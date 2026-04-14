@@ -109,4 +109,3 @@ temp/
 # Vercel
 .vercel
 .manus/
-api/index.js

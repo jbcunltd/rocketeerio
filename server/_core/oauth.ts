@@ -1,6 +1,6 @@
 import type { Express } from "express";
 import bcrypt from "bcryptjs";
-import { COOKIE_NAME } from "@shared/const";
+import { COOKIE_NAME } from "../../shared/const";
 import { getSessionCookieOptions } from "./cookies";
 import { sdk } from "./sdk";
 import * as db from "../db";

@@ -1,13 +1,9 @@
 {
   "buildCommand": "pnpm run build",
   "outputDirectory": "dist/public",
-  "framework": "vite",
-  "functions": {
-    "api/**/*.ts": {
-      "runtime": "@vercel/node@3.1.0"
-    }
-  },
+  "installCommand": "pnpm install",
   "rewrites": [
+    { "source": "/api/(.*)", "destination": "/api" },
     { "source": "/(.*)", "destination": "/index.html" }
   ],
   "crons": [
