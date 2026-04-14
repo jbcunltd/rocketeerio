@@ -22,7 +22,7 @@ export const messageTypeEnum = pgEnum("message_type", ["text", "image", "templat
 export const kbCategoryEnum = pgEnum("kb_category", ["product", "pricing", "faq", "policy", "general"]);
 export const kbSourceEnum = pgEnum("kb_source", ["manual", "website", "pdf", "file"]);
 export const followUpStatusEnum = pgEnum("follow_up_status", ["pending", "sent", "cancelled", "failed"]);
-export const aiToneEnum = pgEnum("ai_tone", ["casual_taglish", "formal_english", "casual_english", "professional_filipino"]);
+export const aiToneEnum = pgEnum("ai_tone", ["casual_taglish", "pure_tagalog", "professional_filipino", "casual_english", "formal_english", "professional_english"]);
 export const aiResponseLengthEnum = pgEnum("ai_response_length", ["short", "medium", "detailed"]);
 export const aiPrimaryGoalEnum = pgEnum("ai_primary_goal", ["site_visit", "booking", "quote_request", "general_support"]);
 

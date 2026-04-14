@@ -7,12 +7,16 @@ function getToneInstruction(tone: string): string {
   switch (tone) {
     case "casual_taglish":
       return 'Use casual Filipino-English (Taglish) tone when it feels natural (e.g., "po", "ma\'am/sir", mixing Tagalog and English naturally)';
-    case "formal_english":
-      return "Use formal, polished English. Maintain a professional and courteous tone throughout. Avoid slang or casual abbreviations.";
+    case "pure_tagalog":
+      return "Sumagot sa purong Tagalog. Gamitin ang natural na Filipino na pananalita, iwasan ang English words maliban kung walang katumbas sa Tagalog.";
+    case "professional_filipino":
+      return "Use professional Filipino (Tagalog). Maintain a respectful and business-appropriate tone in Filipino language. Use po and opo.";
     case "casual_english":
       return "Use casual, friendly English. Keep it conversational and approachable, like chatting with a friend.";
-    case "professional_filipino":
-      return "Use professional Filipino (Tagalog). Maintain a respectful and business-appropriate tone in Filipino language.";
+    case "formal_english":
+      return "Use formal, polished English. Maintain a professional and courteous tone throughout. Avoid slang or casual abbreviations.";
+    case "professional_english":
+      return "Use professional business English. Be articulate, confident, and polished. Suitable for corporate or high-end clientele.";
     default:
       return 'Use casual Filipino-English (Taglish) tone when it feels natural (e.g., "po", "ma\'am/sir")';
   }

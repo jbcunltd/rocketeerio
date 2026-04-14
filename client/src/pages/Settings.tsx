@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectSeparator, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { trpc } from "@/lib/trpc";
 import { User, Bell, CreditCard, Facebook, Loader2, Save, Trash2, CheckCircle, AlertCircle, ExternalLink, Bot } from "lucide-react";
@@ -441,10 +441,19 @@ function AiSettingsForm({ pageId }: { pageId: number }) {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="casual_taglish">Casual Taglish</SelectItem>
-              <SelectItem value="formal_english">Formal English</SelectItem>
-              <SelectItem value="casual_english">Casual English</SelectItem>
-              <SelectItem value="professional_filipino">Professional Filipino</SelectItem>
+              <SelectGroup>
+                <SelectLabel className="text-xs font-semibold text-muted-foreground uppercase tracking-wide px-2 py-1">Filipino</SelectLabel>
+                <SelectItem value="casual_taglish">Casual Taglish</SelectItem>
+                <SelectItem value="pure_tagalog">Pure Tagalog</SelectItem>
+                <SelectItem value="professional_filipino">Professional Filipino</SelectItem>
+              </SelectGroup>
+              <SelectSeparator />
+              <SelectGroup>
+                <SelectLabel className="text-xs font-semibold text-muted-foreground uppercase tracking-wide px-2 py-1">English</SelectLabel>
+                <SelectItem value="casual_english">Casual English</SelectItem>
+                <SelectItem value="formal_english">Formal English</SelectItem>
+                <SelectItem value="professional_english">Professional English</SelectItem>
+              </SelectGroup>
             </SelectContent>
           </Select>
         </div>
