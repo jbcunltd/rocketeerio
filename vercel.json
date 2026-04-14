@@ -11,7 +11,7 @@
   "crons": [
     {
       "path": "/api/cron/follow-ups",
-      "schedule": "* * * * *"
+      "schedule": "0 0 * * *"
     }
   ]
 }
