@@ -1262,7 +1262,6 @@ function registerFacebookRoutes(app2) {
 
 // server/kb-import.ts
 import multer from "multer";
-import pdfParse from "pdf-parse";
 
 // server/website-crawler.ts
 import * as cheerio from "cheerio";
@@ -1488,6 +1487,10 @@ async function authenticateRequest(req) {
   const session = await sdk.verifySession(token);
   return session?.userId ?? null;
 }
+async function parsePdf(buffer) {
+  const pdfParseFn = (await import("pdf-parse/lib/pdf-parse.js")).default ?? await import("pdf-parse/lib/pdf-parse.js");
+  return pdfParseFn(buffer);
+}
 function registerKbImportRoutes(app2) {
   app2.post("/api/kb/import-website", async (req, res) => {
     try {
@@ -1542,7 +1545,7 @@ function registerKbImportRoutes(app2) {
         return res.status(400).json({ error: "PDF file is required" });
       }
       console.log(`[KB Import] Processing PDF: ${file.originalname} (${(file.size / 1024).toFixed(1)}KB) for user ${userId}`);
-      const pdfData = await pdfParse(file.buffer);
+      const pdfData = await parsePdf(file.buffer);
       const pdfText = pdfData.text;
       if (!pdfText || pdfText.trim().length < 20) {
         return res.json({

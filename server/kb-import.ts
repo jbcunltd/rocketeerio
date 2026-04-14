@@ -1,6 +1,5 @@
 import type { Express, Request, Response } from "express";
 import multer from "multer";
-import pdfParse from "pdf-parse";
 import { sdk } from "./_core/sdk";
 import { COOKIE_NAME } from "../shared/const";
 import * as db from "./db";
@@ -24,6 +23,21 @@ async function authenticateRequest(req: Request): Promise<number | null> {
   const token = sessionCookie?.split("=")[1];
   const session = await sdk.verifySession(token);
   return session?.userId ?? null;
+}
+
+/**
+ * pdf-parse v1.1.1 has a bug: when loaded as a non-main module it still
+ * tries to read a test PDF from disk (`./test/data/05-versions-space.pdf`).
+ * On Vercel the file doesn't exist, so the import crashes the entire
+ * serverless function.  We work around this by importing the inner
+ * `lib/pdf-parse.js` directly, which is the actual parser without the
+ * test-file side-effect.
+ */
+async function parsePdf(buffer: Buffer): Promise<{ text: string }> {
+  // pdf-parse/lib/pdf-parse.js is the real implementation without the
+  // auto-test side effect that crashes on Vercel
+  const pdfParseFn = (await import("pdf-parse/lib/pdf-parse.js")).default ?? (await import("pdf-parse/lib/pdf-parse.js"));
+  return pdfParseFn(buffer);
 }
 
 export function registerKbImportRoutes(app: Express) {
@@ -96,7 +110,7 @@ export function registerKbImportRoutes(app: Express) {
       console.log(`[KB Import] Processing PDF: ${file.originalname} (${(file.size / 1024).toFixed(1)}KB) for user ${userId}`);
 
       // Extract text from PDF
-      const pdfData = await pdfParse(file.buffer);
+      const pdfData = await parsePdf(file.buffer);
       const pdfText = pdfData.text;
 
       if (!pdfText || pdfText.trim().length < 20) {
