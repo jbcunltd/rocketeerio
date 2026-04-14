@@ -1,20 +1,4 @@
 {
-  "installCommand": "pnpm install",
   "buildCommand": "pnpm run vercel-build",
-  "outputDirectory": "dist/public",
-  "functions": {
-    "api/index.ts": {
-      "includeFiles": "server/**,shared/**,drizzle/**"
-    }
-  },
-  "rewrites": [
-    { "source": "/api/(.*)", "destination": "/api" },
-    { "source": "/(.*)", "destination": "/index.html" }
-  ],
-  "crons": [
-    {
-      "path": "/api/cron/follow-ups",
-      "schedule": "0 0 * * *"
-    }
-  ]
+  "installCommand": "pnpm install"
 }
