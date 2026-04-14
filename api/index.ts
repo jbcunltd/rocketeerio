@@ -1,48 +1,5 @@
-import "dotenv/config";
-import express from "express";
-import { createExpressMiddleware } from "@trpc/server/adapters/express";
-import { registerAuthRoutes } from "../server/_core/oauth";
-import { appRouter } from "../server/routers";
-import { processFollowUps } from "../server/follow-up-worker";
-import { createContext } from "../server/_core/context";
+import type { VercelRequest, VercelResponse } from '@vercel/node';
 
-const app = express();
-
-try {
-  app.use(express.json({ limit: "50mb" }));
-  app.use(express.urlencoded({ limit: "50mb", extended: true }));
-
-  // Auth routes
-  registerAuthRoutes(app);
-
-  // Follow-up cron endpoint
-  app.post("/api/cron/follow-ups", async (_req, res) => {
-    try {
-      await processFollowUps();
-      res.json({ success: true });
-    } catch (error) {
-      console.error("[Cron] Follow-up processing failed:", error);
-      res.status(500).json({ error: "Follow-up processing failed" });
-    }
-  });
-
-  // tRPC API
-  app.use(
-    "/api/trpc",
-    createExpressMiddleware({
-      router: appRouter,
-      createContext,
-    })
-  );
-} catch (e: any) {
-  console.error("STARTUP CRASH:", e);
-  app.all("*", (req, res) => {
-    res.status(500).json({
-      error: "Startup Crash",
-      message: e.message,
-      stack: e.stack
-    });
-  });
+export default function handler(req: VercelRequest, res: VercelResponse) {
+  res.status(200).json({ ok: true, method: req.method, url: req.url });
 }
-
-export default app;
