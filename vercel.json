@@ -1,15 +1,5 @@
 {
-  "buildCommand": "pnpm run build",
-  "outputDirectory": "dist/public",
-  "installCommand": "pnpm install",
   "rewrites": [
-    { "source": "/api/(.*)", "destination": "/api/simple.ts" },
-    { "source": "/(.*)", "destination": "/index.html" }
-  ],
-  "crons": [
-    {
-      "path": "/api/cron/follow-ups",
-      "schedule": "0 0 * * *"
-    }
+    { "source": "/api/(.*)", "destination": "/api/simple.js" }
   ]
 }
