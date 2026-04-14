@@ -3,7 +3,7 @@
   "outputDirectory": "dist/public",
   "installCommand": "pnpm install",
   "rewrites": [
-    { "source": "/api/(.*)", "destination": "/api" },
+    { "source": "/api/(.*)", "destination": "/api/auth/signup" },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
