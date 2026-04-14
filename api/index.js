@@ -54745,25 +54745,36 @@ async function createContext(opts) {
 
 // api/index.ts
 var app = (0, import_express.default)();
-app.use(import_express.default.json({ limit: "50mb" }));
-app.use(import_express.default.urlencoded({ limit: "50mb", extended: true }));
-registerAuthRoutes(app);
-app.post("/api/cron/follow-ups", async (_req, res) => {
-  try {
-    await processFollowUps();
-    res.json({ success: true });
-  } catch (error48) {
-    console.error("[Cron] Follow-up processing failed:", error48);
-    res.status(500).json({ error: "Follow-up processing failed" });
-  }
-});
-app.use(
-  "/api/trpc",
-  createExpressMiddleware({
-    router: appRouter,
-    createContext
-  })
-);
+try {
+  app.use(import_express.default.json({ limit: "50mb" }));
+  app.use(import_express.default.urlencoded({ limit: "50mb", extended: true }));
+  registerAuthRoutes(app);
+  app.post("/api/cron/follow-ups", async (_req, res) => {
+    try {
+      await processFollowUps();
+      res.json({ success: true });
+    } catch (error48) {
+      console.error("[Cron] Follow-up processing failed:", error48);
+      res.status(500).json({ error: "Follow-up processing failed" });
+    }
+  });
+  app.use(
+    "/api/trpc",
+    createExpressMiddleware({
+      router: appRouter,
+      createContext
+    })
+  );
+} catch (e) {
+  console.error("STARTUP CRASH:", e);
+  app.all("*", (req, res) => {
+    res.status(500).json({
+      error: "Startup Crash",
+      message: e.message,
+      stack: e.stack
+    });
+  });
+}
 var index_default = app;
 export {
   index_default as default
