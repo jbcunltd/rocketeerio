@@ -16,7 +16,7 @@ execSync(`cp -r dist/public/* ${staticDir}/`, { stdio: 'inherit' });
 const funcDir = path.join(outputDir, 'functions/api/index.func');
 fs.mkdirSync(funcDir, { recursive: true });
 execSync(
-  `npx esbuild api/index.ts --bundle --platform=node --target=node18 --format=esm --outfile=${funcDir}/index.mjs --external:pg-native --banner:js='import { createRequire } from "module"; const require = createRequire(import.meta.url);'`,
+  `npx esbuild api/index.src.ts --bundle --platform=node --target=node18 --format=esm --outfile=${funcDir}/index.mjs --external:pg-native --banner:js='import { createRequire } from "module"; const require = createRequire(import.meta.url);'`,
   { stdio: 'inherit' }
 );
 
