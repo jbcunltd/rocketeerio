@@ -280,29 +280,39 @@ function KnowledgeBaseContent() {
               <Plus className="w-4 h-4 mr-2" /> Add Manually
             </Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-lg">
+          <DialogContent className="sm:max-w-2xl max-h-[90vh] flex flex-col">
             <DialogHeader>
               <DialogTitle>{editId ? "Edit Entry" : "Add Knowledge Base Entry"}</DialogTitle>
             </DialogHeader>
-            <div className="space-y-4 mt-2">
-              <div>
-                <Label>Category</Label>
-                <select value={category} onChange={e => setCategory(e.target.value as any)} className="w-full mt-1.5 border rounded-lg px-3 py-2 text-sm">
-                  <option value="product">Product</option>
-                  <option value="pricing">Pricing</option>
-                  <option value="faq">FAQ</option>
-                  <option value="policy">Policy</option>
-                  <option value="general">General</option>
-                </select>
+            <div className="flex-1 overflow-y-auto space-y-4 mt-2 pr-1">
+              <div className="flex gap-4">
+                <div className="flex-1">
+                  <Label>Category</Label>
+                  <select value={category} onChange={e => setCategory(e.target.value as any)} className="w-full mt-1.5 border rounded-lg px-3 py-2 text-sm">
+                    <option value="product">Product</option>
+                    <option value="pricing">Pricing</option>
+                    <option value="faq">FAQ</option>
+                    <option value="policy">Policy</option>
+                    <option value="general">General</option>
+                  </select>
+                </div>
+                <div className="flex-1">
+                  <Label>Title</Label>
+                  <Input value={title} onChange={e => setTitle(e.target.value)} placeholder="e.g., Product Overview" className="mt-1.5" />
+                </div>
               </div>
-              <div>
-                <Label>Title</Label>
-                <Input value={title} onChange={e => setTitle(e.target.value)} placeholder="e.g., Product Overview" className="mt-1.5" />
-              </div>
-              <div>
+              <div className="flex-1">
                 <Label>Content</Label>
-                <Textarea value={content} onChange={e => setContent(e.target.value)} placeholder="Detailed information the AI will use to answer questions..." rows={5} className="mt-1.5" />
+                <p className="text-xs text-muted-foreground mt-0.5 mb-1.5">Paste your full script here. The AI will use this to answer customer questions.</p>
+                <textarea
+                  value={content}
+                  onChange={e => setContent(e.target.value)}
+                  placeholder="Paste your full sales script, objection handling, pricing info, or any content the AI should know..."
+                  className="w-full min-h-[300px] max-h-[50vh] border rounded-lg px-3 py-2 text-sm resize-y focus:outline-none focus:ring-2 focus:ring-messenger/50 focus:border-messenger"
+                />
               </div>
+            </div>
+            <div className="pt-4 border-t mt-2">
               <Button onClick={handleSave} disabled={createEntry.isPending || updateEntry.isPending} className="w-full bg-messenger hover:bg-messenger-dark">
                 {(createEntry.isPending || updateEntry.isPending) ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
                 {editId ? "Update Entry" : "Add Entry"}
