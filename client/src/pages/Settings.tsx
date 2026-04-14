@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { trpc } from "@/lib/trpc";
-import { User, Bell, CreditCard, Facebook, Loader2, Save, Trash2 } from "lucide-react";
+import { User, Bell, CreditCard, Facebook, Loader2, Save, Trash2, CheckCircle, AlertCircle, ExternalLink } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -136,7 +136,45 @@ function NotificationsTab() {
 function PagesTab() {
   const { data: pages, isLoading } = trpc.pages.list.useQuery();
   const deletePage = trpc.pages.delete.useMutation();
+  const togglePage = trpc.pages.update.useMutation();
   const utils = trpc.useUtils();
+  const [connecting, setConnecting] = useState(false);
+
+  // Check URL params for success/error from OAuth callback
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("success") === "connected") {
+      toast.success("Facebook Page connected successfully!");
+      utils.pages.list.invalidate();
+      // Clean URL
+      window.history.replaceState({}, "", "/settings?tab=pages");
+    }
+    const error = params.get("error");
+    if (error) {
+      const errorMessages: Record<string, string> = {
+        not_authenticated: "Please log in first",
+        oauth_failed: "Facebook authentication failed",
+        missing_code: "Authorization was cancelled",
+        token_exchange_failed: "Failed to get access token from Facebook",
+        pages_fetch_failed: "Failed to fetch your Facebook pages",
+        no_pages: "No Facebook Pages found on your account. You need to be an admin of at least one Page.",
+        callback_failed: "Something went wrong during connection",
+      };
+      toast.error(errorMessages[error] || "Connection failed");
+      window.history.replaceState({}, "", "/settings?tab=pages");
+    }
+  }, []);
+
+  const handleConnect = async () => {
+    setConnecting(true);
+    try {
+      // Redirect to our Facebook OAuth endpoint
+      window.location.href = "/api/auth/facebook";
+    } catch {
+      toast.error("Failed to start Facebook connection");
+      setConnecting(false);
+    }
+  };
 
   const handleDelete = async (id: number) => {
     try {
@@ -146,37 +184,102 @@ function PagesTab() {
     } catch { toast.error("Failed to disconnect page"); }
   };
 
+  const handleToggle = async (id: number, isActive: boolean) => {
+    try {
+      await togglePage.mutateAsync({ id, isActive });
+      utils.pages.list.invalidate();
+      toast.success(isActive ? "AI agent activated" : "AI agent paused");
+    } catch { toast.error("Failed to update page"); }
+  };
+
   if (isLoading) return <div className="flex items-center justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-messenger" /></div>;
 
   return (
     <div className="space-y-6">
-      <div>
-        <h3 className="text-lg font-bold mb-1">Connected Facebook Pages</h3>
-        <p className="text-sm text-muted-foreground">Manage your connected pages and their AI agent settings.</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h3 className="text-lg font-bold mb-1">Connected Facebook Pages</h3>
+          <p className="text-sm text-muted-foreground">Connect your Facebook Pages to enable AI-powered Messenger responses.</p>
+        </div>
+        <Button onClick={handleConnect} disabled={connecting} className="bg-[#1877F2] hover:bg-[#166FE5] text-white">
+          {connecting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Facebook className="w-4 h-4 mr-2" />}
+          Connect a Page
+        </Button>
       </div>
+
+      {/* Setup Guide */}
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <h4 className="font-semibold text-blue-900 mb-2 flex items-center gap-2">
+          <AlertCircle className="w-4 h-4" /> Setup Requirements
+        </h4>
+        <ul className="text-sm text-blue-800 space-y-1.5">
+          <li>1. You must be an admin of the Facebook Page you want to connect</li>
+          <li>2. Grant <strong>pages_messaging</strong>, <strong>pages_manage_metadata</strong>, and <strong>pages_read_engagement</strong> permissions</li>
+          <li>3. After connecting, the AI agent will automatically respond to new Messenger conversations</li>
+          <li>4. Make sure your Knowledge Base has business info so the AI gives accurate answers</li>
+        </ul>
+      </div>
+
       {!pages?.length ? (
         <div className="text-center py-12 bg-white rounded-lg border">
           <Facebook className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
-          <p className="text-muted-foreground">No pages connected yet.</p>
+          <p className="text-muted-foreground mb-2">No pages connected yet.</p>
+          <p className="text-sm text-muted-foreground">Click "Connect a Page" to link your Facebook Page and start capturing leads.</p>
         </div>
       ) : (
         <div className="space-y-3">
           {pages.map(page => (
             <div key={page.id} className="flex items-center justify-between p-4 bg-white rounded-lg border">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-messenger-light rounded-lg flex items-center justify-center">
-                  <Facebook className="w-5 h-5 text-messenger" />
-                </div>
+                {page.avatarUrl ? (
+                  <img src={page.avatarUrl} alt={page.pageName} className="w-10 h-10 rounded-lg object-cover" />
+                ) : (
+                  <div className="w-10 h-10 bg-messenger-light rounded-lg flex items-center justify-center">
+                    <Facebook className="w-5 h-5 text-messenger" />
+                  </div>
+                )}
                 <div>
                   <p className="font-medium">{page.pageName}</p>
-                  <p className="text-xs text-muted-foreground">{page.category || "Business"} · {page.isActive ? "Active" : "Paused"}</p>
+                  <div className="flex items-center gap-2">
+                    <p className="text-xs text-muted-foreground">{page.category || "Business"}</p>
+                    {page.followerCount ? (
+                      <p className="text-xs text-muted-foreground">{page.followerCount.toLocaleString()} followers</p>
+                    ) : null}
+                    <span className={`text-xs font-medium flex items-center gap-1 ${page.isActive ? "text-green-600" : "text-amber-600"}`}>
+                      {page.isActive ? <><CheckCircle className="w-3 h-3" /> AI Active</> : "AI Paused"}
+                    </span>
+                  </div>
                 </div>
               </div>
-              <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive" onClick={() => handleDelete(page.id)}>
-                <Trash2 className="w-4 h-4" />
-              </Button>
+              <div className="flex items-center gap-2">
+                <Switch
+                  checked={page.isActive}
+                  onCheckedChange={(checked) => handleToggle(page.id, checked)}
+                />
+                <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive" onClick={() => handleDelete(page.id)}>
+                  <Trash2 className="w-4 h-4" />
+                </Button>
+              </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Webhook Info */}
+      {pages && pages.length > 0 && (
+        <div className="bg-gray-50 border rounded-lg p-4">
+          <h4 className="font-semibold text-sm mb-2">Webhook Configuration</h4>
+          <p className="text-xs text-muted-foreground mb-2">These are automatically configured when you connect a page. For reference:</p>
+          <div className="space-y-1.5">
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-medium text-muted-foreground w-24">Callback URL:</span>
+              <code className="text-xs bg-white px-2 py-1 rounded border font-mono">https://rocketeerio.vercel.app/api/webhook/messenger</code>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-medium text-muted-foreground w-24">Verify Token:</span>
+              <code className="text-xs bg-white px-2 py-1 rounded border font-mono">rocketeer_verify_token_2024</code>
+            </div>
+          </div>
         </div>
       )}
     </div>
@@ -219,6 +322,10 @@ function BillingTab() {
 }
 
 export default function Settings() {
+  // Check URL for tab param
+  const params = new URLSearchParams(window.location.search);
+  const defaultTab = params.get("tab") || "profile";
+
   return (
     <DashboardLayout>
       <div className="max-w-3xl">
@@ -226,7 +333,7 @@ export default function Settings() {
           <h1 className="text-2xl font-bold">Settings</h1>
           <p className="text-muted-foreground">Manage your account, notifications, and integrations.</p>
         </div>
-        <Tabs defaultValue="profile">
+        <Tabs defaultValue={defaultTab}>
           <TabsList className="mb-6">
             <TabsTrigger value="profile"><User className="w-4 h-4 mr-1.5" />Profile</TabsTrigger>
             <TabsTrigger value="notifications"><Bell className="w-4 h-4 mr-1.5" />Notifications</TabsTrigger>

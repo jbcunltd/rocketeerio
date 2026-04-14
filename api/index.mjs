@@ -1,3 +1,5 @@
+import { createRequire } from "module"; const require = createRequire(import.meta.url);
+
 // api/index.src.ts
 import "dotenv/config";
 import express from "express";
@@ -69,6 +71,7 @@ var conversationStatusEnum = pgEnum("conversation_status", ["open", "closed", "a
 var senderEnum = pgEnum("sender", ["lead", "ai", "human"]);
 var messageTypeEnum = pgEnum("message_type", ["text", "image", "template", "quick_reply"]);
 var kbCategoryEnum = pgEnum("kb_category", ["product", "pricing", "faq", "policy", "general"]);
+var kbSourceEnum = pgEnum("kb_source", ["manual", "website", "pdf"]);
 var followUpStatusEnum = pgEnum("follow_up_status", ["pending", "sent", "cancelled", "failed"]);
 var users = pgTable("users", {
   id: serial("id").primaryKey(),
@@ -153,6 +156,8 @@ var knowledgeBase = pgTable("knowledge_base", {
   title: varchar("title", { length: 255 }).notNull(),
   content: text("content").notNull(),
   category: kbCategoryEnum("category").default("general").notNull(),
+  source: kbSourceEnum("source").default("manual").notNull(),
+  sourceUrl: text("sourceUrl"),
   isActive: boolean("isActive").default(true).notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().notNull()
@@ -270,6 +275,12 @@ async function deletePage(pageId) {
   if (!db) return;
   await db.delete(facebookPages).where(eq(facebookPages.id, pageId));
 }
+async function getPageByFacebookId(fbPageId) {
+  const db = await getDb();
+  if (!db) return null;
+  const result = await db.select().from(facebookPages).where(eq(facebookPages.pageId, fbPageId)).limit(1);
+  return result[0] ?? null;
+}
 async function getLeadsByUser(userId, classification) {
   const db = await getDb();
   if (!db) return [];
@@ -295,6 +306,18 @@ async function updateLead(leadId, data) {
   const db = await getDb();
   if (!db) return;
   await db.update(leads).set({ ...data, updatedAt: /* @__PURE__ */ new Date() }).where(eq(leads.id, leadId));
+}
+async function getLeadByPsid(psid, pageId) {
+  const db = await getDb();
+  if (!db) return null;
+  const result = await db.select().from(leads).where(and(eq(leads.psid, psid), eq(leads.pageId, pageId))).limit(1);
+  return result[0] ?? null;
+}
+async function getConversationByLeadId(leadId) {
+  const db = await getDb();
+  if (!db) return null;
+  const result = await db.select().from(conversations).where(eq(conversations.leadId, leadId)).orderBy(desc(conversations.createdAt)).limit(1);
+  return result[0] ?? null;
 }
 async function getConversationsByUser(userId) {
   const db = await getDb();
@@ -441,7 +464,12 @@ var ENV = {
   jwtSecret: process.env.JWT_SECRET ?? "change-me-in-production",
   openaiApiKey: process.env.OPENAI_API_KEY ?? "",
   ownerEmail: process.env.OWNER_EMAIL ?? "jandrickclimaco@gmail.com",
-  isProduction: process.env.NODE_ENV === "production"
+  isProduction: process.env.NODE_ENV === "production",
+  // Facebook / Meta
+  facebookAppId: process.env.FACEBOOK_APP_ID ?? "",
+  facebookAppSecret: process.env.FACEBOOK_APP_SECRET ?? "",
+  facebookVerifyToken: process.env.FACEBOOK_VERIFY_TOKEN ?? "rocketeer_verify_token_2024",
+  appUrl: process.env.APP_URL ?? "https://rocketeerio.vercel.app"
 };
 
 // server/_core/sdk.ts
@@ -582,114 +610,6 @@ function registerAuthRoutes(app2) {
     }
   });
 }
-
-// server/_core/systemRouter.ts
-import { z } from "zod";
-
-// server/_core/notification.ts
-import { TRPCError } from "@trpc/server";
-var TITLE_MAX_LENGTH = 1200;
-var CONTENT_MAX_LENGTH = 2e4;
-var trimValue = (value) => value.trim();
-var isNonEmptyString2 = (value) => typeof value === "string" && value.trim().length > 0;
-var validatePayload = (input) => {
-  if (!isNonEmptyString2(input.title)) {
-    throw new TRPCError({
-      code: "BAD_REQUEST",
-      message: "Notification title is required."
-    });
-  }
-  if (!isNonEmptyString2(input.content)) {
-    throw new TRPCError({
-      code: "BAD_REQUEST",
-      message: "Notification content is required."
-    });
-  }
-  const title = trimValue(input.title);
-  const content = trimValue(input.content);
-  if (title.length > TITLE_MAX_LENGTH) {
-    throw new TRPCError({
-      code: "BAD_REQUEST",
-      message: `Notification title must be at most ${TITLE_MAX_LENGTH} characters.`
-    });
-  }
-  if (content.length > CONTENT_MAX_LENGTH) {
-    throw new TRPCError({
-      code: "BAD_REQUEST",
-      message: `Notification content must be at most ${CONTENT_MAX_LENGTH} characters.`
-    });
-  }
-  return { title, content };
-};
-async function notifyOwner(payload) {
-  const { title, content } = validatePayload(payload);
-  console.log(`[Notification] \u2500\u2500\u2500 Owner Notification \u2500\u2500\u2500`);
-  console.log(`[Notification] Title: ${title}`);
-  console.log(`[Notification] Content: ${content}`);
-  console.log(`[Notification] \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500`);
-  return true;
-}
-
-// server/_core/trpc.ts
-import { initTRPC, TRPCError as TRPCError2 } from "@trpc/server";
-import superjson from "superjson";
-var t = initTRPC.context().create({
-  transformer: superjson
-});
-var router = t.router;
-var publicProcedure = t.procedure;
-var requireUser = t.middleware(async (opts) => {
-  const { ctx, next } = opts;
-  if (!ctx.user) {
-    throw new TRPCError2({ code: "UNAUTHORIZED", message: UNAUTHED_ERR_MSG });
-  }
-  return next({
-    ctx: {
-      ...ctx,
-      user: ctx.user
-    }
-  });
-});
-var protectedProcedure = t.procedure.use(requireUser);
-var adminProcedure = t.procedure.use(
-  t.middleware(async (opts) => {
-    const { ctx, next } = opts;
-    if (!ctx.user || ctx.user.role !== "admin") {
-      throw new TRPCError2({ code: "FORBIDDEN", message: NOT_ADMIN_ERR_MSG });
-    }
-    return next({
-      ctx: {
-        ...ctx,
-        user: ctx.user
-      }
-    });
-  })
-);
-
-// server/_core/systemRouter.ts
-var systemRouter = router({
-  health: publicProcedure.input(
-    z.object({
-      timestamp: z.number().min(0, "timestamp cannot be negative")
-    })
-  ).query(() => ({
-    ok: true
-  })),
-  notifyOwner: adminProcedure.input(
-    z.object({
-      title: z.string().min(1, "title is required"),
-      content: z.string().min(1, "content is required")
-    })
-  ).mutation(async ({ input }) => {
-    const delivered = await notifyOwner(input);
-    return {
-      success: delivered
-    };
-  })
-});
-
-// server/routers.ts
-import { z as z2 } from "zod";
 
 // server/_core/llm.ts
 var ensureArray = (value) => Array.isArray(value) ? value : [value];
@@ -983,7 +903,752 @@ ${transcript}`
   }
 }
 
+// server/_core/notification.ts
+import { TRPCError } from "@trpc/server";
+var TITLE_MAX_LENGTH = 1200;
+var CONTENT_MAX_LENGTH = 2e4;
+var trimValue = (value) => value.trim();
+var isNonEmptyString2 = (value) => typeof value === "string" && value.trim().length > 0;
+var validatePayload = (input) => {
+  if (!isNonEmptyString2(input.title)) {
+    throw new TRPCError({
+      code: "BAD_REQUEST",
+      message: "Notification title is required."
+    });
+  }
+  if (!isNonEmptyString2(input.content)) {
+    throw new TRPCError({
+      code: "BAD_REQUEST",
+      message: "Notification content is required."
+    });
+  }
+  const title = trimValue(input.title);
+  const content = trimValue(input.content);
+  if (title.length > TITLE_MAX_LENGTH) {
+    throw new TRPCError({
+      code: "BAD_REQUEST",
+      message: `Notification title must be at most ${TITLE_MAX_LENGTH} characters.`
+    });
+  }
+  if (content.length > CONTENT_MAX_LENGTH) {
+    throw new TRPCError({
+      code: "BAD_REQUEST",
+      message: `Notification content must be at most ${CONTENT_MAX_LENGTH} characters.`
+    });
+  }
+  return { title, content };
+};
+async function notifyOwner(payload) {
+  const { title, content } = validatePayload(payload);
+  console.log(`[Notification] \u2500\u2500\u2500 Owner Notification \u2500\u2500\u2500`);
+  console.log(`[Notification] Title: ${title}`);
+  console.log(`[Notification] Content: ${content}`);
+  console.log(`[Notification] \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500`);
+  return true;
+}
+
+// server/facebook.ts
+var FB_GRAPH = "https://graph.facebook.com/v19.0";
+async function sendMessengerMessage(pageAccessToken, recipientPsid, text2) {
+  const url = `${FB_GRAPH}/me/messages?access_token=${pageAccessToken}`;
+  const body = {
+    recipient: { id: recipientPsid },
+    message: { text: text2 },
+    messaging_type: "RESPONSE"
+  };
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body)
+  });
+  if (!res.ok) {
+    const errText = await res.text();
+    console.error("[Messenger] Send failed:", res.status, errText);
+    return false;
+  }
+  return true;
+}
+async function getFacebookUserProfile(psid, pageAccessToken) {
+  try {
+    const res = await fetch(
+      `${FB_GRAPH}/${psid}?fields=first_name,last_name,profile_pic&access_token=${pageAccessToken}`
+    );
+    if (!res.ok) return null;
+    const data = await res.json();
+    return {
+      name: [data.first_name, data.last_name].filter(Boolean).join(" ") || null,
+      avatarUrl: data.profile_pic || null
+    };
+  } catch {
+    return null;
+  }
+}
+async function processIncomingMessage(pageEntry, senderPsid, messageText) {
+  console.log(`[Webhook] Message from ${senderPsid} to page ${pageEntry.pageId}: "${messageText.substring(0, 50)}..."`);
+  let lead = await getLeadByPsid(senderPsid, pageEntry.dbPageId);
+  if (!lead) {
+    const profile = await getFacebookUserProfile(senderPsid, pageEntry.pageAccessToken);
+    const leadId = await createLead({
+      userId: pageEntry.userId,
+      pageId: pageEntry.dbPageId,
+      psid: senderPsid,
+      name: profile?.name || `Messenger User`,
+      avatarUrl: profile?.avatarUrl || void 0,
+      source: "messenger",
+      status: "active"
+    });
+    if (!leadId) {
+      console.error("[Webhook] Failed to create lead");
+      return;
+    }
+    lead = await getLeadById(leadId);
+    if (!lead) return;
+  }
+  let conv = await getConversationByLeadId(lead.id);
+  if (!conv) {
+    const convId = await createConversation({
+      userId: pageEntry.userId,
+      pageId: pageEntry.dbPageId,
+      leadId: lead.id,
+      lastMessagePreview: messageText.substring(0, 200),
+      messageCount: 0,
+      status: "open"
+    });
+    if (!convId) {
+      console.error("[Webhook] Failed to create conversation");
+      return;
+    }
+    conv = await getConversationByLeadId(lead.id);
+    if (!conv) return;
+  }
+  await createMessage({
+    conversationId: conv.id,
+    content: messageText,
+    sender: "lead",
+    messageType: "text"
+  });
+  if (!conv.isAiActive) {
+    console.log(`[Webhook] AI disabled for conversation ${conv.id}, skipping auto-reply`);
+    return;
+  }
+  const history = await getMessagesByConversation(conv.id);
+  const historyForAI = history.map((m) => ({ sender: m.sender, content: m.content }));
+  const convDetail = await getConversationById(conv.id);
+  const aiResponse = await generateAIResponse(
+    pageEntry.userId,
+    historyForAI,
+    lead.name,
+    convDetail?.page?.pageName ?? "Our Business"
+  );
+  await createMessage({
+    conversationId: conv.id,
+    content: aiResponse,
+    sender: "ai",
+    messageType: "text"
+  });
+  if (pageEntry.pageAccessToken) {
+    await sendMessengerMessage(pageEntry.pageAccessToken, senderPsid, aiResponse);
+  }
+  await updateConversation(conv.id, {
+    lastMessagePreview: aiResponse.substring(0, 200),
+    lastMessageAt: /* @__PURE__ */ new Date(),
+    messageCount: history.length + 2
+  });
+  const allMessages = [...historyForAI, { sender: "ai", content: aiResponse }];
+  const scoreResult = await scoreLead(allMessages);
+  await updateLead(lead.id, {
+    score: scoreResult.score,
+    classification: scoreResult.classification,
+    budgetScore: scoreResult.budgetScore,
+    authorityScore: scoreResult.authorityScore,
+    needScore: scoreResult.needScore,
+    timelineScore: scoreResult.timelineScore,
+    budgetNotes: scoreResult.budgetNotes,
+    authorityNotes: scoreResult.authorityNotes,
+    needNotes: scoreResult.needNotes,
+    timelineNotes: scoreResult.timelineNotes
+  });
+  if (scoreResult.classification === "hot" && !lead.notifiedAt) {
+    await notifyOwner({
+      title: `Hot Lead Detected: ${lead.name || "Unknown"}`,
+      content: `Score: ${scoreResult.score}/100
+Last message: ${messageText}
+
+Budget: ${scoreResult.budgetNotes}
+Need: ${scoreResult.needNotes}
+Timeline: ${scoreResult.timelineNotes}`
+    });
+    await updateLead(lead.id, { notifiedAt: /* @__PURE__ */ new Date() });
+  }
+  const leadMessages = history.filter((m) => m.sender === "lead");
+  if (leadMessages.length <= 1) {
+    const now = Date.now();
+    const delays = [30, 120, 720];
+    const followUpMessages = [
+      "Hi! Just checking in \u2014 did you have any other questions about what we discussed?",
+      "Hey! I wanted to follow up on our conversation. Is there anything else I can help you with?",
+      "Hi there! I noticed we chatted earlier. I'd love to help you move forward \u2014 feel free to ask me anything!"
+    ];
+    for (let i = 0; i < delays.length; i++) {
+      await createFollowUp({
+        conversationId: conv.id,
+        leadId: lead.id,
+        delayMinutes: delays[i],
+        scheduledAt: now + delays[i] * 60 * 1e3,
+        messageContent: followUpMessages[i]
+      });
+    }
+  }
+  console.log(`[Webhook] Replied to ${senderPsid} with AI response (score: ${scoreResult.score})`);
+}
+function registerFacebookRoutes(app2) {
+  app2.get("/api/auth/facebook", async (req, res) => {
+    try {
+      const cookies = req.headers.cookie || "";
+      const sessionCookie = cookies.split(";").map((c) => c.trim()).find((c) => c.startsWith(`${COOKIE_NAME}=`));
+      const token = sessionCookie?.split("=")[1];
+      const session = await sdk.verifySession(token);
+      if (!session) {
+        return res.redirect("/?error=not_authenticated");
+      }
+      const redirectUri = `${ENV.appUrl}/api/auth/facebook/callback`;
+      const scope = "pages_messaging,pages_manage_metadata,pages_read_engagement";
+      const state = Buffer.from(JSON.stringify({ userId: session.userId })).toString("base64");
+      const authUrl = `https://www.facebook.com/v19.0/dialog/oauth?client_id=${ENV.facebookAppId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${scope}&state=${state}`;
+      res.redirect(authUrl);
+    } catch (error) {
+      console.error("[Facebook OAuth] Error:", error);
+      res.redirect("/settings?tab=pages&error=oauth_failed");
+    }
+  });
+  app2.get("/api/auth/facebook/callback", async (req, res) => {
+    try {
+      const { code, state } = req.query;
+      if (!code || !state) {
+        return res.redirect("/settings?tab=pages&error=missing_code");
+      }
+      const stateData = JSON.parse(Buffer.from(state, "base64").toString());
+      const userId = stateData.userId;
+      const redirectUri = `${ENV.appUrl}/api/auth/facebook/callback`;
+      const tokenUrl = `${FB_GRAPH}/oauth/access_token?client_id=${ENV.facebookAppId}&redirect_uri=${encodeURIComponent(redirectUri)}&client_secret=${ENV.facebookAppSecret}&code=${code}`;
+      const tokenRes = await fetch(tokenUrl);
+      if (!tokenRes.ok) {
+        const err = await tokenRes.text();
+        console.error("[Facebook OAuth] Token exchange failed:", err);
+        return res.redirect("/settings?tab=pages&error=token_exchange_failed");
+      }
+      const tokenData = await tokenRes.json();
+      const userAccessToken = tokenData.access_token;
+      const longLivedUrl = `${FB_GRAPH}/oauth/access_token?grant_type=fb_exchange_token&client_id=${ENV.facebookAppId}&client_secret=${ENV.facebookAppSecret}&fb_exchange_token=${userAccessToken}`;
+      const longLivedRes = await fetch(longLivedUrl);
+      const longLivedData = longLivedRes.ok ? await longLivedRes.json() : { access_token: userAccessToken };
+      const longLivedToken = longLivedData.access_token || userAccessToken;
+      const pagesUrl = `${FB_GRAPH}/me/accounts?access_token=${longLivedToken}&fields=id,name,category,access_token,picture,fan_count`;
+      const pagesRes = await fetch(pagesUrl);
+      if (!pagesRes.ok) {
+        console.error("[Facebook OAuth] Failed to get pages");
+        return res.redirect("/settings?tab=pages&error=pages_fetch_failed");
+      }
+      const pagesData = await pagesRes.json();
+      const pages = pagesData.data || [];
+      if (pages.length === 0) {
+        return res.redirect("/settings?tab=pages&error=no_pages");
+      }
+      for (const page of pages) {
+        const existing = await getPageByFacebookId(page.id);
+        if (existing) {
+          await updatePage(existing.id, {
+            pageAccessToken: page.access_token,
+            pageName: page.name,
+            category: page.category,
+            avatarUrl: page.picture?.data?.url,
+            followerCount: page.fan_count || 0
+          });
+        } else {
+          await createPage({
+            userId,
+            pageId: page.id,
+            pageName: page.name,
+            pageAccessToken: page.access_token,
+            category: page.category,
+            avatarUrl: page.picture?.data?.url,
+            followerCount: page.fan_count || 0,
+            isActive: true
+          });
+        }
+        try {
+          const subscribeUrl = `${FB_GRAPH}/${page.id}/subscribed_apps?subscribed_fields=messages,messaging_postbacks,messaging_optins&access_token=${page.access_token}`;
+          const subRes = await fetch(subscribeUrl, { method: "POST" });
+          if (subRes.ok) {
+            console.log(`[Facebook] Subscribed page ${page.name} (${page.id}) to webhooks`);
+          } else {
+            console.error(`[Facebook] Failed to subscribe page ${page.id}:`, await subRes.text());
+          }
+        } catch (err) {
+          console.error(`[Facebook] Webhook subscription error for ${page.id}:`, err);
+        }
+      }
+      res.redirect("/settings?tab=pages&success=connected");
+    } catch (error) {
+      console.error("[Facebook OAuth] Callback error:", error);
+      res.redirect("/settings?tab=pages&error=callback_failed");
+    }
+  });
+  app2.get("/api/webhook/messenger", (req, res) => {
+    const mode = req.query["hub.mode"];
+    const token = req.query["hub.verify_token"];
+    const challenge = req.query["hub.challenge"];
+    console.log("[Webhook] Verification request:", { mode, token: token ? "***" : "missing" });
+    if (mode === "subscribe" && token === ENV.facebookVerifyToken) {
+      console.log("[Webhook] Verification successful");
+      return res.status(200).send(challenge);
+    }
+    console.error("[Webhook] Verification failed");
+    return res.sendStatus(403);
+  });
+  app2.post("/api/webhook/messenger", async (req, res) => {
+    res.sendStatus(200);
+    try {
+      const body = req.body;
+      if (body.object !== "page") return;
+      for (const entry of body.entry || []) {
+        const pageId = entry.id;
+        const page = await getPageByFacebookId(pageId);
+        if (!page || !page.pageAccessToken) {
+          console.warn(`[Webhook] Received message for unknown/unconfigured page: ${pageId}`);
+          continue;
+        }
+        for (const event of entry.messaging || []) {
+          const senderPsid = event.sender?.id;
+          if (!senderPsid || senderPsid === pageId) continue;
+          if (event.message?.text) {
+            processIncomingMessage(
+              {
+                pageId: page.pageId,
+                pageAccessToken: page.pageAccessToken,
+                userId: page.userId,
+                dbPageId: page.id
+              },
+              senderPsid,
+              event.message.text
+            ).catch((err) => console.error("[Webhook] Process error:", err));
+          }
+        }
+      }
+    } catch (error) {
+      console.error("[Webhook] Error processing:", error);
+    }
+  });
+  app2.get("/api/facebook/auth-url", async (req, res) => {
+    try {
+      const cookies = req.headers.cookie || "";
+      const sessionCookie = cookies.split(";").map((c) => c.trim()).find((c) => c.startsWith(`${COOKIE_NAME}=`));
+      const token = sessionCookie?.split("=")[1];
+      const session = await sdk.verifySession(token);
+      if (!session) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+      const redirectUri = `${ENV.appUrl}/api/auth/facebook/callback`;
+      const scope = "pages_messaging,pages_manage_metadata,pages_read_engagement";
+      const state = Buffer.from(JSON.stringify({ userId: session.userId })).toString("base64");
+      const authUrl = `https://www.facebook.com/v19.0/dialog/oauth?client_id=${ENV.facebookAppId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${scope}&state=${state}`;
+      return res.json({ url: authUrl, appId: ENV.facebookAppId });
+    } catch (error) {
+      console.error("[Facebook] Auth URL error:", error);
+      return res.status(500).json({ error: "Failed to generate auth URL" });
+    }
+  });
+}
+
+// server/kb-import.ts
+import multer from "multer";
+import pdfParse from "pdf-parse";
+
+// server/website-crawler.ts
+import * as cheerio from "cheerio";
+var MAX_PAGES = 10;
+var FETCH_TIMEOUT = 15e3;
+async function crawlWebsite(url) {
+  if (!url.startsWith("http")) url = "https://" + url;
+  const baseUrl = new URL(url);
+  const origin = baseUrl.origin;
+  const pagesToCrawl = /* @__PURE__ */ new Set([url]);
+  const crawled = /* @__PURE__ */ new Set();
+  const allContent = [];
+  const priorityPaths = ["/about", "/products", "/services", "/pricing", "/faq", "/contact", "/menu", "/catalog"];
+  for (const path of priorityPaths) {
+    pagesToCrawl.add(origin + path);
+    pagesToCrawl.add(origin + path + "/");
+  }
+  for (const pageUrl of Array.from(pagesToCrawl)) {
+    if (crawled.size >= MAX_PAGES) break;
+    if (crawled.has(pageUrl)) continue;
+    crawled.add(pageUrl);
+    try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), FETCH_TIMEOUT);
+      const res = await fetch(pageUrl, {
+        signal: controller.signal,
+        headers: {
+          "User-Agent": "Mozilla/5.0 (compatible; RocketeerBot/1.0; +https://rocketeerio.vercel.app)",
+          "Accept": "text/html,application/xhtml+xml"
+        }
+      });
+      clearTimeout(timeout);
+      if (!res.ok) continue;
+      const contentType = res.headers.get("content-type") || "";
+      if (!contentType.includes("text/html")) continue;
+      const html = await res.text();
+      const $ = cheerio.load(html);
+      const title = $("title").text().trim() || $("h1").first().text().trim() || pageUrl;
+      $("script, style, nav, footer, header, iframe, noscript, .cookie-banner, .popup").remove();
+      const mainContent = $("main, article, .content, .main-content, #content, #main").text().trim();
+      const bodyContent = $("body").text().trim();
+      const text2 = (mainContent || bodyContent).replace(/\s+/g, " ").replace(/\n{3,}/g, "\n\n").trim().substring(0, 8e3);
+      if (text2.length > 50) {
+        allContent.push({ url: pageUrl, title, text: text2 });
+      }
+      if (crawled.size < MAX_PAGES) {
+        $("a[href]").each((_, el) => {
+          const href = $(el).attr("href");
+          if (!href) return;
+          try {
+            const resolved = new URL(href, pageUrl);
+            if (resolved.origin === origin && !resolved.hash && !resolved.pathname.match(/\.(pdf|jpg|png|gif|svg|css|js|zip)$/i)) {
+              pagesToCrawl.add(resolved.origin + resolved.pathname);
+            }
+          } catch {
+          }
+        });
+      }
+    } catch (err) {
+      console.warn(`[Crawler] Failed to fetch ${pageUrl}:`, err);
+    }
+  }
+  if (allContent.length === 0) {
+    return { entries: [], pagesScraped: 0, sourceUrl: url };
+  }
+  const combinedText = allContent.map((p) => `=== PAGE: ${p.title} (${p.url}) ===
+${p.text}`).join("\n\n---\n\n").substring(0, 3e4);
+  const result = await invokeLLM({
+    messages: [
+      {
+        role: "system",
+        content: `You are a business information extractor. Analyze the website content and extract structured knowledge base entries. Create entries for each distinct topic found.
+
+Categories:
+- "product": Products, services, offerings, features
+- "pricing": Prices, packages, plans, costs
+- "faq": Common questions, how-to information
+- "policy": Terms, warranties, return policies, shipping
+- "general": Company info, about us, mission, contact details
+
+For each entry, write a clear, detailed description that an AI sales agent could use to answer customer questions. Include specific details like prices, features, timelines, etc.
+
+Return ONLY valid JSON.`
+      },
+      {
+        role: "user",
+        content: `Extract business knowledge from this website content:
+
+${combinedText}`
+      }
+    ],
+    response_format: {
+      type: "json_schema",
+      json_schema: {
+        name: "knowledge_entries",
+        strict: true,
+        schema: {
+          type: "object",
+          properties: {
+            entries: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  title: { type: "string", description: "Clear, descriptive title" },
+                  content: { type: "string", description: "Detailed content for the AI to reference" },
+                  category: { type: "string", enum: ["product", "pricing", "faq", "policy", "general"], description: "Category" }
+                },
+                required: ["title", "content", "category"],
+                additionalProperties: false
+              }
+            }
+          },
+          required: ["entries"],
+          additionalProperties: false
+        }
+      }
+    }
+  });
+  try {
+    const content = result.choices[0]?.message?.content;
+    const text2 = typeof content === "string" ? content : "";
+    const parsed = JSON.parse(text2);
+    const entries = (parsed.entries || []).map((e) => ({
+      title: String(e.title || "").substring(0, 255),
+      content: String(e.content || ""),
+      category: ["product", "pricing", "faq", "policy", "general"].includes(e.category) ? e.category : "general"
+    }));
+    return { entries, pagesScraped: allContent.length, sourceUrl: url };
+  } catch {
+    return { entries: [], pagesScraped: allContent.length, sourceUrl: url };
+  }
+}
+async function structurePdfContent(pdfText, fileName) {
+  if (!pdfText || pdfText.trim().length < 20) {
+    return { entries: [] };
+  }
+  const truncatedText = pdfText.substring(0, 3e4);
+  const result = await invokeLLM({
+    messages: [
+      {
+        role: "system",
+        content: `You are a business information extractor. Analyze the PDF document content and extract structured knowledge base entries. The PDF may be a product catalog, brochure, price list, or specification sheet.
+
+Categories:
+- "product": Products, services, offerings, features, specifications
+- "pricing": Prices, packages, plans, costs
+- "faq": Common questions, how-to information
+- "policy": Terms, warranties, return policies, shipping
+- "general": Company info, about us, mission, contact details
+
+For each entry, write a clear, detailed description that an AI sales agent could use to answer customer questions. Include specific details like prices, features, dimensions, materials, etc.
+
+Return ONLY valid JSON.`
+      },
+      {
+        role: "user",
+        content: `Extract business knowledge from this PDF document "${fileName}":
+
+${truncatedText}`
+      }
+    ],
+    response_format: {
+      type: "json_schema",
+      json_schema: {
+        name: "knowledge_entries",
+        strict: true,
+        schema: {
+          type: "object",
+          properties: {
+            entries: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  title: { type: "string", description: "Clear, descriptive title" },
+                  content: { type: "string", description: "Detailed content for the AI to reference" },
+                  category: { type: "string", enum: ["product", "pricing", "faq", "policy", "general"], description: "Category" }
+                },
+                required: ["title", "content", "category"],
+                additionalProperties: false
+              }
+            }
+          },
+          required: ["entries"],
+          additionalProperties: false
+        }
+      }
+    }
+  });
+  try {
+    const content = result.choices[0]?.message?.content;
+    const text2 = typeof content === "string" ? content : "";
+    const parsed = JSON.parse(text2);
+    const entries = (parsed.entries || []).map((e) => ({
+      title: String(e.title || "").substring(0, 255),
+      content: String(e.content || ""),
+      category: ["product", "pricing", "faq", "policy", "general"].includes(e.category) ? e.category : "general"
+    }));
+    return { entries };
+  } catch {
+    return { entries: [] };
+  }
+}
+
+// server/kb-import.ts
+var upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 20 * 1024 * 1024 },
+  // 20MB
+  fileFilter: (_req, file, cb) => {
+    if (file.mimetype === "application/pdf") {
+      cb(null, true);
+    } else {
+      cb(new Error("Only PDF files are allowed"));
+    }
+  }
+});
+async function authenticateRequest(req) {
+  const cookies = req.headers.cookie || "";
+  const sessionCookie = cookies.split(";").map((c) => c.trim()).find((c) => c.startsWith(`${COOKIE_NAME}=`));
+  const token = sessionCookie?.split("=")[1];
+  const session = await sdk.verifySession(token);
+  return session?.userId ?? null;
+}
+function registerKbImportRoutes(app2) {
+  app2.post("/api/kb/import-website", async (req, res) => {
+    try {
+      const userId = await authenticateRequest(req);
+      if (!userId) return res.status(401).json({ error: "Not authenticated" });
+      const { url } = req.body;
+      if (!url || typeof url !== "string") {
+        return res.status(400).json({ error: "URL is required" });
+      }
+      console.log(`[KB Import] Crawling website: ${url} for user ${userId}`);
+      const result = await crawlWebsite(url);
+      if (result.entries.length === 0) {
+        return res.json({
+          success: true,
+          entries: [],
+          pagesScraped: result.pagesScraped,
+          message: "No content could be extracted from the website."
+        });
+      }
+      const savedEntries = [];
+      for (const entry of result.entries) {
+        const id = await createKnowledgeEntry({
+          userId,
+          title: entry.title,
+          content: entry.content,
+          category: entry.category,
+          source: "website",
+          sourceUrl: url
+        });
+        if (id) {
+          savedEntries.push({ id, ...entry });
+        }
+      }
+      console.log(`[KB Import] Saved ${savedEntries.length} entries from ${result.pagesScraped} pages`);
+      return res.json({
+        success: true,
+        entries: savedEntries,
+        pagesScraped: result.pagesScraped,
+        message: `Extracted ${savedEntries.length} entries from ${result.pagesScraped} pages.`
+      });
+    } catch (error) {
+      console.error("[KB Import] Website crawl error:", error);
+      return res.status(500).json({ error: "Failed to crawl website" });
+    }
+  });
+  app2.post("/api/kb/import-pdf", upload.single("pdf"), async (req, res) => {
+    try {
+      const userId = await authenticateRequest(req);
+      if (!userId) return res.status(401).json({ error: "Not authenticated" });
+      const file = req.file;
+      if (!file) {
+        return res.status(400).json({ error: "PDF file is required" });
+      }
+      console.log(`[KB Import] Processing PDF: ${file.originalname} (${(file.size / 1024).toFixed(1)}KB) for user ${userId}`);
+      const pdfData = await pdfParse(file.buffer);
+      const pdfText = pdfData.text;
+      if (!pdfText || pdfText.trim().length < 20) {
+        return res.json({
+          success: true,
+          entries: [],
+          message: "Could not extract meaningful text from the PDF. It may be image-based."
+        });
+      }
+      const result = await structurePdfContent(pdfText, file.originalname);
+      if (result.entries.length === 0) {
+        return res.json({
+          success: true,
+          entries: [],
+          message: "No structured content could be extracted from the PDF."
+        });
+      }
+      const savedEntries = [];
+      for (const entry of result.entries) {
+        const id = await createKnowledgeEntry({
+          userId,
+          title: entry.title,
+          content: entry.content,
+          category: entry.category,
+          source: "pdf",
+          sourceUrl: file.originalname
+        });
+        if (id) {
+          savedEntries.push({ id, ...entry });
+        }
+      }
+      console.log(`[KB Import] Saved ${savedEntries.length} entries from PDF: ${file.originalname}`);
+      return res.json({
+        success: true,
+        entries: savedEntries,
+        message: `Extracted ${savedEntries.length} entries from "${file.originalname}".`
+      });
+    } catch (error) {
+      console.error("[KB Import] PDF import error:", error);
+      return res.status(500).json({ error: "Failed to process PDF" });
+    }
+  });
+}
+
+// server/_core/systemRouter.ts
+import { z } from "zod";
+
+// server/_core/trpc.ts
+import { initTRPC, TRPCError as TRPCError2 } from "@trpc/server";
+import superjson from "superjson";
+var t = initTRPC.context().create({
+  transformer: superjson
+});
+var router = t.router;
+var publicProcedure = t.procedure;
+var requireUser = t.middleware(async (opts) => {
+  const { ctx, next } = opts;
+  if (!ctx.user) {
+    throw new TRPCError2({ code: "UNAUTHORIZED", message: UNAUTHED_ERR_MSG });
+  }
+  return next({
+    ctx: {
+      ...ctx,
+      user: ctx.user
+    }
+  });
+});
+var protectedProcedure = t.procedure.use(requireUser);
+var adminProcedure = t.procedure.use(
+  t.middleware(async (opts) => {
+    const { ctx, next } = opts;
+    if (!ctx.user || ctx.user.role !== "admin") {
+      throw new TRPCError2({ code: "FORBIDDEN", message: NOT_ADMIN_ERR_MSG });
+    }
+    return next({
+      ctx: {
+        ...ctx,
+        user: ctx.user
+      }
+    });
+  })
+);
+
+// server/_core/systemRouter.ts
+var systemRouter = router({
+  health: publicProcedure.input(
+    z.object({
+      timestamp: z.number().min(0, "timestamp cannot be negative")
+    })
+  ).query(() => ({
+    ok: true
+  })),
+  notifyOwner: adminProcedure.input(
+    z.object({
+      title: z.string().min(1, "title is required"),
+      content: z.string().min(1, "content is required")
+    })
+  ).mutation(async ({ input }) => {
+    const delivered = await notifyOwner(input);
+    return {
+      success: delivered
+    };
+  })
+});
+
 // server/routers.ts
+import { z as z2 } from "zod";
 var appRouter = router({
   system: systemRouter,
   auth: router({
@@ -1501,6 +2166,8 @@ var app = express();
 app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ limit: "50mb", extended: true }));
 registerAuthRoutes(app);
+registerFacebookRoutes(app);
+registerKbImportRoutes(app);
 app.post("/api/cron/follow-ups", async (_req, res) => {
   try {
     await processFollowUps();

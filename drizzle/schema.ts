@@ -20,6 +20,7 @@ export const conversationStatusEnum = pgEnum("conversation_status", ["open", "cl
 export const senderEnum = pgEnum("sender", ["lead", "ai", "human"]);
 export const messageTypeEnum = pgEnum("message_type", ["text", "image", "template", "quick_reply"]);
 export const kbCategoryEnum = pgEnum("kb_category", ["product", "pricing", "faq", "policy", "general"]);
+export const kbSourceEnum = pgEnum("kb_source", ["manual", "website", "pdf"]);
 export const followUpStatusEnum = pgEnum("follow_up_status", ["pending", "sent", "cancelled", "failed"]);
 
 // ─── Users ───────────────────────────────────────────────────────────
@@ -131,6 +132,8 @@ export const knowledgeBase = pgTable("knowledge_base", {
   title: varchar("title", { length: 255 }).notNull(),
   content: text("content").notNull(),
   category: kbCategoryEnum("category").default("general").notNull(),
+  source: kbSourceEnum("source").default("manual").notNull(),
+  sourceUrl: text("sourceUrl"),
   isActive: boolean("isActive").default(true).notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().notNull(),

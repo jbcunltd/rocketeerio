@@ -105,6 +105,19 @@ export async function deletePage(pageId: number) {
   await db.delete(facebookPages).where(eq(facebookPages.id, pageId));
 }
 
+export async function getPageByFacebookId(fbPageId: string) {
+  const db = await getDb();
+  if (!db) return null;
+  const result = await db.select().from(facebookPages).where(eq(facebookPages.pageId, fbPageId)).limit(1);
+  return result[0] ?? null;
+}
+
+export async function getAllActivePages() {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(facebookPages).where(eq(facebookPages.isActive, true));
+}
+
 // ─── Leads ───────────────────────────────────────────────────────────
 
 export async function getLeadsByUser(userId: number, classification?: string) {
@@ -135,6 +148,25 @@ export async function updateLead(leadId: number, data: Partial<InsertLead>) {
   const db = await getDb();
   if (!db) return;
   await db.update(leads).set({ ...data, updatedAt: new Date() }).where(eq(leads.id, leadId));
+}
+
+export async function getLeadByPsid(psid: string, pageId: number) {
+  const db = await getDb();
+  if (!db) return null;
+  const result = await db.select().from(leads)
+    .where(and(eq(leads.psid, psid), eq(leads.pageId, pageId)))
+    .limit(1);
+  return result[0] ?? null;
+}
+
+export async function getConversationByLeadId(leadId: number) {
+  const db = await getDb();
+  if (!db) return null;
+  const result = await db.select().from(conversations)
+    .where(eq(conversations.leadId, leadId))
+    .orderBy(desc(conversations.createdAt))
+    .limit(1);
+  return result[0] ?? null;
 }
 
 // ─── Conversations ───────────────────────────────────────────────────
@@ -229,6 +261,12 @@ export async function getActiveKnowledgeBase(userId: number) {
   const db = await getDb();
   if (!db) return [];
   return db.select().from(knowledgeBase).where(and(eq(knowledgeBase.userId, userId), eq(knowledgeBase.isActive, true)));
+}
+
+export async function deleteKnowledgeBySource(userId: number, source: "manual" | "website" | "pdf") {
+  const db = await getDb();
+  if (!db) return;
+  await db.delete(knowledgeBase).where(and(eq(knowledgeBase.userId, userId), eq(knowledgeBase.source, source)));
 }
 
 // ─── Follow-Up Sequences ────────────────────────────────────────────
