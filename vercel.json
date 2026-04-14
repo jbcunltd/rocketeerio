@@ -4,7 +4,7 @@
   "installCommand": "pnpm install",
   "functions": {
     "api/index.ts": {
-      "includeFiles": "server/**/*.ts,shared/**/*.ts,drizzle/**/*.ts"
+      "includeFiles": "../server/**,../shared/**,../drizzle/**"
     }
   },
   "rewrites": [
