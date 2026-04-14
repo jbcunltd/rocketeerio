@@ -2,8 +2,13 @@
   "buildCommand": "vite build",
   "outputDirectory": "dist/public",
   "installCommand": "pnpm install",
+  "functions": {
+    "api/index.ts": {
+      "includeFiles": "server/**/*.ts,shared/**/*.ts,drizzle/**/*.ts"
+    }
+  },
   "rewrites": [
-    { "source": "/api/(.*)", "destination": "/api/auth/signup" },
+    { "source": "/api/(.*)", "destination": "/api" },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
