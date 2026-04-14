@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { trpc } from "@/lib/trpc";
-import { BookOpen, Plus, Loader2, Trash2, Edit2, Tag, Globe, FileText, Upload, Search, RefreshCw } from "lucide-react";
+import { BookOpen, Plus, Loader2, Trash2, Edit2, Tag, Globe, FileText, Upload, Search, RefreshCw, X } from "lucide-react";
 import { useState, useRef } from "react";
 import { toast } from "sonner";
 
@@ -210,6 +210,7 @@ function KnowledgeBaseContent() {
   const [category, setCategory] = useState<"product" | "pricing" | "faq" | "policy" | "general">("general");
   const [filterCategory, setFilterCategory] = useState<string>("all");
   const [filterSource, setFilterSource] = useState<string>("all");
+  const [expandedId, setExpandedId] = useState<number | null>(null);
 
   const resetForm = () => { setTitle(""); setContent(""); setCategory("general"); setEditId(null); };
 
@@ -261,6 +262,8 @@ function KnowledgeBaseContent() {
     pdf: entries.filter((e: any) => e.source === "pdf").length,
     manual: entries.filter((e: any) => e.source === "manual").length,
   } : { total: 0, website: 0, pdf: 0, manual: 0 };
+
+  const expandedEntry = entries?.find((e: any) => e.id === expandedId);
 
   if (isLoading) return <div className="flex items-center justify-center py-20"><Loader2 className="w-8 h-8 animate-spin text-messenger" /></div>;
 
@@ -361,9 +364,13 @@ function KnowledgeBaseContent() {
           <p className="text-sm text-muted-foreground">Import from your website, upload a PDF, or add entries manually so the AI can answer questions accurately.</p>
         </div>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {(filteredEntries || []).map((entry: any) => (
-            <div key={entry.id} className="bg-white rounded-xl p-5 card-shadow border border-border/50">
+            <div
+              key={entry.id}
+              className="bg-white rounded-xl p-5 card-shadow border border-border/50 cursor-pointer hover:shadow-md transition-shadow"
+              onClick={() => setExpandedId(expandedId === entry.id ? null : entry.id)}
+            >
               <div className="flex items-start justify-between mb-2">
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${categoryColors[entry.category] || categoryColors.general}`}>
@@ -376,7 +383,7 @@ function KnowledgeBaseContent() {
                   )}
                   {!entry.isActive && <span className="text-xs text-muted-foreground">(inactive)</span>}
                 </div>
-                <div className="flex gap-1">
+                <div className="flex gap-1" onClick={e => e.stopPropagation()}>
                   <Button variant="ghost" size="sm" onClick={() => handleEdit(entry)}><Edit2 className="w-3.5 h-3.5" /></Button>
                   <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive" onClick={() => handleDelete(entry.id)}><Trash2 className="w-3.5 h-3.5" /></Button>
                 </div>
@@ -390,6 +397,97 @@ function KnowledgeBaseContent() {
               )}
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Expanded Entry Modal */}
+      {expandedId !== null && expandedEntry && (
+        <div
+          className="fixed inset-0 bg-black/50 z-40 flex items-center justify-center p-4"
+          onClick={() => setExpandedId(null)}
+        >
+          <div
+            className="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[80vh] flex flex-col"
+            onClick={e => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div className="flex items-start justify-between p-6 border-b">
+              <div className="flex-1 pr-4">
+                <h2 className="text-2xl font-bold text-foreground">
+                  {expandedEntry.title}
+                </h2>
+                <div className="flex items-center gap-2 mt-2 flex-wrap">
+                  <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${categoryColors[expandedEntry.category] || categoryColors.general}`}>
+                    <Tag className="w-3 h-3 inline mr-1" />{expandedEntry.category}
+                  </span>
+                  {expandedEntry.source && expandedEntry.source !== "manual" && (
+                    <span className="text-xs text-muted-foreground flex items-center gap-1">
+                      {sourceIcons[expandedEntry.source]} {expandedEntry.source === "website" ? "Website" : "PDF"}
+                    </span>
+                  )}
+                </div>
+              </div>
+              <button
+                onClick={() => setExpandedId(null)}
+                className="text-muted-foreground hover:text-foreground transition-colors p-1 flex-shrink-0"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+
+            {/* Modal Content - Scrollable */}
+            <div className="flex-1 overflow-y-auto p-6">
+              <div className="prose prose-sm max-w-none">
+                <p className="text-foreground whitespace-pre-wrap text-base leading-relaxed">
+                  {expandedEntry.content}
+                </p>
+              </div>
+              {expandedEntry.sourceUrl && (
+                <div className="mt-6 pt-6 border-t">
+                  <p className="text-xs text-muted-foreground mb-2">Source:</p>
+                  <a
+                    href={expandedEntry.sourceUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-messenger hover:text-messenger-dark break-all text-sm"
+                  >
+                    {expandedEntry.sourceUrl}
+                  </a>
+                </div>
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="flex items-center justify-between p-6 border-t bg-gray-50 rounded-b-xl">
+              <div className="flex gap-2" onClick={e => e.stopPropagation()}>
+                <Button
+                  variant="ghost"
+                  onClick={() => {
+                    handleEdit(expandedEntry);
+                    setExpandedId(null);
+                  }}
+                >
+                  <Edit2 className="w-4 h-4 mr-2" /> Edit
+                </Button>
+                <Button
+                  variant="ghost"
+                  className="text-destructive hover:text-destructive"
+                  onClick={() => {
+                    handleDelete(expandedId);
+                    setExpandedId(null);
+                  }}
+                >
+                  <Trash2 className="w-4 h-4 mr-2" /> Delete
+                </Button>
+              </div>
+              <Button
+                variant="outline"
+                onClick={() => setExpandedId(null)}
+              >
+                Close
+              </Button>
+            </div>
+          </div>
         </div>
       )}
     </div>
