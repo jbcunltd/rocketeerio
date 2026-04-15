@@ -87,17 +87,17 @@ function WebsiteImportSection({ onComplete }: { onComplete: () => void }) {
   };
 
   return (
-    <div className="bg-white rounded-xl p-5 card-shadow border border-border/50">
+    <div className="bg-white rounded-xl p-4 sm:p-5 card-shadow border border-border/50">
       <div className="flex items-center gap-2 mb-3">
-        <div className="w-8 h-8 bg-blue-50 rounded-lg flex items-center justify-center">
+        <div className="w-8 h-8 bg-blue-50 rounded-lg flex items-center justify-center shrink-0">
           <Globe className="w-4 h-4 text-blue-600" />
         </div>
-        <div>
+        <div className="min-w-0">
           <h3 className="font-bold text-sm">Import from Website</h3>
           <p className="text-xs text-muted-foreground">Auto-crawl your website to extract business info</p>
         </div>
       </div>
-      <div className="flex gap-2">
+      <div className="flex flex-col sm:flex-row gap-2">
         <Input
           value={url}
           onChange={e => setUrl(e.target.value)}
@@ -182,12 +182,12 @@ function FileImportSection({ onComplete }: { onComplete: () => void }) {
   };
 
   return (
-    <div className="bg-white rounded-xl p-5 card-shadow border border-border/50">
+    <div className="bg-white rounded-xl p-4 sm:p-5 card-shadow border border-border/50">
       <div className="flex items-center gap-2 mb-3">
-        <div className="w-8 h-8 bg-green-50 rounded-lg flex items-center justify-center">
+        <div className="w-8 h-8 bg-green-50 rounded-lg flex items-center justify-center shrink-0">
           <Upload className="w-4 h-4 text-green-600" />
         </div>
-        <div>
+        <div className="min-w-0">
           <h3 className="font-bold text-sm">Upload File</h3>
           <p className="text-xs text-muted-foreground">PDF, Word, Excel, CSV, images, or text files</p>
         </div>
@@ -299,14 +299,14 @@ function KnowledgeBaseContent() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold">Knowledge Base</h1>
-          <p className="text-muted-foreground">Manage the information your AI agent uses to answer questions.</p>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
+        <div className="min-w-0">
+          <h1 className="text-xl sm:text-2xl font-bold">Knowledge Base</h1>
+          <p className="text-sm text-muted-foreground">Manage the information your AI agent uses to answer questions.</p>
         </div>
         <Dialog open={isOpen} onOpenChange={(open) => { setIsOpen(open); if (!open) resetForm(); }}>
           <DialogTrigger asChild>
-            <Button className="bg-messenger hover:bg-messenger-dark">
+            <Button className="bg-messenger hover:bg-messenger-dark w-full sm:w-auto">
               <Plus className="w-4 h-4 mr-2" /> Add Manually
             </Button>
           </DialogTrigger>
@@ -353,16 +353,16 @@ function KnowledgeBaseContent() {
       </div>
 
       {/* Import Methods */}
-      <div className="grid gap-4 md:grid-cols-2 mb-6">
+      <div className="grid gap-3 sm:gap-4 grid-cols-1 md:grid-cols-2 mb-6">
         <WebsiteImportSection onComplete={handleImportComplete} />
         <FileImportSection onComplete={handleImportComplete} />
       </div>
 
       {/* Stats Bar */}
       {entries && entries.length > 0 && (
-        <div className="flex items-center gap-4 mb-4 text-sm">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 mb-4 text-sm">
           <span className="font-medium text-muted-foreground">{entryCounts.total} entries</span>
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
             <button
               onClick={() => setFilterSource("all")}
               className={`px-2.5 py-1 rounded-full text-xs font-medium transition-colors ${filterSource === "all" ? "bg-messenger text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}
@@ -412,11 +412,11 @@ function KnowledgeBaseContent() {
           <p className="text-sm text-muted-foreground">Import from your website, upload a file (PDF, Word, Excel, CSV, images, or text), or add entries manually so the AI can answer questions accurately.</p>
         </div>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-3 sm:gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
           {(filteredEntries || []).map((entry: any) => (
             <div
               key={entry.id}
-              className="bg-white rounded-xl p-5 card-shadow border border-border/50 cursor-pointer hover:shadow-md transition-shadow"
+              className="bg-white rounded-xl p-4 sm:p-5 card-shadow border border-border/50 cursor-pointer hover:shadow-md transition-shadow"
               onClick={() => setExpandedId(expandedId === entry.id ? null : entry.id)}
             >
               <div className="flex items-start justify-between mb-2">
@@ -459,7 +459,7 @@ function KnowledgeBaseContent() {
             onClick={e => e.stopPropagation()}
           >
             {/* Modal Header */}
-            <div className="flex items-start justify-between p-6 border-b">
+            <div className="flex items-start justify-between p-4 sm:p-6 border-b">
               <div className="flex-1 pr-4">
                 <h2 className="text-2xl font-bold text-foreground">
                   {expandedEntry.title}
@@ -484,7 +484,7 @@ function KnowledgeBaseContent() {
             </div>
 
             {/* Modal Content - Scrollable */}
-            <div className="flex-1 overflow-y-auto p-6">
+            <div className="flex-1 overflow-y-auto p-4 sm:p-6">
               <div className="prose prose-sm max-w-none">
                 <p className="text-foreground whitespace-pre-wrap text-base leading-relaxed">
                   {expandedEntry.content}
@@ -506,7 +506,7 @@ function KnowledgeBaseContent() {
             </div>
 
             {/* Modal Footer */}
-            <div className="flex items-center justify-between p-6 border-t bg-gray-50 rounded-b-xl">
+            <div className="flex items-center justify-between p-4 sm:p-6 border-t bg-gray-50 rounded-b-xl">
               <div className="flex gap-2" onClick={e => e.stopPropagation()}>
                 <Button
                   variant="ghost"

@@ -98,17 +98,17 @@ function AnalyticsContent() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold">Analytics</h1>
-          <p className="text-muted-foreground">Track your lead generation and conversation performance.</p>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
+        <div className="min-w-0">
+          <h1 className="text-xl sm:text-2xl font-bold">Analytics</h1>
+          <p className="text-sm text-muted-foreground">Track your lead generation and conversation performance.</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
           {[7, 14, 30, 90].map(days => (
             <button
               key={days}
               onClick={() => setTimeRange(days)}
-              className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${
+              className={`px-2.5 sm:px-3 py-1.5 text-sm rounded-lg transition-colors ${
                 timeRange === days
                   ? "bg-purple-600 text-white"
                   : "bg-gray-100 text-gray-600 hover:bg-gray-200"
@@ -121,7 +121,7 @@ function AnalyticsContent() {
       </div>
 
       {/* Key Metrics */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4 mb-6">
         <StatCard icon={MessageCircle} label="Conversations" value={overview?.totalConversations || 0} color="bg-blue-50 text-blue-600" />
         <StatCard icon={Users} label="Total Leads" value={overview?.totalLeads || 0} color="bg-purple-50 text-purple-600" />
         <StatCard icon={Flame} label="Hot Leads" value={overview?.hotLeads || 0} color="bg-red-50 text-red-600" />
@@ -131,7 +131,7 @@ function AnalyticsContent() {
       </div>
 
       {/* Conversations Over Time */}
-      <div className="bg-white rounded-xl p-6 border border-gray-200 mb-6">
+      <div className="bg-white rounded-xl p-4 sm:p-6 border border-gray-200 mb-6 overflow-hidden">
         <div className="flex items-center gap-2 mb-4">
           <Activity className="w-5 h-5 text-purple-600" />
           <h3 className="font-bold">Conversations Over Time</h3>
@@ -158,7 +158,7 @@ function AnalyticsContent() {
       </div>
 
       {/* Lead Activity Chart */}
-      <div className="bg-white rounded-xl p-6 border border-gray-200 mb-6">
+      <div className="bg-white rounded-xl p-4 sm:p-6 border border-gray-200 mb-6 overflow-hidden">
         <div className="flex items-center gap-2 mb-4">
           <BarChart3 className="w-5 h-5 text-blue-600" />
           <h3 className="font-bold">Lead Activity by Day</h3>
@@ -182,9 +182,9 @@ function AnalyticsContent() {
       </div>
 
       {/* Pie Charts Row */}
-      <div className="grid md:grid-cols-3 gap-6 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6 mb-6">
         {/* Lead Classification */}
-        <div className="bg-white rounded-xl p-6 border border-gray-200">
+        <div className="bg-white rounded-xl p-4 sm:p-6 border border-gray-200">
           <div className="flex items-center gap-2 mb-4">
             <PieChartIcon className="w-5 h-5 text-red-500" />
             <h3 className="font-bold text-sm">Lead Classification</h3>
@@ -216,7 +216,7 @@ function AnalyticsContent() {
         </div>
 
         {/* Lead Status */}
-        <div className="bg-white rounded-xl p-6 border border-gray-200">
+        <div className="bg-white rounded-xl p-4 sm:p-6 border border-gray-200">
           <div className="flex items-center gap-2 mb-4">
             <UserCheck className="w-5 h-5 text-green-500" />
             <h3 className="font-bold text-sm">Lead Status</h3>
@@ -248,7 +248,7 @@ function AnalyticsContent() {
         </div>
 
         {/* Platform Distribution */}
-        <div className="bg-white rounded-xl p-6 border border-gray-200">
+        <div className="bg-white rounded-xl p-4 sm:p-6 border border-gray-200">
           <div className="flex items-center gap-2 mb-4">
             <MessageCircle className="w-5 h-5 text-blue-500" />
             <h3 className="font-bold text-sm">Platform Distribution</h3>

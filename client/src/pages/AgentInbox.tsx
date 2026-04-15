@@ -23,15 +23,15 @@ function AgentInboxContent() {
     <div>
       <div className="flex items-center justify-between mb-6">
         <div>
-          <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-bold">Agent Inbox</h1>
+          <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
+            <h1 className="text-xl sm:text-2xl font-bold">Agent Inbox</h1>
             {(handoffCount ?? 0) > 0 && (
               <span className="bg-red-500 text-white text-xs font-bold px-2.5 py-1 rounded-full animate-pulse">
                 {handoffCount} pending
               </span>
             )}
           </div>
-          <p className="text-muted-foreground">Conversations that need human attention. AI has been paused on these.</p>
+          <p className="text-sm text-muted-foreground">Conversations that need human attention. AI has been paused on these.</p>
         </div>
       </div>
 
@@ -42,9 +42,9 @@ function AgentInboxContent() {
           <p className="text-muted-foreground">No conversations need human attention right now. The AI is handling everything.</p>
         </div>
       ) : (
-        <div className="flex flex-col lg:flex-row gap-4 h-[calc(100vh-12rem)]">
+        <div className="flex flex-col lg:flex-row gap-4 h-auto lg:h-[calc(100vh-12rem)]">
           {/* Queue List */}
-          <div className="w-full lg:w-96 shrink-0 overflow-y-auto space-y-2">
+          <div className="w-full lg:w-96 shrink-0 lg:overflow-y-auto space-y-2 max-h-[40vh] lg:max-h-none overflow-y-auto">
             {queue.map((item: any) => {
               const conv = item.conversation;
               const lead = item.lead;
@@ -157,27 +157,27 @@ function ConversationPanel({ convId, onResolved }: { convId: number; onResolved:
   return (
     <div className="flex flex-col h-full bg-white rounded-xl border border-gray-200 overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b bg-red-50/50">
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 bg-red-100 rounded-full flex items-center justify-center">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-3 sm:p-4 border-b bg-red-50/50">
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+          <div className="w-9 h-9 bg-red-100 rounded-full flex items-center justify-center shrink-0">
             <AlertTriangle className="w-4 h-4 text-red-500" />
           </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <p className="font-semibold text-sm">{lead?.name || "Unknown Lead"}</p>
+          <div className="min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <p className="font-semibold text-sm truncate">{lead?.name || "Unknown Lead"}</p>
               <span className="text-xs bg-red-100 text-red-600 px-2 py-0.5 rounded-full font-medium">Handoff Active</span>
             </div>
-            <p className="text-xs text-muted-foreground">{page?.pageName} · {conv.platform || "messenger"}</p>
+            <p className="text-xs text-muted-foreground truncate">{page?.pageName} · {conv.platform || "messenger"}</p>
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap pl-11 sm:pl-0">
           {lead?.phone && (
             <span className="text-xs text-muted-foreground flex items-center gap-1"><Phone className="w-3 h-3" />{lead.phone}</span>
           )}
           {lead?.email && (
-            <span className="text-xs text-muted-foreground flex items-center gap-1"><Mail className="w-3 h-3" />{lead.email}</span>
+            <span className="text-xs text-muted-foreground flex items-center gap-1 truncate"><Mail className="w-3 h-3" />{lead.email}</span>
           )}
-          <Button onClick={handleResolve} size="sm" className="bg-green-600 hover:bg-green-700 text-white">
+          <Button onClick={handleResolve} size="sm" className="bg-green-600 hover:bg-green-700 text-white w-full sm:w-auto">
             <CheckCircle className="w-3.5 h-3.5 mr-1" /> Resolve & Re-enable AI
           </Button>
         </div>
@@ -220,8 +220,8 @@ function ConversationPanel({ convId, onResolved }: { convId: number; onResolved:
       </div>
 
       {/* Input */}
-      <div className="p-4 border-t">
-        <div className="flex gap-2">
+      <div className="p-3 sm:p-4 border-t">
+        <div className="flex gap-1.5 sm:gap-2">
           <Input
             placeholder="Type a message as the human agent..."
             value={newMessage}

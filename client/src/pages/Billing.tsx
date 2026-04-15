@@ -123,10 +123,10 @@ function BillingContent() {
   };
 
   return (
-    <div className="flex flex-col gap-8 p-4 md:p-8 max-w-7xl mx-auto">
+    <div className="flex flex-col gap-6 sm:gap-8 p-2 sm:p-4 md:p-8 max-w-7xl mx-auto">
       {/* Header */}
       <div className="text-center">
-        <h1 className="text-3xl font-bold tracking-tight">Simple, Transparent Pricing</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Simple, Transparent Pricing</h1>
         <p className="text-muted-foreground mt-2 max-w-2xl mx-auto">
           Choose the perfect plan for your business. Scale up as you grow.
         </p>
@@ -179,12 +179,12 @@ function BillingContent() {
 
       {/* Current Subscription Status */}
       {currentSub && (
-        <div className="rounded-xl border bg-card p-6 shadow-sm">
+        <div className="rounded-xl border bg-card p-4 sm:p-6 shadow-sm">
           <div className="flex items-center gap-3 mb-4">
-            <div className="w-10 h-10 rounded-lg bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-lg bg-green-100 dark:bg-green-900/30 flex items-center justify-center shrink-0">
               <CreditCard className="w-5 h-5 text-green-600" />
             </div>
-            <div>
+            <div className="min-w-0">
               <h2 className="text-lg font-semibold">Current Subscription</h2>
               <p className="text-sm text-muted-foreground">Your active plan details</p>
             </div>
@@ -252,7 +252,7 @@ function BillingContent() {
           <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 sm:gap-6">
           {plans.map((plan) => {
             const Icon = planIcons[plan.slug] ?? Rocket;
             const isCurrentPlan = currentSub?.plan?.slug === plan.slug && currentSub?.status === "active";
@@ -264,7 +264,7 @@ function BillingContent() {
             return (
               <div
                 key={plan.id}
-                className={`relative rounded-xl border p-6 transition-all hover:shadow-md flex flex-col ${
+                className={`relative rounded-xl border p-4 sm:p-6 transition-all hover:shadow-md flex flex-col ${
                   planColors[plan.slug] ?? "border-border"
                 }`}
               >
@@ -368,8 +368,8 @@ function BillingContent() {
       )}
 
       {/* Feature Comparison Table */}
-      <div className="mt-8 rounded-xl border bg-card shadow-sm overflow-hidden">
-        <div className="p-6 pb-4 border-b">
+      <div className="mt-6 sm:mt-8 rounded-xl border bg-card shadow-sm overflow-hidden">
+        <div className="p-4 sm:p-6 pb-4 border-b">
           <h3 className="text-xl font-semibold">Detailed Feature Comparison</h3>
         </div>
         <div className="overflow-x-auto">
@@ -455,7 +455,7 @@ function BillingContent() {
       </div>
 
       {/* Payment Methods Info */}
-      <div className="rounded-xl border bg-card p-6 shadow-sm">
+      <div className="rounded-xl border bg-card p-4 sm:p-6 shadow-sm">
         <div className="flex items-center gap-3 mb-3">
           <CreditCard className="w-5 h-5 text-muted-foreground" />
           <h3 className="font-semibold">Accepted Payment Methods</h3>

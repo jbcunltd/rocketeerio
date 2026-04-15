@@ -255,23 +255,26 @@ export default function Landing() {
       {/*  NAVIGATION                                                   */}
       {/* ============================================================ */}
       <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-lg border-b border-border/50">
-        <div className="container flex items-center justify-between h-16">
+        <div className="container flex items-center justify-between h-14 sm:h-16 px-3 sm:px-4">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 bg-messenger rounded-lg flex items-center justify-center">
               <Rocket className="w-5 h-5 text-white" />
             </div>
-            <span className="text-xl font-bold text-foreground">Rocketeerio</span>
+            <span className="text-lg sm:text-xl font-bold text-foreground">Rocketeerio</span>
           </div>
           <div className="hidden md:flex items-center gap-8">
             <a href="#how-it-works" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">How It Works</a>
             <a href="#pricing" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">Pricing</a>
           </div>
-          <div className="flex items-center gap-3">
-            <Button variant="ghost" size="sm" onClick={scrollToAuth}>
+          <div className="flex items-center gap-2 sm:gap-3">
+            <Button variant="ghost" size="sm" onClick={scrollToAuth} className="text-xs sm:text-sm px-2 sm:px-3">
               Log In
             </Button>
-            <Button size="sm" className="bg-messenger hover:bg-messenger-dark" onClick={scrollToAuth}>
+            <Button size="sm" className="bg-messenger hover:bg-messenger-dark text-xs sm:text-sm px-2 sm:px-4 hidden sm:inline-flex" onClick={scrollToAuth}>
               Start Closing More Leads
+            </Button>
+            <Button size="sm" className="bg-messenger hover:bg-messenger-dark text-xs px-3 sm:hidden" onClick={scrollToAuth}>
+              Start Free
             </Button>
           </div>
         </div>
@@ -282,9 +285,9 @@ export default function Landing() {
       {/* ============================================================ */}
       <section className="relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-messenger/5 via-transparent to-messenger-light/20" />
-        <div className="container relative py-24 md:py-36">
+        <div className="container relative py-12 sm:py-24 md:py-36 px-4 sm:px-6">
           <div className="max-w-3xl mx-auto text-center">
-            <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight text-foreground leading-[1.1] mb-6">
+            <h1 className="text-3xl sm:text-4xl md:text-6xl font-extrabold tracking-tight text-foreground leading-[1.1] mb-6">
               You're paying for leads…{" "}
               <span className="text-messenger">and losing them.</span>
             </h1>
@@ -326,7 +329,7 @@ export default function Landing() {
           <p className="text-center text-sm font-medium text-muted-foreground mb-6 tracking-wide uppercase">
             Supported channels
           </p>
-          <div className="flex items-center justify-center gap-12">
+          <div className="flex items-center justify-center gap-6 sm:gap-12">
             {/* Facebook Messenger */}
             <div className="flex items-center gap-3">
               <div className="w-11 h-11 rounded-xl bg-messenger/10 flex items-center justify-center">
@@ -374,7 +377,7 @@ export default function Landing() {
             </p>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-8 mt-16 max-w-4xl mx-auto">
+          <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-6 sm:gap-8 mt-10 sm:mt-16 max-w-4xl mx-auto">
             {[
               {
                 icon: Clock,
@@ -440,7 +443,7 @@ export default function Landing() {
             </p>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-8 max-w-4xl mx-auto">
+          <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-6 sm:gap-8 max-w-4xl mx-auto">
             {[
               {
                 step: "1",
@@ -679,11 +682,11 @@ export default function Landing() {
           </div>
 
           {/* Pricing Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-12">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 sm:gap-6 mb-12">
             {pricingPlans.map((plan) => (
               <div
                 key={plan.name}
-                className={`relative rounded-2xl p-6 transition-all hover:shadow-lg flex flex-col ${
+                className={`relative rounded-2xl p-4 sm:p-6 transition-all hover:shadow-lg flex flex-col ${
                   plan.popular
                     ? "border-2 border-messenger bg-gradient-to-br from-messenger/5 to-white dark:from-messenger/10 dark:to-gray-900 shadow-lg"
                     : "border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-900"
@@ -768,9 +771,9 @@ export default function Landing() {
       {/* ============================================================ */}
       {/*  BOTTOM CTA                                                   */}
       {/* ============================================================ */}
-      <section className="py-20 md:py-28 bg-messenger">
-        <div className="container text-center">
-          <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
+      <section className="py-12 sm:py-20 md:py-28 bg-messenger">
+        <div className="container text-center px-4 sm:px-6">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-4">
             Stop losing customers. Start closing more deals today.
           </h2>
           <p className="text-lg text-white/80 max-w-2xl mx-auto mb-8">

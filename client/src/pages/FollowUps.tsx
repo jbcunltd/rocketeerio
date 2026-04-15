@@ -97,17 +97,17 @@ function FollowUpsContent() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold">Follow-Up Sequences</h1>
-          <p className="text-muted-foreground">Automatically re-engage leads who haven't responded.</p>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
+        <div className="min-w-0">
+          <h1 className="text-xl sm:text-2xl font-bold">Follow-Up Sequences</h1>
+          <p className="text-sm text-muted-foreground">Automatically re-engage leads who haven't responded.</p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 shrink-0">
           <div className="flex items-center gap-2">
             <Switch checked={isEnabled} onCheckedChange={(val) => { setIsEnabled(val); }} />
             <span className="text-sm font-medium">{isEnabled ? "Enabled" : "Disabled"}</span>
           </div>
-          <Button variant="outline" size="sm" onClick={() => setShowSettings(!showSettings)}>
+          <Button variant="outline" size="sm" onClick={() => setShowSettings(!showSettings)} className="w-full sm:w-auto">
             <Settings2 className="w-4 h-4 mr-1.5" />
             {showSettings ? "Hide Settings" : "Configure"}
           </Button>
@@ -115,9 +115,9 @@ function FollowUpsContent() {
       </div>
 
       {/* Sequence Timeline */}
-      <div className="bg-white rounded-xl p-6 card-shadow border border-border/50 mb-6">
+      <div className="bg-white rounded-xl p-4 sm:p-6 card-shadow border border-border/50 mb-6 overflow-hidden">
         <h3 className="font-bold mb-4">Follow-Up Timeline</h3>
-        <div className="flex items-center gap-2 flex-wrap">
+        <div className="flex items-center gap-2 flex-wrap overflow-x-auto">
           <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-green-50 border border-green-200">
             <div className="w-2 h-2 rounded-full bg-green-500" />
             <span className="text-sm font-medium text-green-700">First Contact</span>
@@ -139,10 +139,10 @@ function FollowUpsContent() {
 
       {/* Settings Panel */}
       {showSettings && (
-        <div className="bg-white rounded-xl p-6 card-shadow border border-border/50 mb-6">
-          <div className="flex items-center justify-between mb-4">
+        <div className="bg-white rounded-xl p-4 sm:p-6 card-shadow border border-border/50 mb-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
             <h3 className="font-bold">Sequence Configuration</h3>
-            <Button onClick={handleSaveSettings} disabled={saving} size="sm">
+            <Button onClick={handleSaveSettings} disabled={saving} size="sm" className="w-full sm:w-auto">
               {saving ? <Loader2 className="w-4 h-4 animate-spin mr-1.5" /> : <Save className="w-4 h-4 mr-1.5" />}
               Save Settings
             </Button>
@@ -198,7 +198,7 @@ function FollowUpsContent() {
       )}
 
       {/* Active Conversations */}
-      <div className="bg-white rounded-xl p-6 card-shadow border border-border/50">
+      <div className="bg-white rounded-xl p-4 sm:p-6 card-shadow border border-border/50">
         <h3 className="font-bold mb-3">Active Conversations</h3>
         <p className="text-sm text-muted-foreground mb-4">Follow-ups are automatically scheduled when a new conversation starts.</p>
         {!conversations?.length ? (

@@ -105,9 +105,9 @@ export default function Onboarding() {
         </div>
       </div>
 
-      <div className="flex-1 container py-8 max-w-2xl mx-auto">
+      <div className="flex-1 container py-4 sm:py-8 px-4 sm:px-6 max-w-2xl mx-auto">
         {/* Progress Steps */}
-        <div className="flex items-center justify-center gap-4 mb-10">
+        <div className="flex items-center justify-center gap-2 sm:gap-4 mb-6 sm:mb-10">
           {steps.map((s, i) => (
             <div key={s.num} className="flex items-center gap-2">
               <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold transition-colors ${
@@ -124,15 +124,15 @@ export default function Onboarding() {
         </div>
 
         {/* Step Content */}
-        <div className="bg-white rounded-xl p-8 card-shadow">
+        <div className="bg-white rounded-xl p-4 sm:p-8 card-shadow">
           {step === 1 && (
             <div>
-              <div className="flex items-center gap-3 mb-6">
-                <div className="w-12 h-12 bg-messenger-light rounded-xl flex items-center justify-center">
-                  <Facebook className="w-6 h-6 text-messenger" />
+              <div className="flex items-start sm:items-center gap-3 mb-6">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-messenger-light rounded-xl flex items-center justify-center shrink-0">
+                  <Facebook className="w-5 h-5 sm:w-6 sm:h-6 text-messenger" />
                 </div>
-                <div>
-                  <h2 className="text-xl font-bold">Connect Your Facebook Page</h2>
+                <div className="min-w-0">
+                  <h2 className="text-lg sm:text-xl font-bold">Connect Your Facebook Page</h2>
                   <p className="text-sm text-muted-foreground">Link your business page to start receiving AI-powered lead qualification.</p>
                 </div>
               </div>
@@ -159,12 +159,12 @@ export default function Onboarding() {
 
           {step === 2 && (
             <div>
-              <div className="flex items-center gap-3 mb-6">
-                <div className="w-12 h-12 bg-messenger-light rounded-xl flex items-center justify-center">
-                  <BookOpen className="w-6 h-6 text-messenger" />
+              <div className="flex items-start sm:items-center gap-3 mb-6">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-messenger-light rounded-xl flex items-center justify-center shrink-0">
+                  <BookOpen className="w-5 h-5 sm:w-6 sm:h-6 text-messenger" />
                 </div>
-                <div>
-                  <h2 className="text-xl font-bold">Add Your Business Info</h2>
+                <div className="min-w-0">
+                  <h2 className="text-lg sm:text-xl font-bold">Add Your Business Info</h2>
                   <p className="text-sm text-muted-foreground">The AI uses this to answer questions and qualify leads accurately.</p>
                 </div>
               </div>
@@ -230,12 +230,12 @@ export default function Onboarding() {
 
           {step === 3 && (
             <div>
-              <div className="flex items-center gap-3 mb-6">
-                <div className="w-12 h-12 bg-messenger-light rounded-xl flex items-center justify-center">
-                  <Bell className="w-6 h-6 text-messenger" />
+              <div className="flex items-start sm:items-center gap-3 mb-6">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-messenger-light rounded-xl flex items-center justify-center shrink-0">
+                  <Bell className="w-5 h-5 sm:w-6 sm:h-6 text-messenger" />
                 </div>
-                <div>
-                  <h2 className="text-xl font-bold">Set Notification Preferences</h2>
+                <div className="min-w-0">
+                  <h2 className="text-lg sm:text-xl font-bold">Set Notification Preferences</h2>
                   <p className="text-sm text-muted-foreground">Choose how you want to be alerted about hot leads.</p>
                 </div>
               </div>

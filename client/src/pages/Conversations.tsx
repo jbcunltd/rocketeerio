@@ -63,13 +63,13 @@ function ConversationsContent() {
   return (
     <div>
       <div className="mb-6">
-        <h1 className="text-2xl font-bold">Conversations</h1>
-        <p className="text-muted-foreground">All lead conversations from your connected Facebook Pages.</p>
+        <h1 className="text-xl sm:text-2xl font-bold">Conversations</h1>
+        <p className="text-sm text-muted-foreground">All lead conversations from your connected Facebook Pages.</p>
       </div>
 
       {/* Filters */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 mb-4">
-        <div className="relative flex-1 max-w-sm">
+        <div className="relative w-full sm:flex-1 sm:max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
             placeholder="Search conversations..."
@@ -78,7 +78,7 @@ function ConversationsContent() {
             className="pl-9"
           />
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
           {[
             { key: "all", label: "All" },
             { key: "hot", label: "Hot" },
@@ -121,7 +121,7 @@ function ConversationsContent() {
                 onClick={() => setLocation(`/conversations/${conv.id}`)}
                 className="w-full text-left bg-white rounded-xl p-4 card-shadow border border-border/50 hover:border-messenger/30 hover:shadow-md transition-all"
               >
-                <div className="flex items-start justify-between gap-3">
+                <div className="flex items-start justify-between gap-2 sm:gap-3">
                   <div className="flex items-start gap-3 min-w-0 flex-1">
                     <div className="w-10 h-10 bg-messenger-light rounded-full flex items-center justify-center shrink-0 mt-0.5">
                       <span className="text-sm font-bold text-messenger">
@@ -129,8 +129,8 @@ function ConversationsContent() {
                       </span>
                     </div>
                     <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2 mb-0.5">
-                        <span className="font-semibold text-foreground truncate">{lead?.name || "Unknown Lead"}</span>
+                      <div className="flex items-center gap-2 mb-0.5 flex-wrap">
+                        <span className="font-semibold text-foreground truncate max-w-[150px] sm:max-w-none">{lead?.name || "Unknown Lead"}</span>
                         {lead && <ScoreBadge classification={lead.classification} score={lead.score} />}
                         {conv.needsHandoff && (
                           <span className="inline-flex items-center gap-1 text-xs font-bold px-2 py-1 rounded-full bg-red-50 text-red-600">

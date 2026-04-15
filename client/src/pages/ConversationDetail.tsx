@@ -142,38 +142,39 @@ function ConversationDetailContent() {
   const { conversation: conv, lead, page } = convData;
 
   return (
-    <div className="flex flex-col lg:flex-row gap-6 h-[calc(100vh-8rem)]">
+    <div className="flex flex-col lg:flex-row gap-4 sm:gap-6 h-auto lg:h-[calc(100vh-8rem)]">
       {/* Chat Thread */}
       <div className="flex-1 flex flex-col bg-white rounded-xl card-shadow border border-border/50 overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b">
-          <div className="flex items-center gap-3">
-            <Button variant="ghost" size="sm" onClick={() => setLocation("/conversations")}>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-3 sm:p-4 border-b">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+            <Button variant="ghost" size="sm" onClick={() => setLocation("/conversations")} className="shrink-0">
               <ArrowLeft className="w-4 h-4" />
             </Button>
-            <div className="w-9 h-9 bg-messenger-light rounded-full flex items-center justify-center">
+            <div className="w-9 h-9 bg-messenger-light rounded-full flex items-center justify-center shrink-0">
               <span className="text-sm font-bold text-messenger">{(lead?.name || "?").charAt(0).toUpperCase()}</span>
             </div>
-            <div>
-              <p className="font-semibold text-sm">{lead?.name || "Unknown Lead"}</p>
-              <p className="text-xs text-muted-foreground">{page?.pageName || "Unknown Page"}</p>
+            <div className="min-w-0">
+              <p className="font-semibold text-sm truncate">{lead?.name || "Unknown Lead"}</p>
+              <p className="text-xs text-muted-foreground truncate">{page?.pageName || "Unknown Page"}</p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={handleMarkConverted} disabled={lead?.status === "converted"}>
+          <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap pl-11 sm:pl-0">
+            <Button variant="outline" size="sm" onClick={handleMarkConverted} disabled={lead?.status === "converted"} className="text-xs sm:text-sm">
               <CheckCircle2 className="w-3.5 h-3.5 mr-1" />
-              {lead?.status === "converted" ? "Converted" : "Mark Converted"}
+              <span className="hidden sm:inline">{lead?.status === "converted" ? "Converted" : "Mark Converted"}</span>
+              <span className="sm:hidden">{lead?.status === "converted" ? "Done" : "Convert"}</span>
             </Button>
-            <Button variant="outline" size="sm" onClick={handleArchive}>
-              <Archive className="w-3.5 h-3.5 mr-1" /> Archive
+            <Button variant="outline" size="sm" onClick={handleArchive} className="text-xs sm:text-sm">
+              <Archive className="w-3.5 h-3.5 sm:mr-1" /> <span className="hidden sm:inline">Archive</span>
             </Button>
             {conv.needsHandoff ? (
-              <Button size="sm" className="bg-green-600 hover:bg-green-700 text-white" onClick={handleResolveHandoff}>
-                <CheckCircle2 className="w-3.5 h-3.5 mr-1" /> Resolve Handoff
+              <Button size="sm" className="bg-green-600 hover:bg-green-700 text-white text-xs sm:text-sm" onClick={handleResolveHandoff}>
+                <CheckCircle2 className="w-3.5 h-3.5 mr-1" /> Resolve
               </Button>
             ) : (
-              <Button variant="outline" size="sm" className="text-red-600 border-red-200 hover:bg-red-50" onClick={handleRequestHandoff}>
-                <Headphones className="w-3.5 h-3.5 mr-1" /> Hand Off
+              <Button variant="outline" size="sm" className="text-red-600 border-red-200 hover:bg-red-50 text-xs sm:text-sm" onClick={handleRequestHandoff}>
+                <Headphones className="w-3.5 h-3.5 sm:mr-1" /> <span className="hidden sm:inline">Hand Off</span>
               </Button>
             )}
           </div>
@@ -208,8 +209,8 @@ function ConversationDetailContent() {
         </div>
 
         {/* Input */}
-        <div className="p-4 border-t">
-          <div className="flex gap-2">
+        <div className="p-3 sm:p-4 border-t">
+          <div className="flex gap-1.5 sm:gap-2">
             <Input
               placeholder="Type a message or simulate a lead message..."
               value={newMessage}
@@ -232,9 +233,9 @@ function ConversationDetailContent() {
       </div>
 
       {/* Lead Info Sidebar */}
-      <div className="w-full lg:w-80 space-y-4 shrink-0">
+      <div className="w-full lg:w-80 space-y-3 sm:space-y-4 shrink-0 pb-4 lg:pb-0 lg:overflow-y-auto">
         {/* Lead Score Card */}
-        <div className="bg-white rounded-xl p-5 card-shadow border border-border/50">
+        <div className="bg-white rounded-xl p-4 sm:p-5 card-shadow border border-border/50">
           <div className="flex items-center justify-between mb-4">
             <h3 className="font-bold">Lead Score</h3>
             {lead && (

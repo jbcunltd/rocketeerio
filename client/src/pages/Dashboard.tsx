@@ -85,14 +85,14 @@ function DashboardContent() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold">Dashboard</h1>
-          <p className="text-muted-foreground">Welcome back{user?.name ? `, ${user.name}` : ""}! Here's your lead overview.</p>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
+        <div className="min-w-0">
+          <h1 className="text-xl sm:text-2xl font-bold">Dashboard</h1>
+          <p className="text-sm text-muted-foreground truncate">Welcome back{user?.name ? `, ${user.name}` : ""}! Here's your lead overview.</p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 shrink-0">
           {!hasData && (
-            <Button onClick={handleSeedDemo} disabled={seedMutation.isPending} className="bg-messenger hover:bg-messenger-dark">
+            <Button onClick={handleSeedDemo} disabled={seedMutation.isPending} className="bg-messenger hover:bg-messenger-dark w-full sm:w-auto">
               {seedMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Zap className="w-4 h-4 mr-2" />}
               Load Demo Data
             </Button>
@@ -106,7 +106,7 @@ function DashboardContent() {
           <div className="flex items-center gap-4 flex-wrap">
             {pages && pages.length > 1 ? (
               pages.map((page: any) => (
-                <div key={page.id} className="flex-1 min-w-[280px]">
+                <div key={page.id} className="flex-1 min-w-0 sm:min-w-[280px]">
                   <div className="flex items-center gap-2 mb-1.5">
                     <div className="w-5 h-5 bg-messenger-light rounded flex items-center justify-center">
                       <Facebook className="w-3 h-3 text-messenger" />
@@ -130,7 +130,7 @@ function DashboardContent() {
       )}
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6">
         <StatCard icon={MessageCircle} label="Total Conversations" value={stats?.totalConversations ?? 0} color="bg-messenger-light text-messenger" />
         <StatCard icon={Flame} label="Hot Leads Today" value={stats?.hotLeadsToday ?? 0} color="bg-red-50 text-red-500" />
         <StatCard icon={Users} label="Total Leads" value={stats?.totalLeads ?? 0} color="bg-amber-50 text-amber-600" />
@@ -158,9 +158,9 @@ function DashboardContent() {
           </div>
         </div>
       ) : (
-        <div className="grid lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
           {/* Lead Activity Chart */}
-          <div className="lg:col-span-2 bg-white rounded-xl p-6 card-shadow border border-border/50">
+          <div className="lg:col-span-2 bg-white rounded-xl p-4 sm:p-6 card-shadow border border-border/50 overflow-hidden">
             <h3 className="text-lg font-bold mb-1">Lead Activity</h3>
             <p className="text-sm text-muted-foreground mb-4">New leads by classification over the last 7 days</p>
             {activityLoading ? (
@@ -185,7 +185,7 @@ function DashboardContent() {
           </div>
 
           {/* Lead Distribution */}
-          <div className="bg-white rounded-xl p-6 card-shadow border border-border/50">
+          <div className="bg-white rounded-xl p-4 sm:p-6 card-shadow border border-border/50">
             <h3 className="text-lg font-bold mb-1">Lead Distribution</h3>
             <p className="text-sm text-muted-foreground mb-4">Current lead classification breakdown</p>
             {pieData.length > 0 ? (
@@ -213,8 +213,8 @@ function DashboardContent() {
           </div>
 
           {/* Connected Pages */}
-          <div className="lg:col-span-2 bg-white rounded-xl p-6 card-shadow border border-border/50">
-            <div className="flex items-center justify-between mb-4">
+          <div className="lg:col-span-2 bg-white rounded-xl p-4 sm:p-6 card-shadow border border-border/50">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
               <div>
                 <h3 className="text-lg font-bold">Connected Pages</h3>
                 <p className="text-sm text-muted-foreground">Your Facebook Pages with active AI agents</p>
@@ -246,7 +246,7 @@ function DashboardContent() {
           </div>
 
           {/* Recent Hot Leads */}
-          <div className="bg-white rounded-xl p-6 card-shadow border border-border/50">
+          <div className="bg-white rounded-xl p-4 sm:p-6 card-shadow border border-border/50">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-bold">Hot Leads</h3>
               <Button variant="ghost" size="sm" onClick={() => setLocation("/leads")} className="text-messenger">

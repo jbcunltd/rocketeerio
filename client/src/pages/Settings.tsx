@@ -193,12 +193,12 @@ function PagesTab() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="min-w-0">
           <h3 className="text-lg font-bold mb-1">Connected Facebook Pages</h3>
           <p className="text-sm text-muted-foreground">Connect your Facebook Pages to enable AI-powered Messenger responses.</p>
         </div>
-        <Button onClick={handleConnect} disabled={connecting} className="bg-[#1877F2] hover:bg-[#166FE5] text-white">
+        <Button onClick={handleConnect} disabled={connecting} className="bg-[#1877F2] hover:bg-[#166FE5] text-white w-full sm:w-auto shrink-0">
           {connecting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Facebook className="w-4 h-4 mr-2" />}
           Connect a Page
         </Button>
@@ -1009,19 +1009,19 @@ export default function Settings() {
     <DashboardLayout>
       <div className="max-w-3xl">
         <div className="mb-6">
-          <h1 className="text-2xl font-bold">Settings</h1>
-          <p className="text-muted-foreground">Manage your account, notifications, and integrations.</p>
+          <h1 className="text-xl sm:text-2xl font-bold">Settings</h1>
+          <p className="text-sm text-muted-foreground">Manage your account, notifications, and integrations.</p>
         </div>
         <Tabs defaultValue={defaultTab}>
-          <TabsList className="mb-6">
-            <TabsTrigger value="profile"><User className="w-4 h-4 mr-1.5" />Profile</TabsTrigger>
-            <TabsTrigger value="hot-lead-alerts"><BellRing className="w-4 h-4 mr-1.5" />Hot Lead Alerts</TabsTrigger>
-            <TabsTrigger value="notifications"><Bell className="w-4 h-4 mr-1.5" />Notifications</TabsTrigger>
-            <TabsTrigger value="pages"><Facebook className="w-4 h-4 mr-1.5" />Pages</TabsTrigger>
-            <TabsTrigger value="instagram"><Instagram className="w-4 h-4 mr-1.5" />Instagram</TabsTrigger>
-            <TabsTrigger value="ai-personality"><Bot className="w-4 h-4 mr-1.5" />AI Personality</TabsTrigger>
-            <TabsTrigger value="billing"><CreditCard className="w-4 h-4 mr-1.5" />Billing</TabsTrigger>
-            <TabsTrigger value="handoff"><Headphones className="w-4 h-4 mr-1.5" />Handoff</TabsTrigger>
+          <TabsList className="mb-6 flex-wrap h-auto gap-1 p-1">
+            <TabsTrigger value="profile" className="text-xs sm:text-sm"><User className="w-4 h-4 sm:mr-1.5" /><span className="hidden sm:inline">Profile</span></TabsTrigger>
+            <TabsTrigger value="hot-lead-alerts" className="text-xs sm:text-sm"><BellRing className="w-4 h-4 sm:mr-1.5" /><span className="hidden sm:inline">Hot Lead Alerts</span></TabsTrigger>
+            <TabsTrigger value="notifications" className="text-xs sm:text-sm"><Bell className="w-4 h-4 sm:mr-1.5" /><span className="hidden sm:inline">Notifications</span></TabsTrigger>
+            <TabsTrigger value="pages" className="text-xs sm:text-sm"><Facebook className="w-4 h-4 sm:mr-1.5" /><span className="hidden sm:inline">Pages</span></TabsTrigger>
+            <TabsTrigger value="instagram" className="text-xs sm:text-sm"><Instagram className="w-4 h-4 sm:mr-1.5" /><span className="hidden sm:inline">Instagram</span></TabsTrigger>
+            <TabsTrigger value="ai-personality" className="text-xs sm:text-sm"><Bot className="w-4 h-4 sm:mr-1.5" /><span className="hidden sm:inline">AI Personality</span></TabsTrigger>
+            <TabsTrigger value="billing" className="text-xs sm:text-sm"><CreditCard className="w-4 h-4 sm:mr-1.5" /><span className="hidden sm:inline">Billing</span></TabsTrigger>
+            <TabsTrigger value="handoff" className="text-xs sm:text-sm"><Headphones className="w-4 h-4 sm:mr-1.5" /><span className="hidden sm:inline">Handoff</span></TabsTrigger>
           </TabsList>
           <TabsContent value="profile"><ProfileTab /></TabsContent>
           <TabsContent value="hot-lead-alerts"><HotLeadAlertsTab /></TabsContent>
