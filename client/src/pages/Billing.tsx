@@ -146,10 +146,14 @@ function BillingContent() {
         </button>
         <button
           onClick={() => setBillingPeriod(billingPeriod === "monthly" ? "annual" : "monthly")}
-          className="relative inline-flex h-8 w-14 items-center rounded-full bg-muted cursor-pointer"
+          className={`relative inline-flex h-8 w-14 items-center rounded-full cursor-pointer border-2 transition-colors ${
+            billingPeriod === "annual"
+              ? "bg-purple-600 border-purple-600"
+              : "bg-gray-300 border-gray-300 dark:bg-gray-600 dark:border-gray-600"
+          }`}
         >
           <span
-            className={`inline-block h-6 w-6 transform rounded-full bg-white shadow-lg transition-transform ${
+            className={`inline-block h-6 w-6 transform rounded-full bg-white shadow-md transition-transform ${
               billingPeriod === "annual" ? "translate-x-7" : "translate-x-1"
             }`}
           />
@@ -164,10 +168,10 @@ function BillingContent() {
         >
           Annual
         </button>
-        <span className={`ml-2 inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${
+        <span className={`ml-2 inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold transition-all ${
           billingPeriod === "annual"
-            ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 visible"
-            : "invisible"
+            ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 visible opacity-100"
+            : "invisible opacity-0"
         }`}>
           Save 20%
         </span>
