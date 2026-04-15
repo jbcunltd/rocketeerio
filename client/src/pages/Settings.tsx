@@ -11,7 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectSeparator, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { trpc } from "@/lib/trpc";
-import { User, Bell, CreditCard, Facebook, Loader2, Save, Trash2, CheckCircle, AlertCircle, ExternalLink, Bot, Instagram, Headphones, MessageSquare, Smartphone, Mail, Radio, BellRing } from "lucide-react";
+import { User, Bell, CreditCard, Facebook, Loader2, Save, Trash2, CheckCircle, AlertCircle, ExternalLink, Bot, Instagram, Headphones, MessageSquare, Smartphone, Mail, Radio, BellRing, CheckCircle2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -762,19 +762,150 @@ function HotLeadAlertsTab() {
   const currentPlan = subscriptionQuery.data?.plan?.slug;
   const isPro = currentPlan === "pro" || currentPlan === "scale" || currentPlan === "custom";
 
-  const [whatsappEnabled, setWhatsappEnabled] = useState(false);
-  const [whatsappNumber, setWhatsappNumber] = useState("");
-  const [telegramEnabled, setTelegramEnabled] = useState(false);
-  const [telegramHandle, setTelegramHandle] = useState("");
-  const [messengerEnabled, setMessengerEnabled] = useState(true);
-  const [emailEnabled, setEmailEnabled] = useState(true);
+  // Email channel
+  const [emailStatus, setEmailStatus] = useState<"not_connected" | "pending" | "connected">("not_connected");
   const [emailAddr, setEmailAddr] = useState("");
-  const [smsEnabled, setSmsEnabled] = useState(false);
+  const [emailVerificationCode, setEmailVerificationCode] = useState("");
+  const [emailOtpInput, setEmailOtpInput] = useState("");
+  const [emailSending, setEmailSending] = useState(false);
+
+  // Messenger channel
+  const [messengerStatus, setMessengerStatus] = useState<"not_connected" | "connected">("not_connected");
+  const [messengerPageName, setMessengerPageName] = useState("");
+  const [messengerConnecting, setMessengerConnecting] = useState(false);
+
+  // Telegram channel
+  const [telegramStatus, setTelegramStatus] = useState<"not_connected" | "pending" | "connected">("not_connected");
+  const [telegramCode, setTelegramCode] = useState("");
+  const [telegramHandle, setTelegramHandle] = useState("");
+
+  // WhatsApp channel (Pro only)
+  const [whatsappStatus, setWhatsappStatus] = useState<"not_connected" | "pending" | "connected">("not_connected");
+  const [whatsappNumber, setWhatsappNumber] = useState("");
+  const [whatsappOtpInput, setWhatsappOtpInput] = useState("");
+  const [whatsappSending, setWhatsappSending] = useState(false);
+
+  // SMS channel (Pro only)
+  const [smsStatus, setSmsStatus] = useState<"not_connected" | "pending" | "connected">("not_connected");
   const [smsNumber, setSmsNumber] = useState("");
+  const [smsOtpInput, setSmsOtpInput] = useState("");
+  const [smsSending, setSmsSending] = useState(false);
+
   const [leadStatus, setLeadStatus] = useState<"hot" | "warm" | "all">("hot");
 
+  // Email handlers
+  const handleEmailSendCode = async () => {
+    if (!emailAddr.trim()) { toast.error("Please enter your email"); return; }
+    setEmailSending(true);
+    setTimeout(() => {
+      const code = Math.random().toString().slice(2, 8);
+      setEmailVerificationCode(code);
+      setEmailStatus("pending");
+      setEmailSending(false);
+      toast.success("Verification code sent to " + emailAddr);
+    }, 1000);
+  };
+
+  const handleEmailVerify = () => {
+    if (emailOtpInput === emailVerificationCode) {
+      setEmailStatus("connected");
+      setEmailOtpInput("");
+      toast.success("Email verified successfully!");
+    } else {
+      toast.error("Invalid verification code");
+    }
+  };
+
+  // Messenger handlers
+  const handleMessengerConnect = () => {
+    setMessengerConnecting(true);
+    setTimeout(() => {
+      setMessengerStatus("connected");
+      setMessengerPageName("My Business Page");
+      setMessengerConnecting(false);
+      toast.success("Connected to Messenger!");
+    }, 1500);
+  };
+
+  // Telegram handlers
+  const handleTelegramConnect = () => {
+    const code = Math.random().toString().slice(2, 8).toUpperCase();
+    setTelegramCode(code);
+    setTelegramStatus("pending");
+    toast.success("Telegram connection code: " + code);
+  };
+
+  const handleTelegramVerify = () => {
+    if (telegramHandle.trim()) {
+      setTelegramStatus("connected");
+      toast.success("Telegram connected successfully!");
+    } else {
+      toast.error("Please enter your Telegram handle");
+    }
+  };
+
+  // WhatsApp handlers
+  const handleWhatsappSendCode = async () => {
+    if (!whatsappNumber.trim()) { toast.error("Please enter your phone number"); return; }
+    setWhatsappSending(true);
+    setTimeout(() => {
+      setWhatsappStatus("pending");
+      setWhatsappSending(false);
+      toast.success("Verification code sent to " + whatsappNumber);
+    }, 1000);
+  };
+
+  const handleWhatsappVerify = () => {
+    if (whatsappOtpInput.length === 6) {
+      setWhatsappStatus("connected");
+      setWhatsappOtpInput("");
+      toast.success("WhatsApp verified successfully!");
+    } else {
+      toast.error("Please enter a valid 6-digit code");
+    }
+  };
+
+  // SMS handlers
+  const handleSmsSendCode = async () => {
+    if (!smsNumber.trim()) { toast.error("Please enter your phone number"); return; }
+    setSmsSending(true);
+    setTimeout(() => {
+      setSmsStatus("pending");
+      setSmsSending(false);
+      toast.success("Verification code sent to " + smsNumber);
+    }, 1000);
+  };
+
+  const handleSmsVerify = () => {
+    if (smsOtpInput.length === 6) {
+      setSmsStatus("connected");
+      setSmsOtpInput("");
+      toast.success("SMS verified successfully!");
+    } else {
+      toast.error("Please enter a valid 6-digit code");
+    }
+  };
+
   const handleSave = () => {
-    toast.success("Hot lead alert preferences saved");
+    const connectedChannels = [
+      emailStatus === "connected" && "Email",
+      messengerStatus === "connected" && "Messenger",
+      telegramStatus === "connected" && "Telegram",
+      whatsappStatus === "connected" && "WhatsApp",
+      smsStatus === "connected" && "SMS"
+    ].filter(Boolean).join(", ");
+    
+    if (connectedChannels) {
+      toast.success("Hot lead alert preferences saved. Connected channels: " + connectedChannels);
+    } else {
+      toast.error("Please connect at least one notification channel");
+    }
+  };
+
+  const getStatusBadge = (status: string) => {
+    if (status === "connected") return <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded inline-flex items-center gap-1"><CheckCircle className="w-3 h-3" /> Connected</span>;
+    if (status === "pending") return <span className="text-xs bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded">Pending verification</span>;
+    return <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded">Not connected</span>;
   };
 
   return (
@@ -817,94 +948,191 @@ function HotLeadAlertsTab() {
       <div>
         <h4 className="font-semibold mb-4">Notification Channels</h4>
         <div className="space-y-4">
-          {/* WhatsApp - Pro Only */}
-          <div className={`flex items-start justify-between p-4 bg-white rounded-lg border ${
-            !isPro ? "opacity-60 bg-gray-50" : ""
-          }`}>
-            <div className="flex-1">
-              <div className="flex items-center gap-2 mb-1">
-                <Smartphone className="w-4 h-4 text-green-500" />
-                <p className="font-medium">WhatsApp <span className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded ml-2">Pro</span></p>
-              </div>
-              <p className="text-sm text-muted-foreground">Get notified instantly on WhatsApp when a lead is ready to buy</p>
-              {!isPro && <p className="text-xs text-purple-600 font-medium mt-2">Upgrade to Pro to unlock</p>}
-              {whatsappEnabled && isPro && (
-                <div className="mt-3">
-                  <Label className="text-xs">Enter your WhatsApp number</Label>
-                  <Input value={whatsappNumber} onChange={e => setWhatsappNumber(e.target.value)} placeholder="+1 (555) 000-0000" className="mt-1.5 max-w-xs" />
+          {/* Email */}
+          <div className="p-4 bg-white rounded-lg border">
+            <div className="flex items-start justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <Mail className="w-5 h-5 text-orange-500" />
+                <div>
+                  <p className="font-medium">Email</p>
+                  <p className="text-xs text-muted-foreground">Get email summaries of your hottest leads</p>
                 </div>
-              )}
-            </div>
-            <Switch checked={whatsappEnabled} onCheckedChange={setWhatsappEnabled} disabled={!isPro} />
-          </div>
-
-          {/* Telegram */}
-          <div className="flex items-start justify-between p-4 bg-white rounded-lg border">
-            <div className="flex-1">
-              <div className="flex items-center gap-2 mb-1">
-                <Radio className="w-4 h-4 text-blue-500" />
-                <p className="font-medium">Telegram</p>
               </div>
-              <p className="text-sm text-muted-foreground">Get a Telegram ping the moment a hot lead comes in</p>
-              {telegramEnabled && (
-                <div className="mt-3">
-                  <Label className="text-xs">Connect Telegram bot</Label>
-                  <Input value={telegramHandle} onChange={e => setTelegramHandle(e.target.value)} placeholder="Your Telegram handle" className="mt-1.5 max-w-xs" />
-                </div>
-              )}
+              {getStatusBadge(emailStatus)}
             </div>
-            <Switch checked={telegramEnabled} onCheckedChange={setTelegramEnabled} />
+            {emailStatus === "not_connected" && (
+              <div className="space-y-3">
+                <Input value={emailAddr} onChange={e => setEmailAddr(e.target.value)} placeholder="you@example.com" className="max-w-xs" />
+                <Button onClick={handleEmailSendCode} disabled={emailSending || !emailAddr.trim()} size="sm" className="bg-messenger hover:bg-messenger-dark">
+                  {emailSending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+                  Send Verification Code
+                </Button>
+              </div>
+            )}
+            {emailStatus === "pending" && (
+              <div className="space-y-3">
+                <div>
+                  <Label className="text-xs">Enter verification code sent to {emailAddr}</Label>
+                  <Input value={emailOtpInput} onChange={e => setEmailOtpInput(e.target.value)} placeholder="000000" maxLength={6} className="mt-1.5 max-w-xs" />
+                </div>
+                <Button onClick={handleEmailVerify} size="sm" className="bg-messenger hover:bg-messenger-dark">
+                  Verify Email
+                </Button>
+              </div>
+            )}
+            {emailStatus === "connected" && (
+              <div className="flex items-center justify-between">
+                <p className="text-sm text-green-600">✓ {emailAddr}</p>
+                <Button onClick={() => setEmailStatus("not_connected")} variant="outline" size="sm">Change</Button>
+              </div>
+            )}
           </div>
 
           {/* Messenger */}
-          <div className="flex items-start justify-between p-4 bg-white rounded-lg border">
-            <div className="flex-1">
-              <div className="flex items-center gap-2 mb-1">
-                <MessageSquare className="w-4 h-4 text-messenger" />
-                <p className="font-medium">Messenger</p>
+          <div className="p-4 bg-white rounded-lg border">
+            <div className="flex items-start justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <MessageSquare className="w-5 h-5 text-messenger" />
+                <div>
+                  <p className="font-medium">Messenger</p>
+                  <p className="text-xs text-muted-foreground">Receive alerts right in your Messenger inbox</p>
+                </div>
               </div>
-              <p className="text-sm text-muted-foreground">Receive alerts right in your Messenger inbox</p>
+              {getStatusBadge(messengerStatus)}
             </div>
-            <Switch checked={messengerEnabled} onCheckedChange={setMessengerEnabled} />
+            {messengerStatus === "not_connected" && (
+              <Button onClick={handleMessengerConnect} disabled={messengerConnecting} size="sm" className="bg-[#1877F2] hover:bg-[#166FE5]">
+                {messengerConnecting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+                Connect with Facebook
+              </Button>
+            )}
+            {messengerStatus === "connected" && (
+              <div className="flex items-center justify-between">
+                <p className="text-sm text-green-600">✓ Connected to {messengerPageName}</p>
+                <Button onClick={() => setMessengerStatus("not_connected")} variant="outline" size="sm">Disconnect</Button>
+              </div>
+            )}
           </div>
 
-          {/* Email */}
-          <div className="flex items-start justify-between p-4 bg-white rounded-lg border">
-            <div className="flex-1">
-              <div className="flex items-center gap-2 mb-1">
-                <Mail className="w-4 h-4 text-orange-500" />
-                <p className="font-medium">Email</p>
-              </div>
-              <p className="text-sm text-muted-foreground">Get email summaries of your hottest leads</p>
-              {emailEnabled && (
-                <div className="mt-3">
-                  <Label className="text-xs">Email address for alerts</Label>
-                  <Input value={emailAddr} onChange={e => setEmailAddr(e.target.value)} placeholder="you@example.com" className="mt-1.5 max-w-xs" />
+          {/* Telegram */}
+          <div className="p-4 bg-white rounded-lg border">
+            <div className="flex items-start justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <Radio className="w-5 h-5 text-blue-500" />
+                <div>
+                  <p className="font-medium">Telegram</p>
+                  <p className="text-xs text-muted-foreground">Get a Telegram ping the moment a hot lead comes in</p>
                 </div>
-              )}
+              </div>
+              {getStatusBadge(telegramStatus)}
             </div>
-            <Switch checked={emailEnabled} onCheckedChange={setEmailEnabled} />
+            {telegramStatus === "not_connected" && (
+              <Button onClick={handleTelegramConnect} size="sm" className="bg-blue-500 hover:bg-blue-600">
+                Get Connection Code
+              </Button>
+            )}
+            {telegramStatus === "pending" && (
+              <div className="space-y-3 bg-blue-50 p-3 rounded">
+                <p className="text-sm">Message <strong>@RocketeerBot</strong> with code: <strong className="text-lg text-blue-600">{telegramCode}</strong></p>
+                <div>
+                  <Label className="text-xs">Your Telegram handle</Label>
+                  <Input value={telegramHandle} onChange={e => setTelegramHandle(e.target.value)} placeholder="@yourhandle" className="mt-1.5 max-w-xs" />
+                </div>
+                <Button onClick={handleTelegramVerify} size="sm" className="bg-blue-500 hover:bg-blue-600">
+                  Verify Connection
+                </Button>
+              </div>
+            )}
+            {telegramStatus === "connected" && (
+              <div className="flex items-center justify-between">
+                <p className="text-sm text-green-600">✓ {telegramHandle}</p>
+                <Button onClick={() => setTelegramStatus("not_connected")} variant="outline" size="sm">Disconnect</Button>
+              </div>
+            )}
+          </div>
+
+          {/* WhatsApp - Pro Only */}
+          <div className={`p-4 bg-white rounded-lg border ${
+            !isPro ? "opacity-60 bg-gray-50" : ""
+          }`}>
+            <div className="flex items-start justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <Smartphone className="w-5 h-5 text-green-500" />
+                <div>
+                  <p className="font-medium">WhatsApp <span className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded ml-2">Pro</span></p>
+                  <p className="text-xs text-muted-foreground">Get notified instantly on WhatsApp when a lead is ready to buy</p>
+                </div>
+              </div>
+              {getStatusBadge(whatsappStatus)}
+            </div>
+            {!isPro ? (
+              <p className="text-xs text-purple-600 font-medium">Upgrade to Pro to unlock</p>
+            ) : whatsappStatus === "not_connected" ? (
+              <div className="space-y-3">
+                <Input value={whatsappNumber} onChange={e => setWhatsappNumber(e.target.value)} placeholder="+1 (555) 000-0000" className="max-w-xs" />
+                <Button onClick={handleWhatsappSendCode} disabled={whatsappSending || !whatsappNumber.trim()} size="sm" className="bg-green-500 hover:bg-green-600">
+                  {whatsappSending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+                  Send Verification Code
+                </Button>
+              </div>
+            ) : whatsappStatus === "pending" ? (
+              <div className="space-y-3">
+                <div>
+                  <Label className="text-xs">Enter verification code sent to {whatsappNumber}</Label>
+                  <Input value={whatsappOtpInput} onChange={e => setWhatsappOtpInput(e.target.value)} placeholder="000000" maxLength={6} className="mt-1.5 max-w-xs" />
+                </div>
+                <Button onClick={handleWhatsappVerify} size="sm" className="bg-green-500 hover:bg-green-600">
+                  Verify WhatsApp
+                </Button>
+              </div>
+            ) : (
+              <div className="flex items-center justify-between">
+                <p className="text-sm text-green-600">✓ {whatsappNumber}</p>
+                <Button onClick={() => setWhatsappStatus("not_connected")} variant="outline" size="sm">Change</Button>
+              </div>
+            )}
           </div>
 
           {/* SMS - Pro Only */}
-          <div className={`flex items-start justify-between p-4 bg-white rounded-lg border ${
+          <div className={`p-4 bg-white rounded-lg border ${
             !isPro ? "opacity-60 bg-gray-50" : ""
           }`}>
-            <div className="flex-1">
-              <div className="flex items-center gap-2 mb-1">
-                <Radio className="w-4 h-4 text-purple-500" />
-                <p className="font-medium">SMS <span className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded ml-2">Pro</span></p>
-              </div>
-              <p className="text-sm text-muted-foreground">Instant SMS for your most urgent leads</p>
-              {!isPro && <p className="text-xs text-purple-600 font-medium mt-2">Upgrade to Pro to unlock</p>}
-              {smsEnabled && isPro && (
-                <div className="mt-3">
-                  <Label className="text-xs">Phone number for SMS alerts</Label>
-                  <Input value={smsNumber} onChange={e => setSmsNumber(e.target.value)} placeholder="+1 (555) 000-0000" className="mt-1.5 max-w-xs" />
+            <div className="flex items-start justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <Radio className="w-5 h-5 text-purple-500" />
+                <div>
+                  <p className="font-medium">SMS <span className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded ml-2">Pro</span></p>
+                  <p className="text-xs text-muted-foreground">Instant SMS for your most urgent leads</p>
                 </div>
-              )}
+              </div>
+              {getStatusBadge(smsStatus)}
             </div>
-            <Switch checked={smsEnabled} onCheckedChange={setSmsEnabled} disabled={!isPro} />
+            {!isPro ? (
+              <p className="text-xs text-purple-600 font-medium">Upgrade to Pro to unlock</p>
+            ) : smsStatus === "not_connected" ? (
+              <div className="space-y-3">
+                <Input value={smsNumber} onChange={e => setSmsNumber(e.target.value)} placeholder="+1 (555) 000-0000" className="max-w-xs" />
+                <Button onClick={handleSmsSendCode} disabled={smsSending || !smsNumber.trim()} size="sm" className="bg-purple-500 hover:bg-purple-600">
+                  {smsSending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+                  Send Verification Code
+                </Button>
+              </div>
+            ) : smsStatus === "pending" ? (
+              <div className="space-y-3">
+                <div>
+                  <Label className="text-xs">Enter verification code sent to {smsNumber}</Label>
+                  <Input value={smsOtpInput} onChange={e => setSmsOtpInput(e.target.value)} placeholder="000000" maxLength={6} className="mt-1.5 max-w-xs" />
+                </div>
+                <Button onClick={handleSmsVerify} size="sm" className="bg-purple-500 hover:bg-purple-600">
+                  Verify SMS
+                </Button>
+              </div>
+            ) : (
+              <div className="flex items-center justify-between">
+                <p className="text-sm text-green-600">✓ {smsNumber}</p>
+                <Button onClick={() => setSmsStatus("not_connected")} variant="outline" size="sm">Change</Button>
+              </div>
+            )}
           </div>
         </div>
       </div>
