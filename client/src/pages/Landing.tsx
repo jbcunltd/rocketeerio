@@ -41,61 +41,7 @@ const features = [
   },
 ];
 
-const pricingPlans = [
-  {
-    name: "Starter",
-    price: "$49",
-    period: "/month",
-    description: "Perfect for small businesses with one Facebook Page",
-    features: [
-      "1 Facebook Page",
-      "Up to 500 conversations/mo",
-      "AI auto-replies",
-      "BANT lead scoring",
-      "Email notifications",
-      "Basic knowledge base",
-    ],
-    cta: "Get Started",
-    popular: false,
-  },
-  {
-    name: "Growth",
-    price: "$149",
-    period: "/month",
-    description: "For growing businesses managing multiple pages",
-    features: [
-      "Up to 5 Facebook Pages",
-      "Unlimited conversations",
-      "AI auto-replies + follow-ups",
-      "BANT lead scoring",
-      "SMS + Email notifications",
-      "Advanced knowledge base",
-      "Priority support",
-      "Conversion analytics",
-    ],
-    cta: "Start Growing",
-    popular: true,
-  },
-  {
-    name: "Scale",
-    price: "$299",
-    period: "/month",
-    description: "For agencies and enterprises with high volume",
-    features: [
-      "Unlimited Facebook Pages",
-      "Unlimited conversations",
-      "AI auto-replies + follow-ups",
-      "Advanced BANT scoring",
-      "SMS + Email + Webhook alerts",
-      "Custom AI persona",
-      "Dedicated account manager",
-      "API access",
-      "White-label option",
-    ],
-    cta: "Scale Up",
-    popular: false,
-  },
-];
+
 
 const stats = [
   { value: "< 5s", label: "Average Response Time" },
@@ -401,61 +347,6 @@ export default function Landing() {
                 <div className="text-sm font-bold text-messenger mb-2">Step {item.step}</div>
                 <h3 className="text-xl font-bold text-foreground mb-2">{item.title}</h3>
                 <p className="text-muted-foreground">{item.description}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Pricing Section */}
-      <section id="pricing" className="py-20 md:py-28">
-        <div className="container">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
-              Simple, Transparent Pricing
-            </h2>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Start with a 14-day free trial. No credit card required.
-            </p>
-          </div>
-          <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
-            {pricingPlans.map((plan) => (
-              <div
-                key={plan.name}
-                className={`relative bg-white rounded-xl p-8 card-shadow border-2 transition-shadow hover:shadow-lg ${
-                  plan.popular ? "border-messenger" : "border-transparent"
-                }`}
-              >
-                {plan.popular && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                    <div className="flex items-center gap-1 px-3 py-1 bg-messenger text-white text-xs font-bold rounded-full">
-                      <Star className="w-3 h-3" /> Most Popular
-                    </div>
-                  </div>
-                )}
-                <div className="mb-6">
-                  <h3 className="text-xl font-bold text-foreground mb-1">{plan.name}</h3>
-                  <p className="text-sm text-muted-foreground mb-4">{plan.description}</p>
-                  <div className="flex items-baseline gap-1">
-                    <span className="text-4xl font-extrabold text-foreground">{plan.price}</span>
-                    <span className="text-muted-foreground">{plan.period}</span>
-                  </div>
-                </div>
-                <ul className="space-y-3 mb-8">
-                  {plan.features.map((feature) => (
-                    <li key={feature} className="flex items-start gap-2 text-sm">
-                      <CheckCircle2 className="w-4 h-4 text-success mt-0.5 shrink-0" />
-                      <span className="text-foreground">{feature}</span>
-                    </li>
-                  ))}
-                </ul>
-                <Button
-                  className={`w-full ${plan.popular ? "bg-messenger hover:bg-messenger-dark" : ""}`}
-                  variant={plan.popular ? "default" : "outline"}
-                  onClick={scrollToAuth}
-                >
-                  {plan.cta}
-                </Button>
               </div>
             ))}
           </div>
