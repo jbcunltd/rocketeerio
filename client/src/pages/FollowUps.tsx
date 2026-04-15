@@ -127,34 +127,62 @@ function FollowUpsContent() {
 
   return (
     <div>
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
-        <div className="min-w-0">
+      <div className="mb-6">
+        <div className="mb-4">
           <h1 className="text-xl sm:text-2xl font-bold">Follow-Up Sequences</h1>
           <p className="text-sm text-muted-foreground">Automatically re-engage leads who haven't responded.</p>
         </div>
-        <div className="flex items-center gap-3 shrink-0">
-          <div className="flex items-center gap-2">
+        
+        {/* Mobile-friendly toggle card */}
+        <div className={`p-4 rounded-lg border transition-all ${
+          isEnabled 
+            ? "bg-green-50 border-green-200" 
+            : "bg-gray-50 border-gray-200"
+        }`}>
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-3">
+              <div className={`w-3 h-3 rounded-full ${
+                isEnabled ? "bg-green-500" : "bg-gray-400"
+              }`}></div>
+              <span className={`text-sm font-semibold ${
+                isEnabled ? "text-green-700" : "text-gray-600"
+              }`}>
+                {isEnabled ? "Follow-Ups Enabled" : "Follow-Ups Disabled"}
+              </span>
+            </div>
             <Switch checked={isEnabled} onCheckedChange={(val) => { setIsEnabled(val); }} />
-            <span className="text-sm font-medium">{isEnabled ? "Enabled" : "Disabled"}</span>
           </div>
-          <Button variant="outline" size="sm" onClick={() => setShowSettings(!showSettings)} className="w-full sm:w-auto">
-            <Settings2 className="w-4 h-4 mr-1.5" />
-            {showSettings ? "Hide Settings" : "Configure"}
-          </Button>
+          <p className={`text-xs ${
+            isEnabled ? "text-green-700" : "text-gray-600"
+          }`}>
+            {isEnabled 
+              ? "Automatic follow-ups are active. Leads will receive messages according to your sequence." 
+              : "Follow-ups are disabled. Enable to start re-engaging leads."}
+          </p>
         </div>
+        
+        {/* Configure button - full width on mobile */}
+        <Button 
+          onClick={() => setShowSettings(!showSettings)} 
+          className="w-full mt-3 bg-messenger hover:bg-messenger-dark"
+        >
+          <Settings2 className="w-4 h-4 mr-2" />
+          {showSettings ? "Hide Settings" : "Configure Sequence"}
+        </Button>
       </div>
 
       {/* Sequence Timeline */}
       <div className="bg-white rounded-xl p-4 sm:p-6 card-shadow border border-border/50 mb-6 overflow-hidden">
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4">
           <h3 className="font-bold">Follow-Up Timeline</h3>
-          <div className="flex items-center gap-2 text-xs bg-blue-50 text-blue-700 px-3 py-1.5 rounded-full border border-blue-100">
+          <div className="hidden sm:flex items-center gap-2 text-xs bg-blue-50 text-blue-700 px-3 py-1.5 rounded-full border border-blue-100 shrink-0">
             <AlertCircle className="w-3.5 h-3.5" />
             <span>Facebook 24-Hour Rule Compliant</span>
           </div>
         </div>
         
-        <div className="flex flex-col gap-6">
+        {/* Desktop: Horizontal layout */}
+        <div className="hidden sm:flex flex-col gap-6">
           {/* Within 24 Hours Zone */}
           <div className="relative">
             <div className="absolute left-0 top-0 bottom-0 w-1 bg-green-400 rounded-full"></div>
@@ -215,6 +243,96 @@ function FollowUpsContent() {
               </div>
             </div>
           </div>
+        </div>
+
+        {/* Mobile: Vertical timeline */}
+        <div className="sm:hidden space-y-3">
+          <div className="flex items-center gap-2 text-xs bg-blue-50 text-blue-700 px-3 py-1.5 rounded-full border border-blue-100 w-fit">
+            <AlertCircle className="w-3.5 h-3.5" />
+            <span>24-Hour Compliant</span>
+          </div>
+          
+          {/* Start marker */}
+          <div className="flex gap-3">
+            <div className="flex flex-col items-center">
+              <div className="w-3 h-3 rounded-full bg-green-500"></div>
+              <div className="w-0.5 h-8 bg-green-200"></div>
+            </div>
+            <div className="pb-8">
+              <p className="text-sm font-medium text-green-700">Last User Message</p>
+              <p className="text-xs text-muted-foreground">Start of 24-hour window</p>
+            </div>
+          </div>
+
+          {/* Messenger steps */}
+          {within24hSteps.map((step, idx) => (
+            <div key={step.num} className="flex gap-3">
+              <div className="flex flex-col items-center">
+                <div className={`w-3 h-3 rounded-full ${
+                  step.enabled ? "bg-messenger" : "bg-gray-300"
+                }`}></div>
+                {idx < within24hSteps.length - 1 && (
+                  <div className="w-0.5 h-20 bg-green-200"></div>
+                )}
+                {idx === within24hSteps.length - 1 && (
+                  <div className="w-0.5 h-12 bg-orange-200"></div>
+                )}
+              </div>
+              <div className={`pb-8 flex-1 border-l-4 ${
+                step.enabled ? "border-green-400 bg-green-50" : "border-gray-300 bg-gray-50"
+              } p-3 rounded`}>
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-sm font-semibold">Step {step.num}</span>
+                  <MessageSquare className={`w-4 h-4 ${
+                    step.enabled ? "text-messenger" : "text-gray-400"
+                  }`} />
+                </div>
+                <p className="text-xs font-medium text-green-700 mb-1">{formatDelay(step.delay)}</p>
+                <p className="text-xs text-muted-foreground line-clamp-2">
+                  {step.message || "AI-generated follow-up"}
+                </p>
+              </div>
+            </div>
+          ))}
+
+          {/* 24-hour divider */}
+          <div className="flex gap-3 py-2">
+            <div className="flex flex-col items-center">
+              <div className="w-2 h-2 rounded-full bg-orange-500"></div>
+              <div className="w-0.5 h-6 bg-orange-300"></div>
+            </div>
+            <div className="text-xs font-semibold text-orange-700 bg-orange-50 px-3 py-1.5 rounded border border-orange-200">
+              24-Hour Window Closes
+            </div>
+          </div>
+
+          {/* Email steps */}
+          {after24hSteps.map((step, idx) => (
+            <div key={step.num} className="flex gap-3">
+              <div className="flex flex-col items-center">
+                <div className={`w-3 h-3 rounded-full ${
+                  step.enabled ? "bg-orange-500" : "bg-gray-300"
+                }`}></div>
+                {idx < after24hSteps.length - 1 && (
+                  <div className="w-0.5 h-20 bg-orange-200"></div>
+                )}
+              </div>
+              <div className={`pb-8 flex-1 border-l-4 ${
+                step.enabled ? "border-orange-400 bg-orange-50" : "border-gray-300 bg-gray-50"
+              } p-3 rounded`}>
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-sm font-semibold">Step {step.num}</span>
+                  <Mail className={`w-4 h-4 ${
+                    step.enabled ? "text-orange-500" : "text-gray-400"
+                  }`} />
+                </div>
+                <p className="text-xs font-medium text-orange-700 mb-1">{formatDelay(step.delay)}</p>
+                <p className="text-xs text-muted-foreground line-clamp-2">
+                  {step.message || "AI-generated follow-up"}
+                </p>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
 
