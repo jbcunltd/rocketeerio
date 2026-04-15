@@ -44,7 +44,14 @@ export default function Onboarding() {
         category: pageCategory || "Business",
       });
       setStep(2);
-    } catch { toast.error("Failed to connect page"); }
+    } catch (err: any) {
+      const msg = err?.message || "";
+      if (msg.includes("limit") || msg.includes("Upgrade")) {
+        toast.error(msg);
+      } else {
+        toast.error("Failed to connect page");
+      }
+    }
   };
 
   const handleStep2 = async () => {

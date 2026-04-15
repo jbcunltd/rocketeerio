@@ -14,7 +14,7 @@ import {
 
 // ─── Enums ──────────────────────────────────────────────────────────
 export const roleEnum = pgEnum("role", ["user", "admin"]);
-export const planEnum = pgEnum("plan", ["starter", "growth", "scale"]);
+export const planEnum = pgEnum("plan", ["free", "growth", "pro", "scale", "custom"]);
 export const classificationEnum = pgEnum("classification", ["hot", "warm", "cold"]);
 export const leadStatusEnum = pgEnum("lead_status", ["active", "converted", "archived", "lost"]);
 export const conversationStatusEnum = pgEnum("conversation_status", ["open", "closed", "archived"]);
@@ -40,7 +40,7 @@ export const users = pgTable("users", {
   phone: varchar("phone", { length: 32 }),
   company: varchar("company", { length: 255 }),
   onboardingCompleted: boolean("onboardingCompleted").default(false).notNull(),
-  plan: planEnum("plan").default("starter").notNull(),
+  plan: planEnum("plan").default("free").notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().notNull(),
   lastSignedIn: timestamp("lastSignedIn").defaultNow().notNull(),
@@ -233,6 +233,8 @@ export type WebhookEndpoint = typeof webhookEndpoints.$inferSelect;
 export type InsertWebhookEndpoint = typeof webhookEndpoints.$inferInsert;
 
 // ─── Notification Preferences ────────────────────────────────────────
+export const alertThresholdEnum = pgEnum("alert_threshold", ["hot", "warm", "all"]);
+
 export const notificationPreferences = pgTable("notification_preferences", {
   id: serial("id").primaryKey(),
   userId: integer("userId").notNull().unique(),
@@ -244,6 +246,17 @@ export const notificationPreferences = pgTable("notification_preferences", {
   dailyDigest: boolean("dailyDigest").default(true).notNull(),
   smsPhone: varchar("smsPhone", { length: 32 }),
   notificationEmail: varchar("notificationEmail", { length: 320 }),
+  // ─── Hot Lead Alert Channels ─────────────────────────────────────
+  alertThreshold: alertThresholdEnum("alertThreshold").default("hot").notNull(),
+  whatsappEnabled: boolean("whatsappEnabled").default(false).notNull(),
+  whatsappNumber: varchar("whatsappNumber", { length: 32 }),
+  telegramEnabled: boolean("telegramEnabled").default(false).notNull(),
+  telegramChatId: varchar("telegramChatId", { length: 128 }),
+  messengerEnabled: boolean("messengerEnabled").default(true).notNull(),
+  alertSmsEnabled: boolean("alertSmsEnabled").default(false).notNull(),
+  alertSmsNumber: varchar("alertSmsNumber", { length: 32 }),
+  alertEmailEnabled: boolean("alertEmailEnabled").default(true).notNull(),
+  alertEmailAddress: varchar("alertEmailAddress", { length: 320 }),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().notNull(),
 });

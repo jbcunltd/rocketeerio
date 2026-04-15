@@ -14,6 +14,7 @@ import { registerPaymongoWebhookRoutes } from "../server/paymongo-webhook";
 import { appRouter } from "../server/routers";
 import { processFollowUps } from "../server/follow-up-worker";
 import { createContext } from "../server/_core/context";
+import { handleTelegramBotUpdate } from "../server/hot-lead-alerts";
 
 const app = express();
 
@@ -34,6 +35,17 @@ registerKbImportRoutes(app);
 
 // PayMongo webhook routes
 registerPaymongoWebhookRoutes(app);
+
+// Telegram bot webhook for hot lead alert linking
+app.post("/api/webhook/telegram", async (req, res) => {
+  try {
+    await handleTelegramBotUpdate(req.body);
+    res.json({ ok: true });
+  } catch (error) {
+    console.error("[Telegram Webhook] Error:", error);
+    res.json({ ok: true }); // Always return 200 to Telegram
+  }
+});
 
 // Follow-up cron endpoint
 app.post("/api/cron/follow-ups", async (_req, res) => {

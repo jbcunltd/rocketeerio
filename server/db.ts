@@ -82,7 +82,7 @@ export async function getUserById(id: number) {
   return result.length > 0 ? result[0] : undefined;
 }
 
-export async function updateUserProfile(userId: number, data: { name?: string; email?: string; phone?: string; company?: string; onboardingCompleted?: boolean; plan?: "starter" | "growth" | "scale" }) {
+export async function updateUserProfile(userId: number, data: { name?: string; email?: string; phone?: string; company?: string; onboardingCompleted?: boolean; plan?: "free" | "growth" | "pro" | "scale" | "custom" }) {
   const db = await getDb();
   if (!db) return;
   await db.update(users).set({ ...data, updatedAt: new Date() }).where(eq(users.id, userId));
@@ -582,37 +582,55 @@ export async function updatePaymentByCheckoutId(checkoutId: string, data: Partia
 export async function seedSubscriptionPlans() {
   const plans: InsertSubscriptionPlan[] = [
     {
-      name: "Starter",
-      slug: "starter",
-      price: "2490.00",
-      currency: "PHP",
+      name: "Free",
+      slug: "free",
+      price: "0.00",
+      currency: "USD",
       interval: "monthly",
       features: [
         "1 Facebook Page",
-        "Up to 500 conversations/mo",
+        "100 active leads",
+        "50 conversations/mo",
         "AI auto-replies",
         "BANT lead scoring",
-        "Email notifications",
-        "Basic knowledge base",
+        "Basic analytics",
       ],
-      sortOrder: 1,
+      sortOrder: 0,
       isActive: true,
     },
     {
       name: "Growth",
       slug: "growth",
-      price: "7490.00",
-      currency: "PHP",
+      price: "29.00",
+      currency: "USD",
       interval: "monthly",
       features: [
-        "Up to 5 Facebook Pages",
-        "Unlimited conversations",
+        "1 Facebook Page",
+        "1,000 active leads",
+        "500 conversations/mo",
         "AI auto-replies + follow-ups",
         "BANT lead scoring",
+        "CRM pipeline",
+        "Email notifications",
+      ],
+      sortOrder: 1,
+      isActive: true,
+    },
+    {
+      name: "Pro",
+      slug: "pro",
+      price: "69.00",
+      currency: "USD",
+      interval: "monthly",
+      features: [
+        "3 Facebook Pages",
+        "5,000 active leads",
+        "2,500 conversations/mo",
+        "AI auto-replies + follow-ups",
+        "Advanced BANT scoring",
+        "CRM pipeline",
         "SMS + Email notifications",
-        "Advanced knowledge base",
         "Priority support",
-        "Conversion analytics",
       ],
       sortOrder: 2,
       isActive: true,
@@ -620,21 +638,40 @@ export async function seedSubscriptionPlans() {
     {
       name: "Scale",
       slug: "scale",
-      price: "14990.00",
-      currency: "PHP",
+      price: "149.00",
+      currency: "USD",
+      interval: "monthly",
+      features: [
+        "10 Facebook Pages",
+        "20,000 active leads",
+        "10,000 conversations/mo",
+        "AI auto-replies + follow-ups",
+        "Advanced BANT scoring",
+        "CRM pipeline",
+        "SMS + Email + Webhook alerts",
+        "Custom AI persona",
+        "White-label option",
+        "Dedicated account manager",
+      ],
+      sortOrder: 3,
+      isActive: true,
+    },
+    {
+      name: "Custom",
+      slug: "custom",
+      price: "0.00",
+      currency: "USD",
       interval: "monthly",
       features: [
         "Unlimited Facebook Pages",
+        "Unlimited active leads",
         "Unlimited conversations",
-        "AI auto-replies + follow-ups",
-        "Advanced BANT scoring",
-        "SMS + Email + Webhook alerts",
-        "Custom AI persona",
-        "Dedicated account manager",
-        "API access",
-        "White-label option",
+        "Everything in Scale",
+        "Custom integrations",
+        "Dedicated support",
+        "SLA guarantee",
       ],
-      sortOrder: 3,
+      sortOrder: 4,
       isActive: true,
     },
   ];
@@ -970,3 +1007,26 @@ export async function upsertHandoffSettings(userId: number, data: Partial<Insert
     await database.insert(handoffSettings).values({ userId, ...data });
   }
 }
+
+
+// ─── Plan Enforcement Helpers ───────────────────────────────────────
+
+export async function getActiveLeadCount(userId: number): Promise<number> {
+  const database = await getDb();
+  if (!database) return 0;
+  const [result] = await database.select({ count: count() }).from(leads)
+    .where(and(eq(leads.userId, userId), eq(leads.status, "active")));
+  return result?.count ?? 0;
+}
+
+export async function getMonthlyConversationCount(userId: number): Promise<number> {
+  const database = await getDb();
+  if (!database) return 0;
+  const monthStart = new Date();
+  monthStart.setDate(1);
+  monthStart.setHours(0, 0, 0, 0);
+  const [result] = await database.select({ count: count() }).from(conversations)
+    .where(and(eq(conversations.userId, userId), gte(conversations.createdAt, monthStart)));
+  return result?.count ?? 0;
+}
+

@@ -8,6 +8,8 @@ import { generateAIResponse, scoreLead } from "./ai-engine";
 import { notifyOwner } from "./_core/notification";
 import { createCheckoutSession } from "./paymongo";
 import { ENV } from "./_core/env";
+import { checkPageLimit, checkLeadLimit, checkConversationLimit, enforcePlanLimit, getPlanUsage, PLAN_LIMITS } from "./plan-limits";
+import { dispatchLeadAlert } from "./hot-lead-alerts";
 
 export const appRouter = router({
   system: systemRouter,
@@ -30,12 +32,20 @@ export const appRouter = router({
         phone: z.string().optional(),
         company: z.string().optional(),
         onboardingCompleted: z.boolean().optional(),
-        plan: z.enum(["starter", "growth", "scale"]).optional(),
+        plan: z.enum(["free", "growth", "pro", "scale", "custom"]).optional(),
       }))
       .mutation(async ({ ctx, input }) => {
         await db.updateUserProfile(ctx.user.id, input);
         return { success: true };
       }),
+
+    planUsage: protectedProcedure.query(async ({ ctx }) => {
+      return getPlanUsage(ctx.user.id, ctx.user.plan);
+    }),
+
+    planLimits: publicProcedure.query(() => {
+      return PLAN_LIMITS;
+    }),
   }),
 
   // ─── Facebook Pages ────────────────────────────────────────────────
@@ -53,6 +63,10 @@ export const appRouter = router({
         followerCount: z.number().optional(),
       }))
       .mutation(async ({ ctx, input }) => {
+        // Plan enforcement: check page limit
+        const pageCheck = await checkPageLimit(ctx.user.id, ctx.user.plan);
+        enforcePlanLimit(pageCheck, "Facebook Pages");
+
         const id = await db.createPage({
           userId: ctx.user.id,
           ...input,
@@ -290,11 +304,27 @@ export const appRouter = router({
             timelineNotes: scoreResult.timelineNotes,
           });
 
-          // Notify owner if hot lead detected
-          if (scoreResult.classification === "hot" && !conv.lead.notifiedAt) {
-            await notifyOwner({
-              title: `🔥 Hot Lead Detected: ${conv.lead.name || "Unknown"}`,
-              content: `Score: ${scoreResult.score}/100\nPage: ${conv.page?.pageName}\nLast message: ${input.leadMessage}\n\nBudget: ${scoreResult.budgetNotes}\nNeed: ${scoreResult.needNotes}\nTimeline: ${scoreResult.timelineNotes}`,
+          // Dispatch hot lead alert via multi-channel notification system
+          const prevClassification = conv.lead.classification;
+          const newClassification = scoreResult.classification;
+          const shouldAlert = 
+            (newClassification === "hot" && prevClassification !== "hot") ||
+            (newClassification === "warm" && prevClassification === "cold");
+
+          if (shouldAlert) {
+            await dispatchLeadAlert({
+              userId: ctx.user.id,
+              userPlan: ctx.user.plan,
+              leadId: conv.lead.id,
+              leadName: conv.lead.name || "Unknown",
+              leadScore: scoreResult.score,
+              classification: newClassification as "hot" | "warm" | "cold",
+              lastMessage: input.leadMessage,
+              pageName: conv.page?.pageName || "Unknown Page",
+              conversationId: input.conversationId,
+              budgetNotes: scoreResult.budgetNotes,
+              needNotes: scoreResult.needNotes,
+              timelineNotes: scoreResult.timelineNotes,
             });
             await db.updateLead(conv.lead.id, { notifiedAt: new Date() });
           }
@@ -467,8 +497,26 @@ export const appRouter = router({
         dailyDigest: z.boolean().optional(),
         smsPhone: z.string().optional(),
         notificationEmail: z.string().optional(),
+        // Hot Lead Alert channels
+        alertThreshold: z.enum(["hot", "warm", "all"]).optional(),
+        whatsappEnabled: z.boolean().optional(),
+        whatsappNumber: z.string().optional(),
+        telegramEnabled: z.boolean().optional(),
+        telegramChatId: z.string().optional(),
+        messengerEnabled: z.boolean().optional(),
+        alertSmsEnabled: z.boolean().optional(),
+        alertSmsNumber: z.string().optional(),
+        alertEmailEnabled: z.boolean().optional(),
+        alertEmailAddress: z.string().optional(),
       }))
       .mutation(async ({ ctx, input }) => {
+        // SMS alerts require Pro+ plan
+        if (input.alertSmsEnabled) {
+          const { checkSmsAlertAccess } = await import("./plan-limits");
+          if (!checkSmsAlertAccess(ctx.user.plan)) {
+            throw new Error("SMS alerts require Pro plan or higher. Please upgrade.");
+          }
+        }
         await db.upsertNotificationPrefs(ctx.user.id, input);
         return { success: true };
       }),
@@ -840,10 +888,9 @@ export const appRouter = router({
         });
 
         // Update user plan field (only for paid plans)
-        const paidPlanSlugs = ["growth", "pro", "scale"];
+        const paidPlanSlugs = ["growth", "pro", "scale", "custom"];
         if (paidPlanSlugs.includes(plan.slug)) {
-          // Map to the allowed plan field in user profile
-          const planField = plan.slug as "starter" | "growth" | "scale";
+          const planField = plan.slug as "free" | "growth" | "pro" | "scale" | "custom";
           await db.updateUserProfile(ctx.user.id, { plan: planField });
         }
 
@@ -852,8 +899,8 @@ export const appRouter = router({
 
     cancelSubscription: protectedProcedure.mutation(async ({ ctx }) => {
       await db.cancelUserSubscription(ctx.user.id);
-      // Reset user to starter plan
-      await db.updateUserProfile(ctx.user.id, { plan: "starter" });
+      // Reset user to free plan
+      await db.updateUserProfile(ctx.user.id, { plan: "free" });
       return { success: true };
     }),
   }),
@@ -962,6 +1009,7 @@ export const appRouter = router({
         await db.upsertHandoffSettings(ctx.user.id, {
           ...input,
           handoffKeywords: input.handoffKeywords ? JSON.stringify(input.handoffKeywords) : undefined,
+          sentimentThreshold: input.sentimentThreshold !== undefined ? String(input.sentimentThreshold) : undefined,
         });
         return { success: true };
       }),

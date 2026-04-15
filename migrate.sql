@@ -55,3 +55,91 @@ CREATE TABLE IF NOT EXISTS "page_testers" (
   "label" varchar(255),
   "createdAt" timestamp DEFAULT now() NOT NULL
 );
+
+-- ═══════════════════════════════════════════════════════════════════
+-- Plan Enforcement System Migration
+-- ═══════════════════════════════════════════════════════════════════
+
+-- Add new plan enum values (free, pro, custom) if not already present
+DO $$ BEGIN
+  ALTER TYPE "plan" ADD VALUE IF NOT EXISTS 'free';
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
+DO $$ BEGIN
+  ALTER TYPE "plan" ADD VALUE IF NOT EXISTS 'pro';
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
+DO $$ BEGIN
+  ALTER TYPE "plan" ADD VALUE IF NOT EXISTS 'custom';
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
+-- Update existing 'starter' plan users to 'free'
+-- Note: This requires the enum to already have 'free' value
+UPDATE "users" SET "plan" = 'free' WHERE "plan" = 'starter';
+
+-- Set default plan to 'free' for users table
+ALTER TABLE "users" ALTER COLUMN "plan" SET DEFAULT 'free';
+
+-- ═══════════════════════════════════════════════════════════════════
+-- Hot Lead Alerts — Notification Preferences Expansion
+-- ═══════════════════════════════════════════════════════════════════
+
+-- Create alert_threshold enum
+DO $$ BEGIN
+  CREATE TYPE "alert_threshold" AS ENUM ('hot', 'warm', 'all');
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
+-- Add new hot lead alert columns to notification_preferences
+DO $$ BEGIN
+  ALTER TABLE "notification_preferences" ADD COLUMN "alertThreshold" "alert_threshold" NOT NULL DEFAULT 'hot';
+EXCEPTION WHEN duplicate_column THEN NULL;
+END $$;
+
+DO $$ BEGIN
+  ALTER TABLE "notification_preferences" ADD COLUMN "whatsappEnabled" boolean NOT NULL DEFAULT false;
+EXCEPTION WHEN duplicate_column THEN NULL;
+END $$;
+
+DO $$ BEGIN
+  ALTER TABLE "notification_preferences" ADD COLUMN "whatsappNumber" varchar(32);
+EXCEPTION WHEN duplicate_column THEN NULL;
+END $$;
+
+DO $$ BEGIN
+  ALTER TABLE "notification_preferences" ADD COLUMN "telegramEnabled" boolean NOT NULL DEFAULT false;
+EXCEPTION WHEN duplicate_column THEN NULL;
+END $$;
+
+DO $$ BEGIN
+  ALTER TABLE "notification_preferences" ADD COLUMN "telegramChatId" varchar(128);
+EXCEPTION WHEN duplicate_column THEN NULL;
+END $$;
+
+DO $$ BEGIN
+  ALTER TABLE "notification_preferences" ADD COLUMN "messengerEnabled" boolean NOT NULL DEFAULT true;
+EXCEPTION WHEN duplicate_column THEN NULL;
+END $$;
+
+DO $$ BEGIN
+  ALTER TABLE "notification_preferences" ADD COLUMN "alertSmsEnabled" boolean NOT NULL DEFAULT false;
+EXCEPTION WHEN duplicate_column THEN NULL;
+END $$;
+
+DO $$ BEGIN
+  ALTER TABLE "notification_preferences" ADD COLUMN "alertSmsNumber" varchar(32);
+EXCEPTION WHEN duplicate_column THEN NULL;
+END $$;
+
+DO $$ BEGIN
+  ALTER TABLE "notification_preferences" ADD COLUMN "alertEmailEnabled" boolean NOT NULL DEFAULT true;
+EXCEPTION WHEN duplicate_column THEN NULL;
+END $$;
+
+DO $$ BEGIN
+  ALTER TABLE "notification_preferences" ADD COLUMN "alertEmailAddress" varchar(320);
+EXCEPTION WHEN duplicate_column THEN NULL;
+END $$;

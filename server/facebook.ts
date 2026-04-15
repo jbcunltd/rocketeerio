@@ -6,6 +6,8 @@ import * as db from "./db";
 import { generateAIResponse, scoreLead, detectHandoff } from "./ai-engine";
 import { notifyOwner } from "./_core/notification";
 import { dispatchWebhookEvent } from "./webhook-dispatcher";
+import { dispatchLeadAlert } from "./hot-lead-alerts";
+import { checkLeadLimit, checkConversationLimit, getPlanLimits } from "./plan-limits";
 
 const FB_GRAPH = "https://graph.facebook.com/v19.0";
 
@@ -94,9 +96,24 @@ async function processIncomingMessage(
 
   // mode === "live" or tester in testing mode — proceed normally
 
-  // 1. Find or create lead
+  // 1. Find or create lead (with plan enforcement)
+  const user = await db.getUserById(pageEntry.userId);
+  const userPlan = user?.plan || "free";
+
   let lead = await db.getLeadByPsid(senderPsid, pageEntry.dbPageId);
   if (!lead) {
+    // Check lead limit before creating
+    const leadCheck = await checkLeadLimit(pageEntry.userId, userPlan);
+    if (!leadCheck.allowed) {
+      console.warn(`[Webhook] Lead limit reached for user ${pageEntry.userId} (${leadCheck.currentCount}/${leadCheck.limit}). Skipping new lead creation.`);
+      // Still send a courtesy reply
+      if (pageEntry.pageAccessToken) {
+        await sendMessengerMessage(pageEntry.pageAccessToken, senderPsid,
+          "Thanks for reaching out! We're currently at capacity but will get back to you soon.");
+      }
+      return;
+    }
+
     console.log(`[Webhook] Creating new lead for PSID ${senderPsid}`);
     const profile = await getFacebookUserProfile(senderPsid, pageEntry.pageAccessToken);
     const leadId = await db.createLead({
@@ -116,9 +133,20 @@ async function processIncomingMessage(
     console.log(`[Webhook] Found existing lead id=${lead.id}, name=${lead.name}`);
   }
 
-  // 2. Find or create conversation
+  // 2. Find or create conversation (with plan enforcement)
   let conv = await db.getConversationByLeadId(lead.id);
   if (!conv) {
+    // Check conversation limit before creating
+    const convCheck = await checkConversationLimit(pageEntry.userId, userPlan);
+    if (!convCheck.allowed) {
+      console.warn(`[Webhook] Conversation limit reached for user ${pageEntry.userId} (${convCheck.currentCount}/${convCheck.limit}). Skipping.`);
+      if (pageEntry.pageAccessToken) {
+        await sendMessengerMessage(pageEntry.pageAccessToken, senderPsid,
+          "Thanks for your message! Our team will get back to you shortly.");
+      }
+      return;
+    }
+
     console.log(`[Webhook] Creating new conversation for lead ${lead.id}`);
     const convId = await db.createConversation({
       userId: pageEntry.userId,
@@ -210,11 +238,27 @@ async function processIncomingMessage(
       timelineNotes: scoreResult.timelineNotes,
     });
 
-    // 11. Notify if hot lead
-    if (scoreResult.classification === "hot" && !lead.notifiedAt) {
-      await notifyOwner({
-        title: `Hot Lead Detected: ${lead.name || "Unknown"}`,
-        content: `Score: ${scoreResult.score}/100\nLast message: ${messageText}\n\nBudget: ${scoreResult.budgetNotes}\nNeed: ${scoreResult.needNotes}\nTimeline: ${scoreResult.timelineNotes}`,
+    // 11. Dispatch hot lead alert via multi-channel notification system
+    const prevClassification = lead.classification;
+    const newClassification = scoreResult.classification;
+    const shouldAlert =
+      (newClassification === "hot" && prevClassification !== "hot") ||
+      (newClassification === "warm" && prevClassification === "cold");
+
+    if (shouldAlert) {
+      await dispatchLeadAlert({
+        userId: pageEntry.userId,
+        userPlan,
+        leadId: lead.id,
+        leadName: lead.name || "Unknown",
+        leadScore: scoreResult.score,
+        classification: newClassification as "hot" | "warm" | "cold",
+        lastMessage: messageText,
+        pageName: convDetail?.page?.pageName || "Unknown Page",
+        conversationId: conv.id,
+        budgetNotes: scoreResult.budgetNotes,
+        needNotes: scoreResult.needNotes,
+        timelineNotes: scoreResult.timelineNotes,
       });
       await db.updateLead(lead.id, { notifiedAt: new Date() });
     }
@@ -257,9 +301,17 @@ async function processIncomingMessage(
       if (handoffResult.shouldHandoff) {
         console.log(`[Webhook] Auto-handoff detected: ${handoffResult.reason} — ${handoffResult.reasonDetail}`);
         await db.requestHandoff(conv.id, `[Auto] ${handoffResult.reason}: ${handoffResult.reasonDetail}`);
-        await notifyOwner({
-          title: `Agent Handoff: ${lead.name || "Unknown Lead"}`,
-          content: `Reason: ${handoffResult.reason}\n${handoffResult.reasonDetail}\n\nConversation has been paused for human agent.`,
+        // Notify via multi-channel alert system for handoffs
+        await dispatchLeadAlert({
+          userId: pageEntry.userId,
+          userPlan,
+          leadId: lead.id,
+          leadName: lead.name || "Unknown",
+          leadScore: lead.score || 0,
+          classification: "hot", // Handoffs are treated as hot alerts
+          lastMessage: `[HANDOFF] ${handoffResult.reason}: ${handoffResult.reasonDetail}`,
+          pageName: convDetail?.page?.pageName || "Unknown Page",
+          conversationId: conv.id,
         });
         // Dispatch webhook event
         await dispatchWebhookEvent(pageEntry.userId, "conversation.handoff", {
@@ -372,12 +424,16 @@ export function registerFacebookRoutes(app: Express) {
         return res.redirect("/settings?tab=pages&error=no_pages");
       }
 
-      // Store pages in a temporary way — redirect to page selection
-      // For MVP, auto-connect all pages (or first page)
+      // Store pages with plan enforcement
+      const userRecord = await db.getUserById(userId);
+      const currentUserPlan = userRecord?.plan || "free";
+      let connectedCount = 0;
+      let limitReached = false;
+
       for (const page of pages) {
         const existing = await db.getPageByFacebookId(page.id);
         if (existing) {
-          // Update token
+          // Update token for already-connected pages
           await db.updatePage(existing.id, {
             pageAccessToken: page.access_token,
             pageName: page.name,
@@ -385,7 +441,17 @@ export function registerFacebookRoutes(app: Express) {
             avatarUrl: page.picture?.data?.url,
             followerCount: page.fan_count || 0,
           });
+          connectedCount++;
         } else {
+          // Check plan limit before connecting new page
+          const currentPages = await db.getUserPages(userId);
+          const planLimits = getPlanLimits(currentUserPlan);
+          if (currentPages.length >= planLimits.maxFacebookPages) {
+            console.warn(`[Facebook OAuth] Page limit reached for user ${userId} (${currentPages.length}/${planLimits.maxFacebookPages}). Skipping page ${page.name}.`);
+            limitReached = true;
+            continue;
+          }
+
           await db.createPage({
             userId,
             pageId: page.id,
@@ -396,6 +462,7 @@ export function registerFacebookRoutes(app: Express) {
             followerCount: page.fan_count || 0,
             isActive: true,
           });
+          connectedCount++;
         }
 
         // Subscribe to webhooks for this page
@@ -412,7 +479,8 @@ export function registerFacebookRoutes(app: Express) {
         }
       }
 
-      res.redirect("/settings?tab=pages&success=connected");
+      const redirectParam = limitReached ? "connected_partial" : "connected";
+      res.redirect(`/settings?tab=pages&success=${redirectParam}`);
     } catch (error) {
       console.error("[Facebook OAuth] Callback error:", error);
       res.redirect("/settings?tab=pages&error=callback_failed");

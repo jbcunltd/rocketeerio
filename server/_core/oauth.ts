@@ -49,9 +49,9 @@ export function registerAuthRoutes(app: Express) {
         return res.status(500).json({ error: "Failed to create user" });
       }
 
-      // If owner, set plan to scale (unlimited)
+      // If owner, set plan to custom (unlimited everything)
       if (isOwner) {
-        await db.updateUserProfile(user.id, { plan: "scale" });
+        await db.updateUserProfile(user.id, { plan: "custom" });
       }
 
       // Create session token

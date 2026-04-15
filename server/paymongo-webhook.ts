@@ -94,11 +94,16 @@ async function handleCheckoutPaymentPaid(eventData: any) {
 
     // Update user plan if metadata is available
     if (metadata?.user_id && metadata?.plan_slug) {
-      const planSlug = metadata.plan_slug as "starter" | "growth" | "scale";
-      await db.updateUserProfile(parseInt(metadata.user_id, 10), {
-        plan: planSlug,
-      });
-      console.log("[PayMongo Webhook] User plan updated to:", planSlug);
+      const validPlanSlugs = ["free", "growth", "pro", "scale", "custom"] as const;
+      const planSlug = metadata.plan_slug;
+      if (validPlanSlugs.includes(planSlug)) {
+        await db.updateUserProfile(parseInt(metadata.user_id, 10), {
+          plan: planSlug as typeof validPlanSlugs[number],
+        });
+        console.log("[PayMongo Webhook] User plan updated to:", planSlug);
+      } else {
+        console.warn("[PayMongo Webhook] Unknown plan slug from metadata:", planSlug);
+      }
     }
   } catch (error) {
     console.error("[PayMongo Webhook] Error handling checkout payment:", error);
