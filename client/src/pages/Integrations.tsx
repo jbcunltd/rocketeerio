@@ -6,7 +6,7 @@ import { Switch } from "@/components/ui/switch";
 import { trpc } from "@/lib/trpc";
 import {
   Loader2, Webhook, Plus, Trash2, Download, FileSpreadsheet,
-  CheckCircle, XCircle, Copy, ExternalLink, Zap, Globe
+  CheckCircle, XCircle, Copy, ExternalLink, Zap, Globe, Info, ChevronDown, ChevronUp
 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -165,6 +165,11 @@ function IntegrationsContent() {
   const utils = trpc.useUtils();
   const [showForm, setShowForm] = useState(false);
   const [exporting, setExporting] = useState(false);
+  
+  // State for collapsible instructions
+  const [showZapierGuide, setShowZapierGuide] = useState(false);
+  const [showSheetsGuide, setShowSheetsGuide] = useState(false);
+  const [showWebhookGuide, setShowWebhookGuide] = useState(false);
 
   const handleDeleteWebhook = async (id: number) => {
     try {
@@ -215,23 +220,43 @@ function IntegrationsContent() {
           <div className="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center shrink-0">
             <Zap className="w-6 h-6 text-orange-600" />
           </div>
-          <div>
-            <h3 className="font-bold text-orange-900 mb-1">Connect with Zapier</h3>
-            <p className="text-sm text-orange-800 mb-3">Send lead data to 5,000+ apps automatically. Create a Zap with a Webhook trigger and paste the URL below.</p>
-            <div className="space-y-2 text-sm text-orange-700">
-              <p>1. In Zapier, create a new Zap with <strong>"Webhooks by Zapier"</strong> as the trigger</p>
-              <p>2. Choose <strong>"Catch Hook"</strong> as the trigger event</p>
-              <p>3. Copy the webhook URL Zapier gives you</p>
-              <p>4. Add it as a webhook endpoint below and select the events you want</p>
-              <p>5. Connect any action app (Google Sheets, Slack, CRM, etc.)</p>
+          <div className="flex-1">
+            <div className="flex justify-between items-center mb-1">
+              <h3 className="font-bold text-orange-900">Connect with Zapier</h3>
+              <Button variant="ghost" size="sm" onClick={() => setShowZapierGuide(!showZapierGuide)} className="text-orange-700 hover:text-orange-900 hover:bg-orange-100">
+                {showZapierGuide ? "Hide Instructions" : "Show Instructions"}
+                {showZapierGuide ? <ChevronUp className="w-4 h-4 ml-1" /> : <ChevronDown className="w-4 h-4 ml-1" />}
+              </Button>
             </div>
+            <p className="text-sm text-orange-800 mb-3">
+              <strong>What this does:</strong> Automatically send your new leads from Rocketeer to over 5,000+ other apps like Gmail, Slack, Mailchimp, or your CRM.
+            </p>
+            
+            {showZapierGuide && (
+              <div className="space-y-4 text-sm text-orange-800 bg-white/60 p-4 rounded-lg border border-orange-100 mt-4">
+                <h4 className="font-semibold text-orange-900">Step-by-Step Setup Guide:</h4>
+                <ol className="list-decimal list-inside space-y-3 ml-1">
+                  <li><strong>Log into Zapier</strong> and click the "Create a Zap" button.</li>
+                  <li><strong>Set up the Trigger:</strong> Search for and select <strong>"Webhooks by Zapier"</strong> as your trigger app.</li>
+                  <li><strong>Choose Event:</strong> Select <strong>"Catch Hook"</strong> from the event dropdown and click Continue.</li>
+                  <li><strong>Copy the URL:</strong> Zapier will give you a unique "Webhook URL". Copy this link.</li>
+                  <li><strong>Add to Rocketeer:</strong> Scroll down to the "Webhook Endpoints" section on this page, click "Add Endpoint", and paste the URL you copied. Select the events you want to send (like "New Lead Created").</li>
+                  <li><strong>Test the Trigger:</strong> Go back to Zapier and click "Test trigger". (Make sure you have at least one lead in Rocketeer first!)</li>
+                  <li><strong>Set up the Action:</strong> Now choose where you want the data to go (e.g., Google Sheets, Slack) and map the fields.</li>
+                </ol>
+                <div className="flex items-start gap-2 bg-orange-100/50 p-3 rounded-md mt-2">
+                  <Info className="w-4 h-4 text-orange-600 mt-0.5 shrink-0" />
+                  <p className="text-xs"><strong>Tip:</strong> You can create multiple Zaps for different events. Just create a new Webhook in Zapier and add it as a new endpoint here.</p>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
 
       {/* Google Sheets Export */}
       <div className="bg-white rounded-xl p-6 border border-gray-200 mb-6">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-green-50 rounded-xl flex items-center justify-center">
               <FileSpreadsheet className="w-5 h-5 text-green-600" />
@@ -241,18 +266,54 @@ function IntegrationsContent() {
               <p className="text-sm text-muted-foreground">Export leads or auto-sync new leads to Google Sheets.</p>
             </div>
           </div>
-          <Button onClick={handleExportCSV} disabled={exporting} variant="outline">
-            {exporting ? <Loader2 className="w-4 h-4 animate-spin mr-1.5" /> : <Download className="w-4 h-4 mr-1.5" />}
-            Export CSV
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="ghost" size="sm" onClick={() => setShowSheetsGuide(!showSheetsGuide)} className="text-gray-600">
+              {showSheetsGuide ? "Hide Instructions" : "Show Instructions"}
+              {showSheetsGuide ? <ChevronUp className="w-4 h-4 ml-1" /> : <ChevronDown className="w-4 h-4 ml-1" />}
+            </Button>
+            <Button onClick={handleExportCSV} disabled={exporting} variant="outline">
+              {exporting ? <Loader2 className="w-4 h-4 animate-spin mr-1.5" /> : <Download className="w-4 h-4 mr-1.5" />}
+              Export CSV
+            </Button>
+          </div>
         </div>
+        
+        {showSheetsGuide && (
+          <div className="mb-6 space-y-4 text-sm text-gray-700 bg-gray-50 p-4 rounded-lg border border-gray-100">
+            <p><strong>What this does:</strong> Allows you to either download a one-time file of all your leads (CSV Export) or set up a system where new leads are automatically added to a Google Sheet as they come in (Auto-Sync).</p>
+            
+            <div className="grid md:grid-cols-2 gap-6">
+              <div>
+                <h4 className="font-semibold text-gray-900 mb-2">Option 1: Manual Export (Easy)</h4>
+                <ol className="list-decimal list-inside space-y-2 ml-1">
+                  <li>Click the <strong>"Export CSV"</strong> button above.</li>
+                  <li>A file will download to your computer.</li>
+                  <li>Open Google Sheets, click <strong>File &gt; Import</strong>.</li>
+                  <li>Upload the downloaded file to view your leads.</li>
+                </ol>
+              </div>
+              
+              <div>
+                <h4 className="font-semibold text-gray-900 mb-2">Option 2: Auto-Sync (Advanced)</h4>
+                <ol className="list-decimal list-inside space-y-2 ml-1">
+                  <li>Create a new Google Sheet.</li>
+                  <li>Go to <strong>Extensions &gt; Apps Script</strong>.</li>
+                  <li>Paste a script that accepts POST requests (you can find templates online).</li>
+                  <li>Click <strong>Deploy &gt; New deployment</strong>.</li>
+                  <li>Select "Web app", set access to "Anyone", and copy the Web App URL.</li>
+                  <li>Toggle the switch below and paste the URL.</li>
+                </ol>
+              </div>
+            </div>
+            
+            <div className="flex items-start gap-2 bg-blue-50 p-3 rounded-md mt-2 border border-blue-100">
+              <Info className="w-4 h-4 text-blue-600 mt-0.5 shrink-0" />
+              <p className="text-xs text-blue-800"><strong>Easier Alternative:</strong> If Option 2 seems too technical, we highly recommend using the <strong>Zapier Integration</strong> (above) to connect to Google Sheets. It's much simpler and requires no coding!</p>
+            </div>
+          </div>
+        )}
+        
         <GoogleSheetsAutoSync />
-        <div className="mt-3 p-3 bg-gray-50 rounded-lg">
-          <p className="text-xs text-muted-foreground">
-            <strong>Tip:</strong> For automatic sync, set up a Zapier webhook with the "lead.created" event and connect it to Google Sheets as the action.
-            This will add new leads to your spreadsheet in real-time.
-          </p>
-        </div>
       </div>
 
       {/* Webhook Endpoints */}
@@ -262,11 +323,38 @@ function IntegrationsContent() {
             <Webhook className="w-5 h-5 text-purple-600" />
             <h3 className="font-bold">Webhook Endpoints</h3>
           </div>
-          <Button onClick={() => setShowForm(!showForm)} size="sm">
-            <Plus className="w-4 h-4 mr-1.5" />
-            Add Endpoint
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="ghost" size="sm" onClick={() => setShowWebhookGuide(!showWebhookGuide)} className="text-gray-600">
+              {showWebhookGuide ? "Hide Instructions" : "Show Instructions"}
+              {showWebhookGuide ? <ChevronUp className="w-4 h-4 ml-1" /> : <ChevronDown className="w-4 h-4 ml-1" />}
+            </Button>
+            <Button onClick={() => setShowForm(!showForm)} size="sm">
+              <Plus className="w-4 h-4 mr-1.5" />
+              Add Endpoint
+            </Button>
+          </div>
         </div>
+
+        {showWebhookGuide && (
+          <div className="mb-6 space-y-4 text-sm text-gray-700 bg-purple-50/50 p-4 rounded-lg border border-purple-100">
+            <p><strong>What this does:</strong> Webhooks are like instant notifications for other apps. When something happens in Rocketeer (like a new lead), we instantly send a message (a "webhook") to another app's URL to let them know.</p>
+            
+            <h4 className="font-semibold text-gray-900">How to set up a Webhook:</h4>
+            <ol className="list-decimal list-inside space-y-2 ml-1">
+              <li>Get a "Webhook URL" from the app you want to send data to (like Zapier, Make.com, or your own custom server).</li>
+              <li>Click the <strong>"Add Endpoint"</strong> button above.</li>
+              <li>Give it a name you'll remember (e.g., "Send to Make.com").</li>
+              <li>Paste the Webhook URL you got in step 1.</li>
+              <li>Select which events should trigger this webhook (e.g., check "New Lead Created").</li>
+              <li>Click <strong>"Create Webhook"</strong>.</li>
+            </ol>
+            
+            <div className="flex items-start gap-2 bg-white p-3 rounded-md mt-2 border border-gray-200">
+              <Info className="w-4 h-4 text-gray-500 mt-0.5 shrink-0" />
+              <p className="text-xs text-gray-600"><strong>Note on Signing Secrets:</strong> This is an optional security feature for developers to verify that the data really came from Rocketeer. If you're using Zapier or Make.com, you can usually leave this blank.</p>
+            </div>
+          </div>
+        )}
 
         {showForm && (
           <WebhookForm
