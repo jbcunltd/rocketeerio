@@ -163,7 +163,7 @@ function AuthForm() {
 /* ------------------------------------------------------------------ */
 /*  Pricing data                                                       */
 /* ------------------------------------------------------------------ */
-const pricingPlans = [
+const pricingPlans: Array<any> = [
   {
     name: "Free",
     icon: Rocket,
@@ -199,6 +199,7 @@ const pricingPlans = [
     buttonStyle: "bg-messenger hover:bg-messenger-dark text-white",
     buttonText: "Get Started",
     popular: true,
+    badge: "Best for businesses running ads",
   },
   {
     name: "Scale",
@@ -270,7 +271,7 @@ export default function Landing() {
               Log In
             </Button>
             <Button size="sm" className="bg-messenger hover:bg-messenger-dark" onClick={scrollToAuth}>
-              Get More Customers
+              Start Closing More Leads
             </Button>
           </div>
         </div>
@@ -291,13 +292,16 @@ export default function Landing() {
               Most businesses reply too late. By the time you respond, the customer is already talking to someone else. Rocketeerio replies instantly — and alerts you when it's time to close.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Button
-                size="lg"
-                className="bg-messenger hover:bg-messenger-dark text-lg px-8 h-14 shadow-lg shadow-messenger/25"
-                onClick={scrollToAuth}
-              >
-                Get More Customers <ArrowRight className="ml-2 w-5 h-5" />
-              </Button>
+              <div>
+                <Button
+                  size="lg"
+                  className="bg-messenger hover:bg-messenger-dark text-lg px-8 h-14 shadow-lg shadow-messenger/25 w-full"
+                  onClick={scrollToAuth}
+                >
+                  Start Closing More Leads <ArrowRight className="ml-2 w-5 h-5" />
+                </Button>
+                <p className="text-xs text-muted-foreground mt-3 text-center">No credit card required • Setup in minutes</p>
+              </div>
               <Button
                 variant="outline"
                 size="lg"
@@ -472,13 +476,80 @@ export default function Landing() {
 
           {/* Mid-page CTA */}
           <div className="text-center mt-16">
-            <Button
-              size="lg"
-              className="bg-messenger hover:bg-messenger-dark text-lg px-8 h-14 shadow-lg shadow-messenger/25"
-              onClick={scrollToAuth}
-            >
-              Get More Customers <ArrowRight className="ml-2 w-5 h-5" />
-            </Button>
+            <div>
+              <Button
+                size="lg"
+                className="bg-messenger hover:bg-messenger-dark text-lg px-8 h-14 shadow-lg shadow-messenger/25"
+                onClick={scrollToAuth}
+              >
+                Start Closing More Leads <ArrowRight className="ml-2 w-5 h-5" />
+              </Button>
+              <p className="text-xs text-muted-foreground mt-3">No credit card required • Setup in minutes</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ============================================================ */}
+      {/*  VISUAL PROOF / MOCK SECTION                                  */}
+      {/* ============================================================ */}
+      <section className="py-20 md:py-28 border-t border-border/50">
+        <div className="container">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
+              See it in action
+            </h2>
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+              This is how leads get qualified and converted
+            </p>
+          </div>
+
+          <div className="max-w-2xl mx-auto">
+            <div className="bg-white rounded-2xl border border-border/50 p-6 shadow-lg">
+              {/* Chat mockup */}
+              <div className="space-y-4">
+                {/* Customer message */}
+                <div className="flex justify-end">
+                  <div className="bg-messenger text-white rounded-2xl rounded-tr-none px-4 py-2 max-w-xs text-sm">
+                    How much for installation?
+                  </div>
+                </div>
+
+                {/* AI response 1 */}
+                <div className="flex justify-start">
+                  <div className="bg-gray-100 text-foreground rounded-2xl rounded-tl-none px-4 py-2 max-w-xs text-sm">
+                    Great question! We offer flexible packages starting at $500.
+                  </div>
+                </div>
+
+                {/* AI response 2 */}
+                <div className="flex justify-start">
+                  <div className="bg-gray-100 text-foreground rounded-2xl rounded-tl-none px-4 py-2 max-w-xs text-sm">
+                    What's your current setup? I can give you a more accurate quote.
+                  </div>
+                </div>
+
+                {/* Customer response */}
+                <div className="flex justify-end">
+                  <div className="bg-messenger text-white rounded-2xl rounded-tr-none px-4 py-2 max-w-xs text-sm">
+                    We have 3 units. Need it done this week.
+                  </div>
+                </div>
+
+                {/* Alert notification */}
+                <div className="flex justify-center mt-6 pt-4 border-t">
+                  <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 flex items-center gap-3 max-w-sm">
+                    <div className="w-8 h-8 bg-red-500 rounded-full flex items-center justify-center flex-shrink-0">
+                      <span className="text-white text-sm font-bold">🔥</span>
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-red-900">Hot Lead Alert</p>
+                      <p className="text-xs text-red-700">Ready to buy — step in now</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -541,8 +612,11 @@ export default function Landing() {
             <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-6">
               You don't need more leads. You need better follow-up.
             </h2>
-            <p className="text-lg md:text-xl text-muted-foreground leading-relaxed max-w-2xl mx-auto">
+            <p className="text-lg md:text-xl text-muted-foreground leading-relaxed max-w-2xl mx-auto mb-6">
               Most businesses think they need to spend more on ads. But the truth is… you're already getting leads — you're just not converting them.
+            </p>
+            <p className="text-base font-semibold text-messenger">
+              Stop chasing leads. Let them come ready.
             </p>
           </div>
         </div>
@@ -622,6 +696,13 @@ export default function Landing() {
                     </span>
                   </div>
                 )}
+                {plan.badge && (
+                  <div className="mb-3 inline-block">
+                    <span className="inline-block bg-blue-100 text-blue-700 text-xs font-semibold px-2.5 py-1 rounded">
+                      {plan.badge}
+                    </span>
+                  </div>
+                )}
 
                 <div className="flex items-center gap-3 mb-4 pt-2">
                   <div className={`w-10 h-10 rounded-lg ${plan.iconBg} flex items-center justify-center`}>
@@ -695,13 +776,16 @@ export default function Landing() {
           <p className="text-lg text-white/80 max-w-2xl mx-auto mb-8">
             Every minute you wait, another lead goes cold.
           </p>
-          <Button
-            size="lg"
-            className="bg-white text-messenger hover:bg-white/90 text-lg px-8 h-14 shadow-lg font-bold"
-            onClick={scrollToAuth}
-          >
-            Get More Customers <ArrowRight className="ml-2 w-5 h-5" />
-          </Button>
+          <div>
+            <Button
+              size="lg"
+              className="bg-white text-messenger hover:bg-white/90 text-lg px-8 h-14 shadow-lg font-bold"
+              onClick={scrollToAuth}
+            >
+              Start Closing More Leads <ArrowRight className="ml-2 w-5 h-5" />
+            </Button>
+            <p className="text-xs text-white/70 mt-3">No credit card required • Setup in minutes</p>
+          </div>
         </div>
       </section>
 
