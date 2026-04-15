@@ -313,7 +313,7 @@ export default function Landing() {
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <Button size="lg" className="bg-messenger hover:bg-messenger-dark text-lg px-8 h-14 shadow-lg shadow-messenger/25" onClick={scrollToAuth}>
-                Start Free Trial <ArrowRight className="ml-2 w-5 h-5" />
+                Start Free <ArrowRight className="ml-2 w-5 h-5" />
               </Button>
               <Button variant="outline" size="lg" className="text-lg px-8 h-14" onClick={() => document.getElementById("how-it-works")?.scrollIntoView({ behavior: "smooth" })}>
                 See How It Works
@@ -458,6 +458,219 @@ export default function Landing() {
                 </Button>
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Pricing Section */}
+      <section id="pricing" className="py-20 md:py-28 bg-background border-t border-border/50">
+        <div className="container">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">Simple, Transparent Pricing</h2>
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">Choose the perfect plan for your business. Scale up as you grow.</p>
+          </div>
+
+          {/* Billing Period Toggle */}
+          <div className="flex items-center justify-center gap-4 mb-12">
+            <button className="text-sm font-medium cursor-pointer transition-colors text-foreground">
+              Monthly
+            </button>
+            <button className="relative inline-flex h-8 w-14 items-center rounded-full cursor-pointer border-2 transition-colors bg-gray-300 border-gray-300 dark:bg-gray-600 dark:border-gray-600">
+              <span className="inline-block h-6 w-6 transform rounded-full bg-white shadow-md transition-transform translate-x-1" />
+            </button>
+            <button className="text-sm font-medium cursor-pointer transition-colors text-muted-foreground hover:text-foreground">
+              Annual
+            </button>
+            <span className="ml-2 inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold invisible opacity-0 transition-all">
+              Save 20%
+            </span>
+          </div>
+
+          {/* Pricing Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-12">
+            {/* Free Tier */}
+            <div className="relative rounded-xl border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-900 p-6 transition-all hover:shadow-md flex flex-col">
+              <div className="flex items-center gap-3 mb-4 pt-2">
+                <div className="w-10 h-10 rounded-lg bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+                  <Rocket className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                </div>
+                <h3 className="text-lg font-semibold">Free</h3>
+              </div>
+              <div className="mb-6">
+                <span className="text-3xl font-bold">$0</span>
+                <span className="text-muted-foreground">/month</span>
+                <p className="text-xs text-muted-foreground mt-1">billed monthly</p>
+              </div>
+              <ul className="space-y-2.5 mb-6 flex-1">
+                <li className="flex items-start gap-2 text-sm">
+                  <CheckCircle2 className="w-4 h-4 text-green-500 mt-0.5 shrink-0" />
+                  <span>100 active leads</span>
+                </li>
+                <li className="flex items-start gap-2 text-sm">
+                  <CheckCircle2 className="w-4 h-4 text-green-500 mt-0.5 shrink-0" />
+                  <span>50 AI conversations/mo</span>
+                </li>
+                <li className="flex items-start gap-2 text-sm">
+                  <CheckCircle2 className="w-4 h-4 text-green-500 mt-0.5 shrink-0" />
+                  <span>1 Facebook Page</span>
+                </li>
+                <li className="flex items-start gap-2 text-sm">
+                  <CheckCircle2 className="w-4 h-4 text-green-500 mt-0.5 shrink-0" />
+                  <span>Basic analytics</span>
+                </li>
+              </ul>
+              <Button className="w-full border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700" onClick={scrollToAuth}>
+                Start Free
+              </Button>
+            </div>
+
+            {/* Growth Tier */}
+            <div className="relative rounded-xl border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-900 p-6 transition-all hover:shadow-md flex flex-col">
+              <div className="flex items-center gap-3 mb-4 pt-2">
+                <div className="w-10 h-10 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
+                  <TrendingUp className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+                </div>
+                <h3 className="text-lg font-semibold">Growth</h3>
+              </div>
+              <div className="mb-6">
+                <span className="text-3xl font-bold">$29</span>
+                <span className="text-muted-foreground">/month</span>
+                <p className="text-xs text-muted-foreground mt-1">billed monthly</p>
+              </div>
+              <ul className="space-y-2.5 mb-6 flex-1">
+                <li className="flex items-start gap-2 text-sm">
+                  <CheckCircle2 className="w-4 h-4 text-green-500 mt-0.5 shrink-0" />
+                  <span>1,000 active leads</span>
+                </li>
+                <li className="flex items-start gap-2 text-sm">
+                  <CheckCircle2 className="w-4 h-4 text-green-500 mt-0.5 shrink-0" />
+                  <span>500 AI conversations/mo</span>
+                </li>
+                <li className="flex items-start gap-2 text-sm">
+                  <CheckCircle2 className="w-4 h-4 text-green-500 mt-0.5 shrink-0" />
+                  <span>1 Facebook Page</span>
+                </li>
+                <li className="flex items-start gap-2 text-sm">
+                  <CheckCircle2 className="w-4 h-4 text-green-500 mt-0.5 shrink-0" />
+                  <span>CRM-style pipeline</span>
+                </li>
+              </ul>
+              <Button className="w-full bg-purple-600 hover:bg-purple-700 text-white" onClick={scrollToAuth}>
+                Subscribe
+              </Button>
+            </div>
+
+            {/* Pro Tier - Most Popular */}
+            <div className="relative rounded-xl border-2 border-purple-600 bg-gradient-to-br from-purple-50 to-white dark:from-purple-900/30 dark:to-gray-900 p-6 transition-all hover:shadow-md flex flex-col shadow-lg">
+              <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-10">
+                <span className="inline-block bg-purple-600 text-white text-xs font-bold px-3 py-1 rounded-full whitespace-nowrap">
+                  MOST POPULAR
+                </span>
+              </div>
+              <div className="flex items-center gap-3 mb-4 pt-2">
+                <div className="w-10 h-10 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
+                  <Star className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+                </div>
+                <h3 className="text-lg font-semibold">Pro</h3>
+              </div>
+              <div className="mb-6">
+                <span className="text-3xl font-bold">$69</span>
+                <span className="text-muted-foreground">/month</span>
+                <p className="text-xs text-muted-foreground mt-1">billed monthly</p>
+              </div>
+              <ul className="space-y-2.5 mb-6 flex-1">
+                <li className="flex items-start gap-2 text-sm">
+                  <CheckCircle2 className="w-4 h-4 text-green-500 mt-0.5 shrink-0" />
+                  <span>5,000 active leads</span>
+                </li>
+                <li className="flex items-start gap-2 text-sm">
+                  <CheckCircle2 className="w-4 h-4 text-green-500 mt-0.5 shrink-0" />
+                  <span>2,500 AI conversations/mo</span>
+                </li>
+                <li className="flex items-start gap-2 text-sm">
+                  <CheckCircle2 className="w-4 h-4 text-green-500 mt-0.5 shrink-0" />
+                  <span>3 Facebook Pages</span>
+                </li>
+                <li className="flex items-start gap-2 text-sm">
+                  <CheckCircle2 className="w-4 h-4 text-green-500 mt-0.5 shrink-0" />
+                  <span>API access</span>
+                </li>
+              </ul>
+              <Button className="w-full bg-white border-2 border-purple-600 text-purple-600 hover:bg-purple-50 dark:bg-gray-800 dark:text-purple-400 dark:hover:bg-gray-700" onClick={scrollToAuth}>
+                Subscribe
+              </Button>
+            </div>
+
+            {/* Scale Tier */}
+            <div className="relative rounded-xl border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-900 p-6 transition-all hover:shadow-md flex flex-col">
+              <div className="flex items-center gap-3 mb-4 pt-2">
+                <div className="w-10 h-10 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
+                  <Zap className="w-5 h-5 text-slate-700 dark:text-slate-300" />
+                </div>
+                <h3 className="text-lg font-semibold">Scale</h3>
+              </div>
+              <div className="mb-6">
+                <span className="text-3xl font-bold">$149</span>
+                <span className="text-muted-foreground">/month</span>
+                <p className="text-xs text-muted-foreground mt-1">billed monthly</p>
+              </div>
+              <ul className="space-y-2.5 mb-6 flex-1">
+                <li className="flex items-start gap-2 text-sm">
+                  <CheckCircle2 className="w-4 h-4 text-green-500 mt-0.5 shrink-0" />
+                  <span>20,000 active leads</span>
+                </li>
+                <li className="flex items-start gap-2 text-sm">
+                  <CheckCircle2 className="w-4 h-4 text-green-500 mt-0.5 shrink-0" />
+                  <span>10,000 AI conversations/mo</span>
+                </li>
+                <li className="flex items-start gap-2 text-sm">
+                  <CheckCircle2 className="w-4 h-4 text-green-500 mt-0.5 shrink-0" />
+                  <span>10 Facebook Pages</span>
+                </li>
+                <li className="flex items-start gap-2 text-sm">
+                  <CheckCircle2 className="w-4 h-4 text-green-500 mt-0.5 shrink-0" />
+                  <span>White-label option</span>
+                </li>
+              </ul>
+              <Button className="w-full bg-slate-900 hover:bg-slate-950 text-white dark:bg-slate-800 dark:hover:bg-slate-700" onClick={scrollToAuth}>
+                Subscribe
+              </Button>
+            </div>
+
+            {/* Custom Tier */}
+            <div className="relative rounded-xl border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-900 p-6 transition-all hover:shadow-md flex flex-col">
+              <div className="flex items-center gap-3 mb-4 pt-2">
+                <div className="w-10 h-10 rounded-lg bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+                  <Star className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                </div>
+                <h3 className="text-lg font-semibold">Custom</h3>
+              </div>
+              <div className="mb-6">
+                <span className="text-sm text-muted-foreground">Custom pricing</span>
+                <p className="text-xs text-muted-foreground mt-1">Contact sales</p>
+              </div>
+              <ul className="space-y-2.5 mb-6 flex-1">
+                <li className="flex items-start gap-2 text-sm">
+                  <CheckCircle2 className="w-4 h-4 text-green-500 mt-0.5 shrink-0" />
+                  <span>Unlimited everything</span>
+                </li>
+                <li className="flex items-start gap-2 text-sm">
+                  <CheckCircle2 className="w-4 h-4 text-green-500 mt-0.5 shrink-0" />
+                  <span>Custom AI fine-tuning</span>
+                </li>
+                <li className="flex items-start gap-2 text-sm">
+                  <CheckCircle2 className="w-4 h-4 text-green-500 mt-0.5 shrink-0" />
+                  <span>Dedicated CSM</span>
+                </li>
+                <li className="flex items-start gap-2 text-sm">
+                  <CheckCircle2 className="w-4 h-4 text-green-500 mt-0.5 shrink-0" />
+                  <span>SSO/SAML</span>
+                </li>
+              </ul>
+              <Button className="w-full border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700" onClick={scrollToAuth}>
+                Contact Sales
+              </Button>
+            </div>
           </div>
         </div>
       </section>
