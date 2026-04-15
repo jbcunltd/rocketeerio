@@ -11,7 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectSeparator, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { trpc } from "@/lib/trpc";
-import { User, Bell, CreditCard, Facebook, Loader2, Save, Trash2, CheckCircle, AlertCircle, ExternalLink, Bot, Instagram } from "lucide-react";
+import { User, Bell, CreditCard, Facebook, Loader2, Save, Trash2, CheckCircle, AlertCircle, ExternalLink, Bot, Instagram, Headphones } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -756,6 +756,100 @@ function BillingTab() {
   );
 }
 
+function HandoffTab() {
+  const settingsQuery = trpc.handoffs.getSettings.useQuery();
+  const updateMutation = trpc.handoffs.updateSettings.useMutation({
+    onSuccess: () => { settingsQuery.refetch(); toast.success("Handoff settings saved"); },
+    onError: () => toast.error("Failed to save handoff settings"),
+  });
+
+  const [autoEnabled, setAutoEnabled] = useState(true);
+  const [notifyOnHandoff, setNotifyOnHandoff] = useState(true);
+  const [sentimentThreshold, setSentimentThreshold] = useState(0.3);
+  const [keywords, setKeywords] = useState("speak to a human\ntalk to someone\nreal person\nhuman agent\nmanager");
+
+  useEffect(() => {
+    if (settingsQuery.data) {
+      const s = settingsQuery.data;
+      setAutoEnabled(s.autoHandoffEnabled ?? true);
+      setNotifyOnHandoff(s.notifyOnHandoff ?? true);
+      setSentimentThreshold(parseFloat(s.sentimentThreshold as string) || 0.3);
+      const kw = (s.handoffKeywords as string[]) || ["speak to a human", "talk to someone", "real person"];
+      setKeywords(kw.join("\n"));
+    }
+  }, [settingsQuery.data]);
+
+  const handleSave = () => {
+    updateMutation.mutate({
+      autoHandoffEnabled: autoEnabled,
+      notifyOnHandoff,
+      sentimentThreshold,
+      handoffKeywords: keywords.split("\n").map(k => k.trim()).filter(Boolean),
+    });
+  };
+
+  if (settingsQuery.isLoading) {
+    return <div className="flex justify-center py-8"><Loader2 className="h-6 w-6 animate-spin" /></div>;
+  }
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h3 className="text-lg font-bold mb-1">Live Agent Handoff</h3>
+        <p className="text-sm text-muted-foreground">Configure when the AI should hand conversations to a human agent.</p>
+      </div>
+
+      <div className="space-y-4">
+        <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+          <div>
+            <p className="font-medium">Auto-Handoff</p>
+            <p className="text-sm text-muted-foreground">Automatically detect when a human agent should take over</p>
+          </div>
+          <Switch checked={autoEnabled} onCheckedChange={setAutoEnabled} />
+        </div>
+
+        <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+          <div>
+            <p className="font-medium">Notify on Handoff</p>
+            <p className="text-sm text-muted-foreground">Send a notification when a handoff occurs</p>
+          </div>
+          <Switch checked={notifyOnHandoff} onCheckedChange={setNotifyOnHandoff} />
+        </div>
+
+        <div>
+          <Label>Sentiment Threshold</Label>
+          <p className="text-xs text-muted-foreground mb-2">Lower values trigger handoff more easily (0.0 = very sensitive, 1.0 = never)</p>
+          <Input
+            type="number"
+            min={0}
+            max={1}
+            step={0.1}
+            value={sentimentThreshold}
+            onChange={e => setSentimentThreshold(parseFloat(e.target.value) || 0.3)}
+            className="w-32"
+          />
+        </div>
+
+        <div>
+          <Label>Handoff Keywords</Label>
+          <p className="text-xs text-muted-foreground mb-2">One keyword/phrase per line. If a lead says any of these, handoff is triggered.</p>
+          <Textarea
+            value={keywords}
+            onChange={e => setKeywords(e.target.value)}
+            rows={5}
+            placeholder={"speak to a human\ntalk to someone\nreal person"}
+          />
+        </div>
+      </div>
+
+      <Button onClick={handleSave} disabled={updateMutation.isPending} className="bg-messenger hover:bg-messenger-dark">
+        {updateMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}
+        Save Handoff Settings
+      </Button>
+    </div>
+  );
+}
+
 export default function Settings() {
   // Check URL for tab param
   const params = new URLSearchParams(window.location.search);
@@ -776,6 +870,7 @@ export default function Settings() {
             <TabsTrigger value="instagram"><Instagram className="w-4 h-4 mr-1.5" />Instagram</TabsTrigger>
             <TabsTrigger value="ai-personality"><Bot className="w-4 h-4 mr-1.5" />AI Personality</TabsTrigger>
             <TabsTrigger value="billing"><CreditCard className="w-4 h-4 mr-1.5" />Billing</TabsTrigger>
+            <TabsTrigger value="handoff"><Headphones className="w-4 h-4 mr-1.5" />Handoff</TabsTrigger>
           </TabsList>
           <TabsContent value="profile"><ProfileTab /></TabsContent>
           <TabsContent value="notifications"><NotificationsTab /></TabsContent>
@@ -783,6 +878,7 @@ export default function Settings() {
           <TabsContent value="instagram"><InstagramTab /></TabsContent>
           <TabsContent value="ai-personality"><AiPersonalityTab /></TabsContent>
           <TabsContent value="billing"><BillingTab /></TabsContent>
+          <TabsContent value="handoff"><HandoffTab /></TabsContent>
         </Tabs>
       </div>
     </DashboardLayout>

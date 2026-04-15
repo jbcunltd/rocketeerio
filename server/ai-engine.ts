@@ -267,3 +267,98 @@ Return ONLY valid JSON.`,
     };
   }
 }
+
+/**
+ * Detect if a conversation should be handed off to a human agent.
+ * Checks for: angry/frustrated customers, complex questions, explicit requests for human.
+ */
+export async function detectHandoff(
+  conversationHistory: Array<{ sender: string; content: string }>,
+  handoffKeywords: string[] = ["speak to a human", "talk to someone", "real person", "human agent", "manager"]
+): Promise<{
+  shouldHandoff: boolean;
+  reason: string;
+  reasonDetail: string;
+}> {
+  // 1. Check for keyword-based triggers first (fast, no LLM call)
+  const lastLeadMessages = conversationHistory
+    .filter(m => m.sender === "lead")
+    .slice(-3);
+  
+  for (const msg of lastLeadMessages) {
+    const lower = msg.content.toLowerCase();
+    for (const keyword of handoffKeywords) {
+      if (lower.includes(keyword.toLowerCase())) {
+        return {
+          shouldHandoff: true,
+          reason: "explicit_request",
+          reasonDetail: `Lead used keyword: "${keyword}" in message: "${msg.content.substring(0, 100)}"`,
+        };
+      }
+    }
+  }
+
+  // 2. Use LLM to detect sentiment and complexity issues
+  if (conversationHistory.length < 3) {
+    return { shouldHandoff: false, reason: "", reasonDetail: "" };
+  }
+
+  const recentMessages = conversationHistory.slice(-6);
+  const transcript = recentMessages
+    .map(msg => `${msg.sender === "lead" ? "CUSTOMER" : "AGENT"}: ${msg.content}`)
+    .join("\n");
+
+  try {
+    const result = await invokeLLM({
+      messages: [
+        {
+          role: "system",
+          content: `You are a conversation analyzer. Determine if this customer conversation should be handed off to a human agent.
+
+Handoff reasons:
+- "angry_customer": Customer is angry, frustrated, threatening, or using aggressive language
+- "complex_question": Customer has a question the AI clearly cannot answer (legal, medical, highly specific technical)
+- "explicit_request": Customer explicitly asks for a human, manager, or supervisor
+- "ai_uncertain": The AI agent seems to be going in circles, repeating itself, or giving unhelpful responses
+- "none": No handoff needed, conversation is going well
+
+Return ONLY valid JSON.`,
+        },
+        {
+          role: "user",
+          content: `Analyze this conversation:\n\n${transcript}`,
+        },
+      ],
+      response_format: {
+        type: "json_schema",
+        json_schema: {
+          name: "handoff_detection",
+          strict: true,
+          schema: {
+            type: "object",
+            properties: {
+              shouldHandoff: { type: "boolean", description: "Whether handoff is needed" },
+              reason: { type: "string", description: "One of: angry_customer, complex_question, explicit_request, ai_uncertain, none" },
+              reasonDetail: { type: "string", description: "Brief explanation of why handoff is needed" },
+            },
+            required: ["shouldHandoff", "reason", "reasonDetail"],
+            additionalProperties: false,
+          },
+        },
+      },
+    });
+
+    const content = result.choices[0]?.message?.content;
+    const text = typeof content === "string" ? content : "";
+    const parsed = JSON.parse(text);
+
+    return {
+      shouldHandoff: parsed.shouldHandoff === true,
+      reason: parsed.reason || "none",
+      reasonDetail: parsed.reasonDetail || "",
+    };
+  } catch (err) {
+    console.error("[Handoff Detection] LLM analysis failed:", err);
+    return { shouldHandoff: false, reason: "", reasonDetail: "" };
+  }
+}

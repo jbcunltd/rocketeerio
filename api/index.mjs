@@ -320,6 +320,38 @@ var paymentHistory = pgTable("payment_history", {
   paidAt: timestamp("paidAt"),
   createdAt: timestamp("createdAt").defaultNow().notNull()
 });
+var integrationSettings = pgTable("integration_settings", {
+  id: serial("id").primaryKey(),
+  userId: integer("userId").notNull(),
+  webhookUrl: text("webhookUrl"),
+  webhookSecret: varchar("webhookSecret", { length: 255 }),
+  webhookEnabled: boolean("webhookEnabled").default(false).notNull(),
+  webhookEvents: json("webhookEvents"),
+  googleSheetUrl: text("googleSheetUrl"),
+  googleSheetEnabled: boolean("googleSheetEnabled").default(false).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().notNull()
+});
+var handoffSettings = pgTable("handoff_settings", {
+  id: serial("id").primaryKey(),
+  userId: integer("userId").notNull(),
+  autoHandoffEnabled: boolean("autoHandoffEnabled").default(true).notNull(),
+  notifyOnHandoff: boolean("notifyOnHandoff").default(true).notNull(),
+  handoffKeywords: json("handoffKeywords"),
+  sentimentThreshold: numeric("sentimentThreshold", { precision: 3, scale: 2 }).default("0.30"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().notNull()
+});
+var webhookLogs = pgTable("webhook_logs", {
+  id: serial("id").primaryKey(),
+  userId: integer("userId").notNull(),
+  eventType: varchar("eventType", { length: 100 }).notNull(),
+  payload: json("payload"),
+  statusCode: integer("statusCode"),
+  response: text("response"),
+  success: boolean("success").default(false).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull()
+});
 
 // server/db.ts
 var _db = null;
@@ -953,6 +985,23 @@ async function deleteWebhookEndpoint(id) {
   if (!database) return;
   await database.delete(webhookEndpoints).where(eq(webhookEndpoints.id, id));
 }
+async function getActiveWebhooksForEvent(userId, event) {
+  const database = await getDb();
+  if (!database) return [];
+  const all = await database.select().from(webhookEndpoints).where(and(eq(webhookEndpoints.userId, userId), eq(webhookEndpoints.isActive, true)));
+  return all.filter((wh) => wh.events.includes(event));
+}
+async function markWebhookTriggered(id, success) {
+  const database = await getDb();
+  if (!database) return;
+  if (success) {
+    await database.update(webhookEndpoints).set({ lastTriggeredAt: /* @__PURE__ */ new Date(), failCount: 0 }).where(eq(webhookEndpoints.id, id));
+  } else {
+    await database.update(webhookEndpoints).set({
+      failCount: sql`${webhookEndpoints.failCount} + 1`
+    }).where(eq(webhookEndpoints.id, id));
+  }
+}
 async function getLeadsForExport(userId) {
   const database = await getDb();
   if (!database) return [];
@@ -993,6 +1042,38 @@ async function getHandoffCount(userId) {
   if (!database) return 0;
   const [result] = await database.select({ count: count() }).from(conversations).where(and(eq(conversations.userId, userId), eq(conversations.needsHandoff, true)));
   return result?.count ?? 0;
+}
+async function getIntegrationSettings(userId) {
+  const database = await getDb();
+  if (!database) return null;
+  const result = await database.select().from(integrationSettings).where(eq(integrationSettings.userId, userId)).limit(1);
+  return result[0] ?? null;
+}
+async function upsertIntegrationSettings(userId, data) {
+  const database = await getDb();
+  if (!database) return;
+  const existing = await database.select().from(integrationSettings).where(eq(integrationSettings.userId, userId)).limit(1);
+  if (existing.length > 0) {
+    await database.update(integrationSettings).set({ ...data, updatedAt: /* @__PURE__ */ new Date() }).where(eq(integrationSettings.userId, userId));
+  } else {
+    await database.insert(integrationSettings).values({ userId, ...data });
+  }
+}
+async function getHandoffSettings(userId) {
+  const database = await getDb();
+  if (!database) return null;
+  const result = await database.select().from(handoffSettings).where(eq(handoffSettings.userId, userId)).limit(1);
+  return result[0] ?? null;
+}
+async function upsertHandoffSettings(userId, data) {
+  const database = await getDb();
+  if (!database) return;
+  const existing = await database.select().from(handoffSettings).where(eq(handoffSettings.userId, userId)).limit(1);
+  if (existing.length > 0) {
+    await database.update(handoffSettings).set({ ...data, updatedAt: /* @__PURE__ */ new Date() }).where(eq(handoffSettings.userId, userId));
+  } else {
+    await database.insert(handoffSettings).values({ userId, ...data });
+  }
 }
 
 // server/_core/env.ts
@@ -1527,6 +1608,79 @@ ${transcript}`
     };
   }
 }
+async function detectHandoff(conversationHistory, handoffKeywords = ["speak to a human", "talk to someone", "real person", "human agent", "manager"]) {
+  const lastLeadMessages = conversationHistory.filter((m) => m.sender === "lead").slice(-3);
+  for (const msg of lastLeadMessages) {
+    const lower = msg.content.toLowerCase();
+    for (const keyword of handoffKeywords) {
+      if (lower.includes(keyword.toLowerCase())) {
+        return {
+          shouldHandoff: true,
+          reason: "explicit_request",
+          reasonDetail: `Lead used keyword: "${keyword}" in message: "${msg.content.substring(0, 100)}"`
+        };
+      }
+    }
+  }
+  if (conversationHistory.length < 3) {
+    return { shouldHandoff: false, reason: "", reasonDetail: "" };
+  }
+  const recentMessages = conversationHistory.slice(-6);
+  const transcript = recentMessages.map((msg) => `${msg.sender === "lead" ? "CUSTOMER" : "AGENT"}: ${msg.content}`).join("\n");
+  try {
+    const result = await invokeLLM({
+      messages: [
+        {
+          role: "system",
+          content: `You are a conversation analyzer. Determine if this customer conversation should be handed off to a human agent.
+
+Handoff reasons:
+- "angry_customer": Customer is angry, frustrated, threatening, or using aggressive language
+- "complex_question": Customer has a question the AI clearly cannot answer (legal, medical, highly specific technical)
+- "explicit_request": Customer explicitly asks for a human, manager, or supervisor
+- "ai_uncertain": The AI agent seems to be going in circles, repeating itself, or giving unhelpful responses
+- "none": No handoff needed, conversation is going well
+
+Return ONLY valid JSON.`
+        },
+        {
+          role: "user",
+          content: `Analyze this conversation:
+
+${transcript}`
+        }
+      ],
+      response_format: {
+        type: "json_schema",
+        json_schema: {
+          name: "handoff_detection",
+          strict: true,
+          schema: {
+            type: "object",
+            properties: {
+              shouldHandoff: { type: "boolean", description: "Whether handoff is needed" },
+              reason: { type: "string", description: "One of: angry_customer, complex_question, explicit_request, ai_uncertain, none" },
+              reasonDetail: { type: "string", description: "Brief explanation of why handoff is needed" }
+            },
+            required: ["shouldHandoff", "reason", "reasonDetail"],
+            additionalProperties: false
+          }
+        }
+      }
+    });
+    const content = result.choices[0]?.message?.content;
+    const text2 = typeof content === "string" ? content : "";
+    const parsed = JSON.parse(text2);
+    return {
+      shouldHandoff: parsed.shouldHandoff === true,
+      reason: parsed.reason || "none",
+      reasonDetail: parsed.reasonDetail || ""
+    };
+  } catch (err) {
+    console.error("[Handoff Detection] LLM analysis failed:", err);
+    return { shouldHandoff: false, reason: "", reasonDetail: "" };
+  }
+}
 
 // server/_core/notification.ts
 import { TRPCError } from "@trpc/server";
@@ -1570,6 +1724,60 @@ async function notifyOwner(payload) {
   console.log(`[Notification] Content: ${content}`);
   console.log(`[Notification] \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500`);
   return true;
+}
+
+// server/webhook-dispatcher.ts
+async function dispatchWebhookEvent(userId, event, payload) {
+  try {
+    const endpoints = await getActiveWebhooksForEvent(userId, event);
+    if (endpoints.length === 0) return;
+    console.log(`[Webhook] Dispatching "${event}" to ${endpoints.length} endpoint(s)`);
+    for (const endpoint of endpoints) {
+      try {
+        const body = JSON.stringify({
+          event,
+          timestamp: (/* @__PURE__ */ new Date()).toISOString(),
+          data: payload
+        });
+        const headers = {
+          "Content-Type": "application/json",
+          "X-Rocketeer-Event": event
+        };
+        if (endpoint.secret) {
+          const encoder = new TextEncoder();
+          const key = await crypto.subtle.importKey(
+            "raw",
+            encoder.encode(endpoint.secret),
+            { name: "HMAC", hash: "SHA-256" },
+            false,
+            ["sign"]
+          );
+          const signature = await crypto.subtle.sign("HMAC", key, encoder.encode(body));
+          const hex = Array.from(new Uint8Array(signature)).map((b) => b.toString(16).padStart(2, "0")).join("");
+          headers["X-Rocketeer-Signature"] = `sha256=${hex}`;
+        }
+        const response = await fetch(endpoint.url, {
+          method: "POST",
+          headers,
+          body,
+          signal: AbortSignal.timeout(1e4)
+          // 10s timeout
+        });
+        if (response.ok) {
+          await markWebhookTriggered(endpoint.id, true);
+          console.log(`[Webhook] \u2713 Delivered "${event}" to ${endpoint.name}`);
+        } else {
+          await markWebhookTriggered(endpoint.id, false);
+          console.warn(`[Webhook] \u2717 Failed "${event}" to ${endpoint.name}: ${response.status}`);
+        }
+      } catch (err) {
+        await markWebhookTriggered(endpoint.id, false);
+        console.error(`[Webhook] \u2717 Error dispatching to ${endpoint.name}:`, err);
+      }
+    }
+  } catch (err) {
+    console.error("[Webhook] Dispatch error:", err);
+  }
 }
 
 // server/facebook.ts
@@ -1782,6 +1990,48 @@ Timeline: ${scoreResult.timelineNotes}`
     }
   } catch (followUpErr) {
     console.error("[Webhook] Follow-up scheduling failed (non-critical):", followUpErr);
+  }
+  try {
+    if (conv.isAiActive && !conv.needsHandoff) {
+      const allMsgs = [...historyForAI, { sender: "ai", content: aiResponse }];
+      const handoffResult = await detectHandoff(allMsgs);
+      if (handoffResult.shouldHandoff) {
+        console.log(`[Webhook] Auto-handoff detected: ${handoffResult.reason} \u2014 ${handoffResult.reasonDetail}`);
+        await requestHandoff(conv.id, `[Auto] ${handoffResult.reason}: ${handoffResult.reasonDetail}`);
+        await notifyOwner({
+          title: `Agent Handoff: ${lead.name || "Unknown Lead"}`,
+          content: `Reason: ${handoffResult.reason}
+${handoffResult.reasonDetail}
+
+Conversation has been paused for human agent.`
+        });
+        await dispatchWebhookEvent(pageEntry.userId, "conversation.handoff", {
+          leadId: lead.id,
+          leadName: lead.name,
+          conversationId: conv.id,
+          reason: handoffResult.reason,
+          reasonDetail: handoffResult.reasonDetail,
+          platform: "messenger"
+        });
+      }
+    }
+  } catch (handoffErr) {
+    console.error("[Webhook] Handoff detection failed (non-critical):", handoffErr);
+  }
+  try {
+    const leadMsgs = history.filter((m) => m.sender === "lead");
+    if (leadMsgs.length <= 1) {
+      await dispatchWebhookEvent(pageEntry.userId, "lead.created", {
+        leadId: lead.id,
+        leadName: lead.name,
+        leadEmail: lead.email,
+        leadPhone: lead.phone,
+        platform: "messenger",
+        source: lead.source
+      });
+    }
+  } catch (webhookErr) {
+    console.error("[Webhook] Webhook dispatch failed (non-critical):", webhookErr);
   }
   console.log(`[Webhook] \u2705 Fully processed message from ${senderPsid} (lead=${lead.id}, conv=${conv.id})`);
 }
@@ -2135,6 +2385,48 @@ Platform: Instagram DM`
     }
   } catch (scoreErr) {
     console.error("[IG Webhook] Lead scoring failed (non-critical):", scoreErr);
+  }
+  try {
+    if (conv.isAiActive && !conv.needsHandoff) {
+      const allMsgs = [...historyForAI, { sender: "ai", content: aiResponse }];
+      const handoffResult = await detectHandoff(allMsgs);
+      if (handoffResult.shouldHandoff) {
+        console.log(`[IG Webhook] Auto-handoff detected: ${handoffResult.reason}`);
+        await requestHandoff(conv.id, `[Auto] ${handoffResult.reason}: ${handoffResult.reasonDetail}`);
+        await notifyOwner({
+          title: `Agent Handoff (Instagram): ${lead.name || "Unknown Lead"}`,
+          content: `Reason: ${handoffResult.reason}
+${handoffResult.reasonDetail}
+
+Conversation has been paused for human agent.`
+        });
+        await dispatchWebhookEvent(igAccount.userId, "conversation.handoff", {
+          leadId: lead.id,
+          leadName: lead.name,
+          conversationId: conv.id,
+          reason: handoffResult.reason,
+          reasonDetail: handoffResult.reasonDetail,
+          platform: "instagram"
+        });
+      }
+    }
+  } catch (handoffErr) {
+    console.error("[IG Webhook] Handoff detection failed (non-critical):", handoffErr);
+  }
+  try {
+    const leadMsgs = history.filter((m) => m.sender === "lead");
+    if (leadMsgs.length <= 1) {
+      await dispatchWebhookEvent(igAccount.userId, "lead.created", {
+        leadId: lead.id,
+        leadName: lead.name,
+        leadEmail: lead.email,
+        leadPhone: lead.phone,
+        platform: "instagram",
+        source: lead.source
+      });
+    }
+  } catch (webhookErr) {
+    console.error("[IG Webhook] Webhook dispatch failed (non-critical):", webhookErr);
   }
   console.log(`[IG Webhook] \u2705 Fully processed Instagram DM from ${senderIgScopedId} (lead=${lead.id}, conv=${conv.id})`);
 }
@@ -3779,6 +4071,47 @@ Timeline: ${scoreResult.timelineNotes}`
       ]);
       const csv = [headers.join(","), ...rows.map((r) => r.map((v) => `"${(v || "").replace(/"/g, '""')}"`).join(","))].join("\n");
       return { format: "csv", data: csv };
+    }),
+    // ─── Google Sheets Settings ─────────────────────────────────────
+    googleSheets: router({
+      getSettings: protectedProcedure.query(async ({ ctx }) => {
+        return getIntegrationSettings(ctx.user.id);
+      }),
+      updateSettings: protectedProcedure.input(z2.object({
+        googleSheetUrl: z2.string().optional(),
+        googleSheetEnabled: z2.boolean().optional()
+      })).mutation(async ({ ctx, input }) => {
+        await upsertIntegrationSettings(ctx.user.id, input);
+        return { success: true };
+      })
+    })
+  }),
+  // ─── Handoff Settings ──────────────────────────────────────────────
+  handoffs: router({
+    getSettings: protectedProcedure.query(async ({ ctx }) => {
+      return getHandoffSettings(ctx.user.id);
+    }),
+    updateSettings: protectedProcedure.input(z2.object({
+      autoHandoffEnabled: z2.boolean().optional(),
+      notifyOnHandoff: z2.boolean().optional(),
+      sentimentThreshold: z2.number().min(0).max(1).optional(),
+      handoffKeywords: z2.array(z2.string()).optional()
+    })).mutation(async ({ ctx, input }) => {
+      await upsertHandoffSettings(ctx.user.id, {
+        ...input,
+        handoffKeywords: input.handoffKeywords ? JSON.stringify(input.handoffKeywords) : void 0
+      });
+      return { success: true };
+    }),
+    active: protectedProcedure.query(async ({ ctx }) => {
+      return getHandoffQueue(ctx.user.id);
+    }),
+    list: protectedProcedure.input(z2.object({ limit: z2.number().default(50) })).query(async ({ ctx }) => {
+      return getHandoffQueue(ctx.user.id);
+    }),
+    resolveAndReenableAi: protectedProcedure.input(z2.object({ conversationId: z2.number() })).mutation(async ({ input }) => {
+      await resolveHandoff(input.conversationId);
+      return { success: true };
     })
   })
 });

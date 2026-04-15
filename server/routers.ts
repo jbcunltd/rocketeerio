@@ -930,6 +930,55 @@ export const appRouter = router({
         const csv = [headers.join(","), ...rows.map(r => r.map(v => `"${(v || "").replace(/"/g, '""')}"`).join(","))].join("\n");
         return { format: "csv", data: csv };
       }),
+    // ─── Google Sheets Settings ─────────────────────────────────────
+    googleSheets: router({
+      getSettings: protectedProcedure.query(async ({ ctx }) => {
+        return db.getIntegrationSettings(ctx.user.id);
+      }),
+      updateSettings: protectedProcedure
+        .input(z.object({
+          googleSheetUrl: z.string().optional(),
+          googleSheetEnabled: z.boolean().optional(),
+        }))
+        .mutation(async ({ ctx, input }) => {
+          await db.upsertIntegrationSettings(ctx.user.id, input);
+          return { success: true };
+        }),
+    }),
+  }),
+  // ─── Handoff Settings ──────────────────────────────────────────────
+  handoffs: router({
+    getSettings: protectedProcedure.query(async ({ ctx }) => {
+      return db.getHandoffSettings(ctx.user.id);
+    }),
+    updateSettings: protectedProcedure
+      .input(z.object({
+        autoHandoffEnabled: z.boolean().optional(),
+        notifyOnHandoff: z.boolean().optional(),
+        sentimentThreshold: z.number().min(0).max(1).optional(),
+        handoffKeywords: z.array(z.string()).optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        await db.upsertHandoffSettings(ctx.user.id, {
+          ...input,
+          handoffKeywords: input.handoffKeywords ? JSON.stringify(input.handoffKeywords) : undefined,
+        });
+        return { success: true };
+      }),
+    active: protectedProcedure.query(async ({ ctx }) => {
+      return db.getHandoffQueue(ctx.user.id);
+    }),
+    list: protectedProcedure
+      .input(z.object({ limit: z.number().default(50) }))
+      .query(async ({ ctx }) => {
+        return db.getHandoffQueue(ctx.user.id);
+      }),
+    resolveAndReenableAi: protectedProcedure
+      .input(z.object({ conversationId: z.number() }))
+      .mutation(async ({ input }) => {
+        await db.resolveHandoff(input.conversationId);
+        return { success: true };
+      }),
   }),
 });
 

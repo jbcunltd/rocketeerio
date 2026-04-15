@@ -18,6 +18,8 @@ import {
   instagramAccounts, InsertInstagramAccount,
   followUpSettings, InsertFollowUpSetting,
   webhookEndpoints, InsertWebhookEndpoint,
+  integrationSettings, InsertIntegrationSetting,
+  handoffSettings, InsertHandoffSetting,
 } from "../drizzle/schema";
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -918,4 +920,53 @@ export async function getHandoffCount(userId: number) {
   const [result] = await database.select({ count: count() }).from(conversations)
     .where(and(eq(conversations.userId, userId), eq(conversations.needsHandoff, true)));
   return result?.count ?? 0;
+}
+
+
+// ─── Integration Settings ───────────────────────────────────────────
+
+export async function getIntegrationSettings(userId: number) {
+  const database = await getDb();
+  if (!database) return null;
+  const result = await database.select().from(integrationSettings)
+    .where(eq(integrationSettings.userId, userId)).limit(1);
+  return result[0] ?? null;
+}
+
+export async function upsertIntegrationSettings(userId: number, data: Partial<InsertIntegrationSetting>) {
+  const database = await getDb();
+  if (!database) return;
+  const existing = await database.select().from(integrationSettings)
+    .where(eq(integrationSettings.userId, userId)).limit(1);
+  if (existing.length > 0) {
+    await database.update(integrationSettings)
+      .set({ ...data, updatedAt: new Date() })
+      .where(eq(integrationSettings.userId, userId));
+  } else {
+    await database.insert(integrationSettings).values({ userId, ...data });
+  }
+}
+
+// ─── Handoff Settings ───────────────────────────────────────────────
+
+export async function getHandoffSettings(userId: number) {
+  const database = await getDb();
+  if (!database) return null;
+  const result = await database.select().from(handoffSettings)
+    .where(eq(handoffSettings.userId, userId)).limit(1);
+  return result[0] ?? null;
+}
+
+export async function upsertHandoffSettings(userId: number, data: Partial<InsertHandoffSetting>) {
+  const database = await getDb();
+  if (!database) return;
+  const existing = await database.select().from(handoffSettings)
+    .where(eq(handoffSettings.userId, userId)).limit(1);
+  if (existing.length > 0) {
+    await database.update(handoffSettings)
+      .set({ ...data, updatedAt: new Date() })
+      .where(eq(handoffSettings.userId, userId));
+  } else {
+    await database.insert(handoffSettings).values({ userId, ...data });
+  }
 }

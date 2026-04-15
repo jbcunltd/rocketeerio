@@ -106,6 +106,57 @@ function WebhookForm({ onClose, onSuccess }: { onClose: () => void; onSuccess: (
   );
 }
 
+function GoogleSheetsAutoSync() {
+  const settingsQuery = trpc.integrations.googleSheets.getSettings.useQuery();
+  const updateMutation = trpc.integrations.googleSheets.updateSettings.useMutation({
+    onSuccess: () => { settingsQuery.refetch(); toast.success("Google Sheets settings saved"); },
+    onError: () => toast.error("Failed to save settings"),
+  });
+  const [sheetUrl, setSheetUrl] = useState("");
+  const [enabled, setEnabled] = useState(false);
+  const [loaded, setLoaded] = useState(false);
+
+  if (settingsQuery.data && !loaded) {
+    setSheetUrl(settingsQuery.data.googleSheetUrl || "");
+    setEnabled(settingsQuery.data.googleSheetEnabled ?? false);
+    setLoaded(true);
+  }
+
+  const handleSave = () => {
+    updateMutation.mutate({ googleSheetUrl: sheetUrl, googleSheetEnabled: enabled });
+  };
+
+  return (
+    <div className="mt-4 p-4 border border-green-200 bg-green-50 rounded-lg space-y-3">
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="font-medium text-sm">Auto-Sync to Google Sheets</p>
+          <p className="text-xs text-muted-foreground">Paste a Google Apps Script Web App URL to auto-populate leads.</p>
+        </div>
+        <Switch checked={enabled} onCheckedChange={setEnabled} />
+      </div>
+      {enabled && (
+        <div className="space-y-2">
+          <Label className="text-xs">Google Apps Script Web App URL</Label>
+          <Input
+            value={sheetUrl}
+            onChange={e => setSheetUrl(e.target.value)}
+            placeholder="https://script.google.com/macros/s/.../exec"
+            className="text-sm"
+          />
+          <p className="text-xs text-muted-foreground">
+            Deploy a Google Apps Script that accepts POST requests and appends rows to your sheet.
+          </p>
+          <Button onClick={handleSave} size="sm" disabled={updateMutation.isPending}>
+            {updateMutation.isPending ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : null}
+            Save
+          </Button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function IntegrationsContent() {
   const { data: webhooks, isLoading } = trpc.integrations.webhooks.list.useQuery();
   const deleteWebhook = trpc.integrations.webhooks.delete.useMutation();
@@ -186,8 +237,8 @@ function IntegrationsContent() {
               <FileSpreadsheet className="w-5 h-5 text-green-600" />
             </div>
             <div>
-              <h3 className="font-bold">Export to Google Sheets</h3>
-              <p className="text-sm text-muted-foreground">Download all leads as CSV and import into Google Sheets.</p>
+              <h3 className="font-bold">Google Sheets Integration</h3>
+              <p className="text-sm text-muted-foreground">Export leads or auto-sync new leads to Google Sheets.</p>
             </div>
           </div>
           <Button onClick={handleExportCSV} disabled={exporting} variant="outline">
@@ -195,6 +246,7 @@ function IntegrationsContent() {
             Export CSV
           </Button>
         </div>
+        <GoogleSheetsAutoSync />
         <div className="mt-3 p-3 bg-gray-50 rounded-lg">
           <p className="text-xs text-muted-foreground">
             <strong>Tip:</strong> For automatic sync, set up a Zapier webhook with the "lead.created" event and connect it to Google Sheets as the action.

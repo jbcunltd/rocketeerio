@@ -77,3 +77,47 @@ export const WEBHOOK_EVENTS = [
   { key: "conversation.handoff", label: "Agent Handoff", description: "Triggered when AI hands off to a human agent" },
   { key: "followup.sent", label: "Follow-Up Sent", description: "Triggered when a follow-up message is sent" },
 ] as const;
+
+/**
+ * Export lead data to a Google Sheet via Apps Script Web App URL.
+ * The user deploys a simple Apps Script that accepts POST requests
+ * and appends rows to their sheet.
+ */
+export async function exportLeadToGoogleSheet(
+  googleSheetWebAppUrl: string,
+  leadData: Record<string, any>
+): Promise<boolean> {
+  try {
+    if (!googleSheetWebAppUrl) return false;
+
+    const body = JSON.stringify({
+      timestamp: new Date().toISOString(),
+      name: leadData.leadName || "",
+      email: leadData.leadEmail || "",
+      phone: leadData.leadPhone || "",
+      platform: leadData.platform || "messenger",
+      source: leadData.source || "",
+      score: leadData.score || 0,
+      classification: leadData.classification || "",
+      status: leadData.status || "new",
+    });
+
+    const response = await fetch(googleSheetWebAppUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body,
+      signal: AbortSignal.timeout(15000),
+    });
+
+    if (response.ok) {
+      console.log("[Google Sheets] Lead exported successfully");
+      return true;
+    } else {
+      console.warn(`[Google Sheets] Export failed: ${response.status}`);
+      return false;
+    }
+  } catch (err) {
+    console.error("[Google Sheets] Export error:", err);
+    return false;
+  }
+}

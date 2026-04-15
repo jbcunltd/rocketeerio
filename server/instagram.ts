@@ -3,8 +3,9 @@ import { ENV } from "./_core/env";
 import { sdk } from "./_core/sdk";
 import { COOKIE_NAME } from "../shared/const";
 import * as db from "./db";
-import { generateAIResponse, scoreLead } from "./ai-engine";
+import { generateAIResponse, scoreLead, detectHandoff } from "./ai-engine";
 import { notifyOwner } from "./_core/notification";
+import { dispatchWebhookEvent } from "./webhook-dispatcher";
 
 const FB_GRAPH = "https://graph.facebook.com/v19.0";
 
@@ -212,10 +213,53 @@ async function processIncomingInstagramMessage(
     console.error("[IG Webhook] Lead scoring failed (non-critical):", scoreErr);
   }
 
-  console.log(`[IG Webhook] ✅ Fully processed Instagram DM from ${senderIgScopedId} (lead=${lead.id}, conv=${conv.id})`);
+  // 11. Auto-detect handoff need (non-critical)
+  try {
+    if (conv.isAiActive && !conv.needsHandoff) {
+      const allMsgs = [...historyForAI, { sender: "ai", content: aiResponse }];
+      const handoffResult = await detectHandoff(allMsgs);
+      if (handoffResult.shouldHandoff) {
+        console.log(`[IG Webhook] Auto-handoff detected: ${handoffResult.reason}`);
+        await db.requestHandoff(conv.id, `[Auto] ${handoffResult.reason}: ${handoffResult.reasonDetail}`);
+        await notifyOwner({
+          title: `Agent Handoff (Instagram): ${lead.name || "Unknown Lead"}`,
+          content: `Reason: ${handoffResult.reason}\n${handoffResult.reasonDetail}\n\nConversation has been paused for human agent.`,
+        });
+        await dispatchWebhookEvent(igAccount.userId, "conversation.handoff", {
+          leadId: lead.id,
+          leadName: lead.name,
+          conversationId: conv.id,
+          reason: handoffResult.reason,
+          reasonDetail: handoffResult.reasonDetail,
+          platform: "instagram",
+        });
+      }
+    }
+  } catch (handoffErr) {
+    console.error("[IG Webhook] Handoff detection failed (non-critical):", handoffErr);
+  }
+
+  // 12. Dispatch webhook events for new leads (non-critical)
+  try {
+    const leadMsgs = history.filter(m => m.sender === "lead");
+    if (leadMsgs.length <= 1) {
+      await dispatchWebhookEvent(igAccount.userId, "lead.created", {
+        leadId: lead.id,
+        leadName: lead.name,
+        leadEmail: lead.email,
+        leadPhone: lead.phone,
+        platform: "instagram",
+        source: lead.source,
+      });
+    }
+  } catch (webhookErr) {
+    console.error("[IG Webhook] Webhook dispatch failed (non-critical):", webhookErr);
+  }
+
+  console.log(`[IG Webhook] \u2705 Fully processed Instagram DM from ${senderIgScopedId} (lead=${lead.id}, conv=${conv.id})`);
 }
 
-// ─── Register Instagram Routes ──────────────────────────────────────
+// \u2500\u2500\u2500 Register Instagram Routes─────────────────────────
 
 export function registerInstagramRoutes(app: Express) {
 

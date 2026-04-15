@@ -344,3 +344,47 @@ export const paymentHistory = pgTable("payment_history", {
 
 export type PaymentHistoryEntry = typeof paymentHistory.$inferSelect;
 export type InsertPaymentHistory = typeof paymentHistory.$inferInsert;
+
+// ─── Integration Settings (Google Sheets) ───────────────────────────
+export const integrationSettings = pgTable("integration_settings", {
+  id: serial("id").primaryKey(),
+  userId: integer("userId").notNull(),
+  webhookUrl: text("webhookUrl"),
+  webhookSecret: varchar("webhookSecret", { length: 255 }),
+  webhookEnabled: boolean("webhookEnabled").default(false).notNull(),
+  webhookEvents: json("webhookEvents"),
+  googleSheetUrl: text("googleSheetUrl"),
+  googleSheetEnabled: boolean("googleSheetEnabled").default(false).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().notNull(),
+});
+export type IntegrationSetting = typeof integrationSettings.$inferSelect;
+export type InsertIntegrationSetting = typeof integrationSettings.$inferInsert;
+
+// ─── Handoff Settings ───────────────────────────────────────────────
+export const handoffSettings = pgTable("handoff_settings", {
+  id: serial("id").primaryKey(),
+  userId: integer("userId").notNull(),
+  autoHandoffEnabled: boolean("autoHandoffEnabled").default(true).notNull(),
+  notifyOnHandoff: boolean("notifyOnHandoff").default(true).notNull(),
+  handoffKeywords: json("handoffKeywords"),
+  sentimentThreshold: numeric("sentimentThreshold", { precision: 3, scale: 2 }).default("0.30"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().notNull(),
+});
+export type HandoffSetting = typeof handoffSettings.$inferSelect;
+export type InsertHandoffSetting = typeof handoffSettings.$inferInsert;
+
+// ─── Webhook Logs ───────────────────────────────────────────────────
+export const webhookLogs = pgTable("webhook_logs", {
+  id: serial("id").primaryKey(),
+  userId: integer("userId").notNull(),
+  eventType: varchar("eventType", { length: 100 }).notNull(),
+  payload: json("payload"),
+  statusCode: integer("statusCode"),
+  response: text("response"),
+  success: boolean("success").default(false).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type WebhookLog = typeof webhookLogs.$inferSelect;
+export type InsertWebhookLog = typeof webhookLogs.$inferInsert;
