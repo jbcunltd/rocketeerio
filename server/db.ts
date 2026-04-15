@@ -16,6 +16,7 @@ import {
   userSubscriptions, InsertUserSubscription,
   paymentHistory, InsertPaymentHistory,
   instagramAccounts, InsertInstagramAccount,
+  followUpSettings, InsertFollowUpSetting,
 } from "../drizzle/schema";
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -686,4 +687,24 @@ export async function getLeadByIgScopedId(igScopedId: string, igAccountId: numbe
   if (!database) return null;
   const rows = await database.select().from(leads).where(eq(leads.igScopedId, igScopedId));
   return rows[0] || null;
+}
+
+// ─── Follow-Up Settings ─────────────────────────────────────────────
+
+export async function getFollowUpSettings(userId: number) {
+  const database = await getDb();
+  if (!database) return null;
+  const rows = await database.select().from(followUpSettings).where(eq(followUpSettings.userId, userId));
+  return rows[0] || null;
+}
+
+export async function upsertFollowUpSettings(userId: number, data: Partial<InsertFollowUpSetting>) {
+  const database = await getDb();
+  if (!database) return;
+  const existing = await getFollowUpSettings(userId);
+  if (existing) {
+    await database.update(followUpSettings).set({ ...data, updatedAt: new Date() }).where(eq(followUpSettings.userId, userId));
+  } else {
+    await database.insert(followUpSettings).values({ userId, ...data });
+  }
 }

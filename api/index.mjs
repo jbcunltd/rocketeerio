@@ -197,6 +197,22 @@ var followUpSequences = pgTable("follow_up_sequences", {
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().notNull()
 });
+var followUpSettings = pgTable("follow_up_settings", {
+  id: serial("id").primaryKey(),
+  userId: integer("userId").notNull().unique(),
+  isEnabled: boolean("isEnabled").default(true).notNull(),
+  step1DelayMinutes: integer("step1DelayMinutes").default(1440).notNull(),
+  step1Message: text("step1Message"),
+  step1Enabled: boolean("step1Enabled").default(true).notNull(),
+  step2DelayMinutes: integer("step2DelayMinutes").default(2880).notNull(),
+  step2Message: text("step2Message"),
+  step2Enabled: boolean("step2Enabled").default(true).notNull(),
+  step3DelayMinutes: integer("step3DelayMinutes").default(10080).notNull(),
+  step3Message: text("step3Message"),
+  step3Enabled: boolean("step3Enabled").default(true).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().notNull()
+});
 var notificationPreferences = pgTable("notification_preferences", {
   id: serial("id").primaryKey(),
   userId: integer("userId").notNull().unique(),
@@ -792,6 +808,22 @@ async function getLeadByIgScopedId(igScopedId, igAccountId) {
   if (!database) return null;
   const rows = await database.select().from(leads).where(eq(leads.igScopedId, igScopedId));
   return rows[0] || null;
+}
+async function getFollowUpSettings(userId) {
+  const database = await getDb();
+  if (!database) return null;
+  const rows = await database.select().from(followUpSettings).where(eq(followUpSettings.userId, userId));
+  return rows[0] || null;
+}
+async function upsertFollowUpSettings(userId, data) {
+  const database = await getDb();
+  if (!database) return;
+  const existing = await getFollowUpSettings(userId);
+  if (existing) {
+    await database.update(followUpSettings).set({ ...data, updatedAt: /* @__PURE__ */ new Date() }).where(eq(followUpSettings.userId, userId));
+  } else {
+    await database.insert(followUpSettings).values({ userId, ...data });
+  }
 }
 
 // server/_core/env.ts
@@ -3115,27 +3147,64 @@ Timeline: ${scoreResult.timelineNotes}`
     schedule: protectedProcedure.input(z2.object({
       conversationId: z2.number(),
       leadId: z2.number()
-    })).mutation(async ({ input }) => {
+    })).mutation(async ({ ctx, input }) => {
+      const settings = await getFollowUpSettings(ctx.user.id);
+      if (settings && !settings.isEnabled) {
+        return { success: false, count: 0, reason: "Follow-ups disabled" };
+      }
       const now = Date.now();
-      const delays = [30, 120, 720];
-      const messages2 = [
-        "Hi! Just checking in \u2014 did you have any other questions about what we discussed?",
-        "Hey! I wanted to follow up on our conversation. Is there anything else I can help you with?",
-        "Hi there! I noticed we chatted earlier. I'd love to help you move forward \u2014 feel free to ask me anything!"
+      const steps = [
+        { delay: settings?.step1DelayMinutes ?? 1440, message: settings?.step1Message || "Hi! Just checking in \u2014 did you have any other questions about what we discussed?", enabled: settings?.step1Enabled ?? true },
+        { delay: settings?.step2DelayMinutes ?? 2880, message: settings?.step2Message || "Hey! I wanted to follow up on our conversation. Is there anything else I can help you with?", enabled: settings?.step2Enabled ?? true },
+        { delay: settings?.step3DelayMinutes ?? 10080, message: settings?.step3Message || "Hi there! I noticed we chatted earlier. I\u2019d love to help you move forward \u2014 feel free to ask me anything!", enabled: settings?.step3Enabled ?? true }
       ];
-      for (let i = 0; i < delays.length; i++) {
+      let count2 = 0;
+      for (const step of steps) {
+        if (!step.enabled) continue;
         await createFollowUp({
           conversationId: input.conversationId,
           leadId: input.leadId,
-          delayMinutes: delays[i],
-          scheduledAt: now + delays[i] * 60 * 1e3,
-          messageContent: messages2[i]
+          delayMinutes: step.delay,
+          scheduledAt: now + step.delay * 60 * 1e3,
+          messageContent: step.message
         });
+        count2++;
       }
-      return { success: true, count: delays.length };
+      return { success: true, count: count2 };
     }),
     cancel: protectedProcedure.input(z2.object({ id: z2.number() })).mutation(async ({ input }) => {
       await updateFollowUp(input.id, { status: "cancelled" });
+      return { success: true };
+    }),
+    // ─── Follow-Up Settings ────────────────────────────────────────
+    getSettings: protectedProcedure.query(async ({ ctx }) => {
+      const settings = await getFollowUpSettings(ctx.user.id);
+      return settings || {
+        isEnabled: true,
+        step1DelayMinutes: 1440,
+        step1Message: "Hi! Just checking in \u2014 did you have any other questions about what we discussed?",
+        step1Enabled: true,
+        step2DelayMinutes: 2880,
+        step2Message: "Hey! I wanted to follow up on our conversation. Is there anything else I can help you with?",
+        step2Enabled: true,
+        step3DelayMinutes: 10080,
+        step3Message: "Hi there! I noticed we chatted earlier. I\u2019d love to help you move forward \u2014 feel free to ask me anything!",
+        step3Enabled: true
+      };
+    }),
+    updateSettings: protectedProcedure.input(z2.object({
+      isEnabled: z2.boolean().optional(),
+      step1DelayMinutes: z2.number().min(1).optional(),
+      step1Message: z2.string().optional(),
+      step1Enabled: z2.boolean().optional(),
+      step2DelayMinutes: z2.number().min(1).optional(),
+      step2Message: z2.string().optional(),
+      step2Enabled: z2.boolean().optional(),
+      step3DelayMinutes: z2.number().min(1).optional(),
+      step3Message: z2.string().optional(),
+      step3Enabled: z2.boolean().optional()
+    })).mutation(async ({ ctx, input }) => {
+      await upsertFollowUpSettings(ctx.user.id, input);
       return { success: true };
     })
   }),

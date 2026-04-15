@@ -189,6 +189,27 @@ export const followUpSequences = pgTable("follow_up_sequences", {
 export type FollowUpSequence = typeof followUpSequences.$inferSelect;
 export type InsertFollowUpSequence = typeof followUpSequences.$inferInsert;
 
+// ─── Follow-Up Settings (configurable per user) ───────────────────
+export const followUpSettings = pgTable("follow_up_settings", {
+  id: serial("id").primaryKey(),
+  userId: integer("userId").notNull().unique(),
+  isEnabled: boolean("isEnabled").default(true).notNull(),
+  step1DelayMinutes: integer("step1DelayMinutes").default(1440).notNull(),
+  step1Message: text("step1Message"),
+  step1Enabled: boolean("step1Enabled").default(true).notNull(),
+  step2DelayMinutes: integer("step2DelayMinutes").default(2880).notNull(),
+  step2Message: text("step2Message"),
+  step2Enabled: boolean("step2Enabled").default(true).notNull(),
+  step3DelayMinutes: integer("step3DelayMinutes").default(10080).notNull(),
+  step3Message: text("step3Message"),
+  step3Enabled: boolean("step3Enabled").default(true).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().notNull(),
+});
+
+export type FollowUpSetting = typeof followUpSettings.$inferSelect;
+export type InsertFollowUpSetting = typeof followUpSettings.$inferInsert;
+
 // ─── Notification Preferences ────────────────────────────────────────
 export const notificationPreferences = pgTable("notification_preferences", {
   id: serial("id").primaryKey(),

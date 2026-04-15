@@ -355,31 +355,73 @@ export const appRouter = router({
         conversationId: z.number(),
         leadId: z.number(),
       }))
-      .mutation(async ({ input }) => {
+      .mutation(async ({ ctx, input }) => {
+        const settings = await db.getFollowUpSettings(ctx.user.id);
+        if (settings && !settings.isEnabled) {
+          return { success: false, count: 0, reason: "Follow-ups disabled" };
+        }
+
         const now = Date.now();
-        const delays = [30, 120, 720]; // 30 min, 2 hrs, 12 hrs
-        const messages = [
-          "Hi! Just checking in — did you have any other questions about what we discussed?",
-          "Hey! I wanted to follow up on our conversation. Is there anything else I can help you with?",
-          "Hi there! I noticed we chatted earlier. I'd love to help you move forward — feel free to ask me anything!",
+        const steps = [
+          { delay: settings?.step1DelayMinutes ?? 1440, message: settings?.step1Message || "Hi! Just checking in \u2014 did you have any other questions about what we discussed?", enabled: settings?.step1Enabled ?? true },
+          { delay: settings?.step2DelayMinutes ?? 2880, message: settings?.step2Message || "Hey! I wanted to follow up on our conversation. Is there anything else I can help you with?", enabled: settings?.step2Enabled ?? true },
+          { delay: settings?.step3DelayMinutes ?? 10080, message: settings?.step3Message || "Hi there! I noticed we chatted earlier. I\u2019d love to help you move forward \u2014 feel free to ask me anything!", enabled: settings?.step3Enabled ?? true },
         ];
 
-        for (let i = 0; i < delays.length; i++) {
+        let count = 0;
+        for (const step of steps) {
+          if (!step.enabled) continue;
           await db.createFollowUp({
             conversationId: input.conversationId,
             leadId: input.leadId,
-            delayMinutes: delays[i],
-            scheduledAt: now + delays[i] * 60 * 1000,
-            messageContent: messages[i],
+            delayMinutes: step.delay,
+            scheduledAt: now + step.delay * 60 * 1000,
+            messageContent: step.message,
           });
+          count++;
         }
-        return { success: true, count: delays.length };
+        return { success: true, count };
       }),
 
     cancel: protectedProcedure
       .input(z.object({ id: z.number() }))
       .mutation(async ({ input }) => {
         await db.updateFollowUp(input.id, { status: "cancelled" });
+        return { success: true };
+      }),
+
+    // ─── Follow-Up Settings ────────────────────────────────────────
+    getSettings: protectedProcedure.query(async ({ ctx }) => {
+      const settings = await db.getFollowUpSettings(ctx.user.id);
+      return settings || {
+        isEnabled: true,
+        step1DelayMinutes: 1440,
+        step1Message: "Hi! Just checking in \u2014 did you have any other questions about what we discussed?",
+        step1Enabled: true,
+        step2DelayMinutes: 2880,
+        step2Message: "Hey! I wanted to follow up on our conversation. Is there anything else I can help you with?",
+        step2Enabled: true,
+        step3DelayMinutes: 10080,
+        step3Message: "Hi there! I noticed we chatted earlier. I\u2019d love to help you move forward \u2014 feel free to ask me anything!",
+        step3Enabled: true,
+      };
+    }),
+
+    updateSettings: protectedProcedure
+      .input(z.object({
+        isEnabled: z.boolean().optional(),
+        step1DelayMinutes: z.number().min(1).optional(),
+        step1Message: z.string().optional(),
+        step1Enabled: z.boolean().optional(),
+        step2DelayMinutes: z.number().min(1).optional(),
+        step2Message: z.string().optional(),
+        step2Enabled: z.boolean().optional(),
+        step3DelayMinutes: z.number().min(1).optional(),
+        step3Message: z.string().optional(),
+        step3Enabled: z.boolean().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        await db.upsertFollowUpSettings(ctx.user.id, input);
         return { success: true };
       }),
   }),
