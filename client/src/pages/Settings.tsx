@@ -1005,33 +1005,90 @@ export default function Settings() {
   const params = new URLSearchParams(window.location.search);
   const defaultTab = params.get("tab") || "profile";
 
+  const [activeTab, setActiveTab] = useState(defaultTab);
+
+  const tabs = [
+    { id: "profile", label: "Profile", icon: User, description: "Personal details and account info" },
+    { id: "hot-lead-alerts", label: "Hot Lead Alerts", icon: BellRing, description: "When to notify you about ready-to-buy leads" },
+    { id: "notifications", label: "Notifications", icon: Bell, description: "General email and SMS preferences" },
+    { id: "pages", label: "Facebook Pages", icon: Facebook, description: "Connect your business pages" },
+    { id: "instagram", label: "Instagram", icon: Instagram, description: "Connect your Instagram accounts" },
+    { id: "ai-personality", label: "AI Personality", icon: Bot, description: "How your AI agent talks to customers" },
+    { id: "handoff", label: "Live Agent Handoff", icon: Headphones, description: "When to pass the chat to a human" },
+    { id: "billing", label: "Billing & Plans", icon: CreditCard, description: "Manage your subscription" },
+  ];
+
   return (
     <DashboardLayout>
-      <div className="max-w-3xl">
-        <div className="mb-6">
-          <h1 className="text-xl sm:text-2xl font-bold">Settings</h1>
-          <p className="text-sm text-muted-foreground">Manage your account, notifications, and integrations.</p>
+      <div className="max-w-5xl mx-auto">
+        <div className="mb-8">
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Settings</h1>
+          <p className="text-muted-foreground mt-1">Manage your account, notifications, and integrations.</p>
         </div>
-        <Tabs defaultValue={defaultTab}>
-          <TabsList className="mb-6 flex-wrap h-auto gap-1 p-1">
-            <TabsTrigger value="profile" className="text-xs sm:text-sm"><User className="w-4 h-4 sm:mr-1.5" /><span className="hidden sm:inline">Profile</span></TabsTrigger>
-            <TabsTrigger value="hot-lead-alerts" className="text-xs sm:text-sm"><BellRing className="w-4 h-4 sm:mr-1.5" /><span className="hidden sm:inline">Hot Lead Alerts</span></TabsTrigger>
-            <TabsTrigger value="notifications" className="text-xs sm:text-sm"><Bell className="w-4 h-4 sm:mr-1.5" /><span className="hidden sm:inline">Notifications</span></TabsTrigger>
-            <TabsTrigger value="pages" className="text-xs sm:text-sm"><Facebook className="w-4 h-4 sm:mr-1.5" /><span className="hidden sm:inline">Pages</span></TabsTrigger>
-            <TabsTrigger value="instagram" className="text-xs sm:text-sm"><Instagram className="w-4 h-4 sm:mr-1.5" /><span className="hidden sm:inline">Instagram</span></TabsTrigger>
-            <TabsTrigger value="ai-personality" className="text-xs sm:text-sm"><Bot className="w-4 h-4 sm:mr-1.5" /><span className="hidden sm:inline">AI Personality</span></TabsTrigger>
-            <TabsTrigger value="billing" className="text-xs sm:text-sm"><CreditCard className="w-4 h-4 sm:mr-1.5" /><span className="hidden sm:inline">Billing</span></TabsTrigger>
-            <TabsTrigger value="handoff" className="text-xs sm:text-sm"><Headphones className="w-4 h-4 sm:mr-1.5" /><span className="hidden sm:inline">Handoff</span></TabsTrigger>
-          </TabsList>
-          <TabsContent value="profile"><ProfileTab /></TabsContent>
-          <TabsContent value="hot-lead-alerts"><HotLeadAlertsTab /></TabsContent>
-          <TabsContent value="notifications"><NotificationsTab /></TabsContent>
-          <TabsContent value="pages"><PagesTab /></TabsContent>
-          <TabsContent value="instagram"><InstagramTab /></TabsContent>
-          <TabsContent value="ai-personality"><AiPersonalityTab /></TabsContent>
-          <TabsContent value="billing"><BillingTab /></TabsContent>
-          <TabsContent value="handoff"><HandoffTab /></TabsContent>
-        </Tabs>
+
+        <div className="flex flex-col md:flex-row gap-8">
+          {/* Mobile Tab Selector */}
+          <div className="md:hidden mb-4">
+            <Label className="mb-2 block text-sm font-medium text-muted-foreground">Select Settings Category</Label>
+            <Select value={activeTab} onValueChange={setActiveTab}>
+              <SelectTrigger className="w-full h-12 bg-white">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {tabs.map(tab => (
+                  <SelectItem key={tab.id} value={tab.id}>
+                    <div className="flex items-center gap-2">
+                      <tab.icon className="w-4 h-4 text-muted-foreground" />
+                      <span>{tab.label}</span>
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Desktop Sidebar */}
+          <div className="hidden md:block w-64 shrink-0">
+            <nav className="flex flex-col gap-1 sticky top-6">
+              {tabs.map(tab => {
+                const isActive = activeTab === tab.id;
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id)}
+                    className={`flex items-start gap-3 px-3 py-2.5 rounded-lg text-left transition-colors ${
+                      isActive 
+                        ? "bg-messenger/10 text-messenger font-medium" 
+                        : "text-muted-foreground hover:bg-gray-100 hover:text-foreground"
+                    }`}
+                  >
+                    <tab.icon className={`w-5 h-5 shrink-0 mt-0.5 ${isActive ? "text-messenger" : "text-muted-foreground"}`} />
+                    <div>
+                      <div className="text-sm">{tab.label}</div>
+                      <div className={`text-xs mt-0.5 ${isActive ? "text-messenger/70" : "text-muted-foreground/70"}`}>
+                        {tab.description}
+                      </div>
+                    </div>
+                  </button>
+                );
+              })}
+            </nav>
+          </div>
+
+          {/* Content Area */}
+          <div className="flex-1 min-w-0">
+            <div className="bg-white rounded-xl border border-border/50 shadow-sm p-4 sm:p-6 md:p-8">
+              {activeTab === "profile" && <ProfileTab />}
+              {activeTab === "hot-lead-alerts" && <HotLeadAlertsTab />}
+              {activeTab === "notifications" && <NotificationsTab />}
+              {activeTab === "pages" && <PagesTab />}
+              {activeTab === "instagram" && <InstagramTab />}
+              {activeTab === "ai-personality" && <AiPersonalityTab />}
+              {activeTab === "billing" && <BillingTab />}
+              {activeTab === "handoff" && <HandoffTab />}
+            </div>
+          </div>
+        </div>
       </div>
     </DashboardLayout>
   );
