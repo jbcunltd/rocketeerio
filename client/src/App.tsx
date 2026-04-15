@@ -15,6 +15,7 @@ import Settings from "./pages/Settings";
 import Billing from "./pages/Billing";
 import Analytics from "./pages/Analytics";
 import Integrations from "./pages/Integrations";
+import AgentInbox from "./pages/AgentInbox";
 import Onboarding from "./pages/Onboarding";
 
 function Router() {
@@ -32,6 +33,7 @@ function Router() {
       <Route path="/billing" component={Billing} />
       <Route path="/analytics" component={Analytics} />
       <Route path="/integrations" component={Integrations} />
+      <Route path="/agent-inbox" component={AgentInbox} />
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />
     </Switch>

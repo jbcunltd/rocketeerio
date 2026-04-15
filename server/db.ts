@@ -871,3 +871,51 @@ export async function getLeadsForExport(userId: number) {
   if (!database) return [];
   return database.select().from(leads).where(eq(leads.userId, userId)).orderBy(desc(leads.createdAt));
 }
+
+// ─── Live Agent Handoff ─────────────────────────────────────────────
+
+export async function requestHandoff(conversationId: number, reason: string) {
+  const database = await getDb();
+  if (!database) return;
+  await database.update(conversations).set({
+    needsHandoff: true,
+    handoffReason: reason,
+    handoffAt: new Date(),
+    isAiActive: false,
+    updatedAt: new Date(),
+  }).where(eq(conversations.id, conversationId));
+}
+
+export async function resolveHandoff(conversationId: number) {
+  const database = await getDb();
+  if (!database) return;
+  await database.update(conversations).set({
+    needsHandoff: false,
+    handoffReason: null,
+    isAiActive: true,
+    updatedAt: new Date(),
+  }).where(eq(conversations.id, conversationId));
+}
+
+export async function getHandoffQueue(userId: number) {
+  const database = await getDb();
+  if (!database) return [];
+  return database.select({
+    conversation: conversations,
+    lead: leads,
+    page: facebookPages,
+  })
+    .from(conversations)
+    .leftJoin(leads, eq(conversations.leadId, leads.id))
+    .leftJoin(facebookPages, eq(conversations.pageId, facebookPages.id))
+    .where(and(eq(conversations.userId, userId), eq(conversations.needsHandoff, true)))
+    .orderBy(desc(conversations.handoffAt));
+}
+
+export async function getHandoffCount(userId: number) {
+  const database = await getDb();
+  if (!database) return 0;
+  const [result] = await database.select({ count: count() }).from(conversations)
+    .where(and(eq(conversations.userId, userId), eq(conversations.needsHandoff, true)));
+  return result?.count ?? 0;
+}

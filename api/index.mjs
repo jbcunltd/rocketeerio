@@ -161,6 +161,10 @@ var conversations = pgTable("conversations", {
   isAiActive: boolean("isAiActive").default(true).notNull(),
   platform: varchar("platform", { length: 32 }).default("messenger"),
   status: conversationStatusEnum("status").default("open").notNull(),
+  needsHandoff: boolean("needsHandoff").default(false).notNull(),
+  handoffReason: text("handoffReason"),
+  handoffAt: timestamp("handoffAt"),
+  assignedTo: integer("assignedTo"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().notNull()
 });
@@ -953,6 +957,42 @@ async function getLeadsForExport(userId) {
   const database = await getDb();
   if (!database) return [];
   return database.select().from(leads).where(eq(leads.userId, userId)).orderBy(desc(leads.createdAt));
+}
+async function requestHandoff(conversationId, reason) {
+  const database = await getDb();
+  if (!database) return;
+  await database.update(conversations).set({
+    needsHandoff: true,
+    handoffReason: reason,
+    handoffAt: /* @__PURE__ */ new Date(),
+    isAiActive: false,
+    updatedAt: /* @__PURE__ */ new Date()
+  }).where(eq(conversations.id, conversationId));
+}
+async function resolveHandoff(conversationId) {
+  const database = await getDb();
+  if (!database) return;
+  await database.update(conversations).set({
+    needsHandoff: false,
+    handoffReason: null,
+    isAiActive: true,
+    updatedAt: /* @__PURE__ */ new Date()
+  }).where(eq(conversations.id, conversationId));
+}
+async function getHandoffQueue(userId) {
+  const database = await getDb();
+  if (!database) return [];
+  return database.select({
+    conversation: conversations,
+    lead: leads,
+    page: facebookPages
+  }).from(conversations).leftJoin(leads, eq(conversations.leadId, leads.id)).leftJoin(facebookPages, eq(conversations.pageId, facebookPages.id)).where(and(eq(conversations.userId, userId), eq(conversations.needsHandoff, true))).orderBy(desc(conversations.handoffAt));
+}
+async function getHandoffCount(userId) {
+  const database = await getDb();
+  if (!database) return 0;
+  const [result] = await database.select({ count: count() }).from(conversations).where(and(eq(conversations.userId, userId), eq(conversations.needsHandoff, true)));
+  return result?.count ?? 0;
 }
 
 // server/_core/env.ts
@@ -3128,6 +3168,23 @@ var appRouter = router({
     })).mutation(async ({ input }) => {
       await updateConversation(input.id, { isAiActive: input.isAiActive });
       return { success: true };
+    }),
+    requestHandoff: protectedProcedure.input(z2.object({
+      id: z2.number(),
+      reason: z2.string().default("Manual handoff requested")
+    })).mutation(async ({ input }) => {
+      await requestHandoff(input.id, input.reason);
+      return { success: true };
+    }),
+    resolveHandoff: protectedProcedure.input(z2.object({ id: z2.number() })).mutation(async ({ input }) => {
+      await resolveHandoff(input.id);
+      return { success: true };
+    }),
+    handoffQueue: protectedProcedure.query(async ({ ctx }) => {
+      return getHandoffQueue(ctx.user.id);
+    }),
+    handoffCount: protectedProcedure.query(async ({ ctx }) => {
+      return getHandoffCount(ctx.user.id);
     })
   }),
   // ─── Messages ──────────────────────────────────────────────────────

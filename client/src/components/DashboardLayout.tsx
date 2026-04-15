@@ -27,7 +27,7 @@ import { trpc } from "@/lib/trpc";
 import { useIsMobile } from "@/hooks/useMobile";
 import {
   LayoutDashboard, MessageCircle, Users, Settings,
-  LogOut, PanelLeft, Rocket, BookOpen, Zap, CreditCard, BarChart3, Plug
+  LogOut, PanelLeft, Rocket, BookOpen, Zap, CreditCard, BarChart3, Plug, Headphones
 } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
@@ -37,6 +37,7 @@ import { Button } from "./ui/button";
 const menuItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard" },
   { icon: MessageCircle, label: "Conversations", path: "/conversations" },
+  { icon: Headphones, label: "Agent Inbox", path: "/agent-inbox" },
   { icon: Users, label: "Leads", path: "/leads" },
   { icon: BookOpen, label: "Knowledge Base", path: "/knowledge-base" },
   { icon: Zap, label: "Follow-Ups", path: "/follow-ups" },

@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { trpc } from "@/lib/trpc";
 import {
   ArrowLeft, Loader2, Send, Flame, Thermometer, Snowflake,
-  CheckCircle2, Archive, Clock, User, Mail, Phone, Bot, Zap
+  CheckCircle2, Archive, Clock, User, Mail, Phone, Bot, Zap, Headphones, AlertTriangle
 } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { useLocation, useParams } from "wouter";
@@ -45,6 +45,8 @@ function ConversationDetailContent() {
   const updateLead = trpc.leads.update.useMutation();
   const updateConv = trpc.conversations.updateStatus.useMutation();
   const scheduleFollowUps = trpc.followUps.schedule.useMutation();
+  const requestHandoff = trpc.conversations.requestHandoff.useMutation();
+  const resolveHandoff = trpc.conversations.resolveHandoff.useMutation();
   const utils = trpc.useUtils();
 
   useEffect(() => {
@@ -100,6 +102,24 @@ function ConversationDetailContent() {
     } catch { toast.error("Failed to schedule follow-ups"); }
   };
 
+  const handleRequestHandoff = async () => {
+    try {
+      await requestHandoff.mutateAsync({ id: convId, reason: "Manual handoff requested by agent" });
+      utils.conversations.get.invalidate({ id: convId });
+      utils.conversations.handoffCount.invalidate();
+      toast.success("Handoff requested. AI paused. Check Agent Inbox.");
+    } catch { toast.error("Failed to request handoff"); }
+  };
+
+  const handleResolveHandoff = async () => {
+    try {
+      await resolveHandoff.mutateAsync({ id: convId });
+      utils.conversations.get.invalidate({ id: convId });
+      utils.conversations.handoffCount.invalidate();
+      toast.success("Handoff resolved. AI re-enabled.");
+    } catch { toast.error("Failed to resolve handoff"); }
+  };
+
   if (convLoading || msgsLoading) {
     return (
       <div className="flex items-center justify-center py-20">
@@ -147,6 +167,15 @@ function ConversationDetailContent() {
             <Button variant="outline" size="sm" onClick={handleArchive}>
               <Archive className="w-3.5 h-3.5 mr-1" /> Archive
             </Button>
+            {conv.needsHandoff ? (
+              <Button size="sm" className="bg-green-600 hover:bg-green-700 text-white" onClick={handleResolveHandoff}>
+                <CheckCircle2 className="w-3.5 h-3.5 mr-1" /> Resolve Handoff
+              </Button>
+            ) : (
+              <Button variant="outline" size="sm" className="text-red-600 border-red-200 hover:bg-red-50" onClick={handleRequestHandoff}>
+                <Headphones className="w-3.5 h-3.5 mr-1" /> Hand Off
+              </Button>
+            )}
           </div>
         </div>
 
@@ -260,6 +289,15 @@ function ConversationDetailContent() {
             <Button variant="outline" className="w-full justify-start" onClick={handleMarkConverted} disabled={lead?.status === "converted"}>
               <CheckCircle2 className="w-4 h-4 mr-2" /> {lead?.status === "converted" ? "Already Converted" : "Mark as Converted"}
             </Button>
+            {conv.needsHandoff ? (
+              <Button variant="outline" className="w-full justify-start text-green-600 border-green-200 hover:bg-green-50" onClick={handleResolveHandoff}>
+                <CheckCircle2 className="w-4 h-4 mr-2" /> Resolve Handoff & Re-enable AI
+              </Button>
+            ) : (
+              <Button variant="outline" className="w-full justify-start text-red-600 border-red-200 hover:bg-red-50" onClick={handleRequestHandoff}>
+                <Headphones className="w-4 h-4 mr-2" /> Request Agent Handoff
+              </Button>
+            )}
           </div>
         </div>
 

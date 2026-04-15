@@ -134,6 +134,10 @@ export const conversations = pgTable("conversations", {
   isAiActive: boolean("isAiActive").default(true).notNull(),
   platform: varchar("platform", { length: 32 }).default("messenger"),
   status: conversationStatusEnum("status").default("open").notNull(),
+  needsHandoff: boolean("needsHandoff").default(false).notNull(),
+  handoffReason: text("handoffReason"),
+  handoffAt: timestamp("handoffAt"),
+  assignedTo: integer("assignedTo"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().notNull(),
 });

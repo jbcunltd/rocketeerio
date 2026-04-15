@@ -169,6 +169,31 @@ export const appRouter = router({
         await db.updateConversation(input.id, { isAiActive: input.isAiActive });
         return { success: true };
       }),
+
+    requestHandoff: protectedProcedure
+      .input(z.object({
+        id: z.number(),
+        reason: z.string().default("Manual handoff requested"),
+      }))
+      .mutation(async ({ input }) => {
+        await db.requestHandoff(input.id, input.reason);
+        return { success: true };
+      }),
+
+    resolveHandoff: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input }) => {
+        await db.resolveHandoff(input.id);
+        return { success: true };
+      }),
+
+    handoffQueue: protectedProcedure.query(async ({ ctx }) => {
+      return db.getHandoffQueue(ctx.user.id);
+    }),
+
+    handoffCount: protectedProcedure.query(async ({ ctx }) => {
+      return db.getHandoffCount(ctx.user.id);
+    }),
   }),
 
   // ─── Messages ──────────────────────────────────────────────────────

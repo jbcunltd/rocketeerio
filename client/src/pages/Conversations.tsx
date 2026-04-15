@@ -1,6 +1,6 @@
 import DashboardLayout from "@/components/DashboardLayout";
 import { trpc } from "@/lib/trpc";
-import { MessageCircle, Loader2, Search, Flame, Thermometer, Snowflake } from "lucide-react";
+import { MessageCircle, Loader2, Search, Flame, Thermometer, Snowflake, AlertTriangle } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useState, useMemo } from "react";
 import { useLocation } from "wouter";
@@ -36,7 +36,9 @@ function ConversationsContent() {
   const filtered = useMemo(() => {
     if (!conversations) return [];
     let list = conversations;
-    if (filter !== "all") {
+    if (filter === "handoff") {
+      list = list.filter((c: any) => c.conversation?.needsHandoff);
+    } else if (filter !== "all") {
       list = list.filter((c: any) => c.lead?.classification === filter);
     }
     if (search.trim()) {
@@ -82,6 +84,7 @@ function ConversationsContent() {
             { key: "hot", label: "Hot" },
             { key: "warm", label: "Warm" },
             { key: "cold", label: "Cold" },
+            { key: "handoff", label: "Needs Agent" },
           ].map(f => (
             <button
               key={f.key}
@@ -129,6 +132,11 @@ function ConversationsContent() {
                       <div className="flex items-center gap-2 mb-0.5">
                         <span className="font-semibold text-foreground truncate">{lead?.name || "Unknown Lead"}</span>
                         {lead && <ScoreBadge classification={lead.classification} score={lead.score} />}
+                        {conv.needsHandoff && (
+                          <span className="inline-flex items-center gap-1 text-xs font-bold px-2 py-1 rounded-full bg-red-50 text-red-600">
+                            <AlertTriangle className="w-3 h-3" /> Handoff
+                          </span>
+                        )}
                       </div>
                       <p className="text-sm text-muted-foreground truncate">{conv.lastMessagePreview || "No messages yet"}</p>
                       <div className="flex items-center gap-2 mt-1">
