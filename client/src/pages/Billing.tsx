@@ -92,19 +92,19 @@ function BillingContent() {
   };
 
   const planColors: Record<string, string> = {
-    free: "border-slate-200 bg-slate-50/50 dark:border-slate-800 dark:bg-slate-950/30",
-    growth: "border-blue-200 bg-blue-50/50 dark:border-blue-900 dark:bg-blue-950/30",
-    pro: "border-purple-200 bg-purple-50/50 dark:border-purple-900 dark:bg-purple-950/30 ring-2 ring-purple-500/20",
-    scale: "border-amber-200 bg-amber-50/50 dark:border-amber-900 dark:bg-amber-950/30",
-    custom: "border-slate-300 bg-slate-100/50 dark:border-slate-700 dark:bg-slate-900/30",
+    free: "border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-900",
+    growth: "border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-900",
+    pro: "border-2 border-purple-600 bg-gradient-to-br from-purple-50 to-white dark:from-purple-900/30 dark:to-gray-900 shadow-lg",
+    scale: "border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-900",
+    custom: "border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-900",
   };
 
   const planButtonColors: Record<string, string> = {
-    free: "bg-slate-600 hover:bg-slate-700 text-white",
-    growth: "bg-blue-600 hover:bg-blue-700 text-white",
-    pro: "bg-purple-600 hover:bg-purple-700 text-white",
-    scale: "bg-amber-600 hover:bg-amber-700 text-white",
-    custom: "bg-slate-600 hover:bg-slate-700 text-white",
+    free: "border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700",
+    growth: "bg-purple-600 hover:bg-purple-700 text-white",
+    pro: "bg-white border-2 border-purple-600 text-purple-600 hover:bg-purple-50 dark:bg-gray-800 dark:text-purple-400 dark:hover:bg-gray-700",
+    scale: "bg-slate-900 hover:bg-slate-950 text-white dark:bg-slate-800 dark:hover:bg-slate-700",
+    custom: "border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700",
   };
 
   // Annual discount: 20% off (monthly * 12 * 0.8)
@@ -258,18 +258,18 @@ function BillingContent() {
 
                 <div className="flex items-center gap-3 mb-4 pt-2">
                   <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                    plan.slug === "free" ? "bg-slate-100 dark:bg-slate-900/30" :
-                    plan.slug === "growth" ? "bg-blue-100 dark:bg-blue-900/30" :
+                    plan.slug === "free" ? "bg-gray-100 dark:bg-gray-800" :
+                    plan.slug === "growth" ? "bg-purple-100 dark:bg-purple-900/30" :
                     plan.slug === "pro" ? "bg-purple-100 dark:bg-purple-900/30" :
-                    plan.slug === "scale" ? "bg-amber-100 dark:bg-amber-900/30" :
-                    "bg-slate-100 dark:bg-slate-900/30"
+                    plan.slug === "scale" ? "bg-slate-100 dark:bg-slate-800" :
+                    "bg-gray-100 dark:bg-gray-800"
                   }`}>
                     <Icon className={`w-5 h-5 ${
-                      plan.slug === "free" ? "text-slate-600" :
-                      plan.slug === "growth" ? "text-blue-600" :
-                      plan.slug === "pro" ? "text-purple-600" :
-                      plan.slug === "scale" ? "text-amber-600" :
-                      "text-slate-600"
+                      plan.slug === "free" ? "text-gray-600 dark:text-gray-400" :
+                      plan.slug === "growth" ? "text-purple-600 dark:text-purple-400" :
+                      plan.slug === "pro" ? "text-purple-600 dark:text-purple-400" :
+                      plan.slug === "scale" ? "text-slate-700 dark:text-slate-300" :
+                      "text-gray-600 dark:text-gray-400"
                     }`} />
                   </div>
                   <h3 className="text-lg font-semibold">{plan.name}</h3>
