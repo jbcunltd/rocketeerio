@@ -4,13 +4,13 @@ import { trpc } from "@/lib/trpc";
 import {
   CheckCircle2, ArrowRight, Rocket, Star, TrendingUp,
   Zap, MessageSquare, BellRing, DollarSign, Clock, Users,
-  ChevronRight
+  ChevronRight, ShieldCheck
 } from "lucide-react";
 import { useEffect, useState, FormEvent } from "react";
 import { useLocation } from "wouter";
 
 /* ------------------------------------------------------------------ */
-/*  Auth Form (kept from original)                                     */
+/*  Auth Form                                                          */
 /* ------------------------------------------------------------------ */
 function AuthForm() {
   const [mode, setMode] = useState<"login" | "signup">("login");
@@ -171,7 +171,7 @@ const pricingPlans = [
     iconColor: "text-gray-600 dark:text-gray-400",
     monthlyPrice: 0,
     annualPrice: 0,
-    features: ["100 active leads", "50 conversations/mo", "1 Facebook Page", "Basic analytics"],
+    features: ["100 active leads", "50 conversations/mo", "1 Facebook Page", "Basic analytics", "Rocketeerio branding"],
     buttonStyle: "border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700",
     buttonText: "Start Free",
     popular: false,
@@ -183,7 +183,7 @@ const pricingPlans = [
     iconColor: "text-messenger",
     monthlyPrice: 29,
     annualPrice: 23,
-    features: ["1,000 active leads", "500 conversations/mo", "1 Facebook Page", "CRM-style pipeline"],
+    features: ["1,000 active leads", "500 conversations/mo", "1 Facebook Page", "CRM-style pipeline", "Rocketeerio branding"],
     buttonStyle: "bg-messenger hover:bg-messenger-dark text-white",
     buttonText: "Get Started",
     popular: false,
@@ -195,7 +195,7 @@ const pricingPlans = [
     iconColor: "text-messenger",
     monthlyPrice: 69,
     annualPrice: 55,
-    features: ["5,000 active leads", "2,500 conversations/mo", "3 Facebook Pages", "Priority support"],
+    features: ["5,000 active leads", "2,500 conversations/mo", "3 Facebook Pages", "Priority support", "Rocketeerio branding"],
     buttonStyle: "bg-messenger hover:bg-messenger-dark text-white",
     buttonText: "Get Started",
     popular: true,
@@ -207,7 +207,7 @@ const pricingPlans = [
     iconColor: "text-slate-700 dark:text-slate-300",
     monthlyPrice: 149,
     annualPrice: 119,
-    features: ["20,000 active leads", "10,000 conversations/mo", "10 Facebook Pages", "White-label option"],
+    features: ["20,000 active leads", "10,000 conversations/mo", "10 Facebook Pages", "White-label option", "Rocketeerio branding"],
     buttonStyle: "bg-slate-900 hover:bg-slate-950 text-white dark:bg-slate-800 dark:hover:bg-slate-700",
     buttonText: "Get Started",
     popular: false,
@@ -219,7 +219,7 @@ const pricingPlans = [
     iconColor: "text-gray-600 dark:text-gray-400",
     monthlyPrice: -1,
     annualPrice: -1,
-    features: ["Unlimited everything", "Custom setup", "Dedicated account manager", "SSO/SAML"],
+    features: ["Unlimited everything", "Custom setup", "Dedicated account manager", "SSO/SAML", "No Rocketeerio branding"],
     buttonStyle: "border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700",
     buttonText: "Contact Sales",
     popular: false,
@@ -259,7 +259,7 @@ export default function Landing() {
             <div className="w-8 h-8 bg-messenger rounded-lg flex items-center justify-center">
               <Rocket className="w-5 h-5 text-white" />
             </div>
-            <span className="text-xl font-bold text-foreground">Rocketeer</span>
+            <span className="text-xl font-bold text-foreground">Rocketeerio</span>
           </div>
           <div className="hidden md:flex items-center gap-8">
             <a href="#how-it-works" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">How It Works</a>
@@ -284,11 +284,11 @@ export default function Landing() {
         <div className="container relative py-24 md:py-36">
           <div className="max-w-3xl mx-auto text-center">
             <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight text-foreground leading-[1.1] mb-6">
-              Turn every message into a{" "}
-              <span className="text-messenger">paying customer.</span>
+              You're paying for leads…{" "}
+              <span className="text-messenger">and losing them.</span>
             </h1>
             <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-10 leading-relaxed">
-              We reply to your Facebook leads instantly and notify you when it's time to close.
+              Most businesses reply too late. By the time you respond, the customer is already talking to someone else. Rocketeerio replies instantly — and alerts you when it's time to close.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <Button
@@ -312,16 +312,16 @@ export default function Landing() {
       </section>
 
       {/* ============================================================ */}
-      {/*  PROBLEM SECTION                                              */}
+      {/*  PAIN SECTION                                                 */}
       {/* ============================================================ */}
       <section className="py-20 md:py-28 border-t border-border/50">
         <div className="container">
           <div className="max-w-3xl mx-auto text-center">
             <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-6">
-              Stop losing leads you already paid for.
+              Every missed message is a lost sale.
             </h2>
             <p className="text-lg md:text-xl text-muted-foreground leading-relaxed max-w-2xl mx-auto">
-              Most businesses run Facebook ads but miss leads because they reply too late — or not at all. Every missed message is a lost sale.
+              You run ads. People message your page. But not all of them get a reply — or they get one too late. And when that happens… the sale goes to someone else.
             </p>
           </div>
 
@@ -356,13 +356,32 @@ export default function Landing() {
       </section>
 
       {/* ============================================================ */}
+      {/*  LOGIC / PROOF SECTION (NEW)                                  */}
+      {/* ============================================================ */}
+      <section className="py-20 md:py-28 bg-white border-t border-border/50">
+        <div className="container">
+          <div className="max-w-3xl mx-auto text-center">
+            <div className="w-16 h-16 bg-messenger/10 rounded-2xl flex items-center justify-center mx-auto mb-8">
+              <Zap className="w-8 h-8 text-messenger" />
+            </div>
+            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-6">
+              Speed wins deals. Every time.
+            </h2>
+            <p className="text-lg md:text-xl text-muted-foreground leading-relaxed max-w-2xl mx-auto">
+              Customers don't wait. They message multiple businesses — and the first one to respond usually gets the deal. If you're not replying instantly, you're already behind.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* ============================================================ */}
       {/*  HOW IT WORKS (Solution Section)                              */}
       {/* ============================================================ */}
-      <section id="how-it-works" className="py-20 md:py-28 bg-white">
+      <section id="how-it-works" className="py-20 md:py-28 border-t border-border/50">
         <div className="container">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
-              Rocketeer handles your leads instantly.
+              Rocketeerio handles your leads instantly.
             </h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
               Three steps. Zero missed leads.
@@ -374,19 +393,19 @@ export default function Landing() {
               {
                 step: "1",
                 title: "A customer messages your page",
-                description: "Someone clicks your Facebook ad or finds your page and sends a message. That's a potential sale.",
+                description: "From your ads or organic traffic.",
                 icon: MessageSquare,
               },
               {
                 step: "2",
-                title: "Rocketeer replies instantly and qualifies them",
-                description: "Your leads get an immediate, helpful response — day or night. Rocketeer asks the right questions and figures out who's ready to buy.",
+                title: "Rocketeerio replies immediately",
+                description: "Answers questions, qualifies the lead, and keeps them engaged.",
                 icon: Zap,
               },
               {
                 step: "3",
-                title: "You get notified when they're ready to buy",
-                description: "No more sifting through messages. You only step in when a lead is serious — so you can focus on closing.",
+                title: "You get notified when they're ready",
+                description: "So you only step in when it's time to close.",
                 icon: BellRing,
               },
             ].map((item) => (
@@ -419,7 +438,7 @@ export default function Landing() {
       {/* ============================================================ */}
       {/*  VALUE SECTION                                                */}
       {/* ============================================================ */}
-      <section className="py-20 md:py-28 border-t border-border/50">
+      <section className="py-20 md:py-28 bg-white border-t border-border/50">
         <div className="container">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
@@ -436,21 +455,21 @@ export default function Landing() {
               },
               {
                 icon: Zap,
-                title: "Faster replies = more conversions",
+                title: "Faster replies = higher conversions",
                 description: "Speed wins deals. Be the first business to respond, every time.",
               },
               {
                 icon: Users,
-                title: "Focus only on serious buyers",
-                description: "Stop wasting time on tire-kickers. Talk only to qualified leads.",
+                title: "Talk only to serious buyers",
+                description: "Stop wasting time on tire-kickers. Focus on the leads that matter.",
               },
               {
                 icon: DollarSign,
-                title: "Turn conversations into revenue",
-                description: "Every chat is a chance to close. Rocketeer makes sure you don't waste it.",
+                title: "Turn conversations into paying customers",
+                description: "Every chat is a chance to close. Rocketeerio makes sure you don't waste it.",
               },
             ].map((item) => (
-              <div key={item.title} className="bg-white rounded-2xl p-6 border border-border/50 hover:shadow-md transition-shadow">
+              <div key={item.title} className="bg-background rounded-2xl p-6 border border-border/50 hover:shadow-md transition-shadow">
                 <div className="w-12 h-12 bg-messenger/10 rounded-xl flex items-center justify-center mb-4">
                   <item.icon className="w-6 h-6 text-messenger" />
                 </div>
@@ -463,16 +482,35 @@ export default function Landing() {
       </section>
 
       {/* ============================================================ */}
+      {/*  REINFORCEMENT SECTION (NEW)                                  */}
+      {/* ============================================================ */}
+      <section className="py-20 md:py-28 border-t border-border/50">
+        <div className="container">
+          <div className="max-w-3xl mx-auto text-center">
+            <div className="w-16 h-16 bg-messenger/10 rounded-2xl flex items-center justify-center mx-auto mb-8">
+              <TrendingUp className="w-8 h-8 text-messenger" />
+            </div>
+            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-6">
+              You don't need more leads. You need better follow-up.
+            </h2>
+            <p className="text-lg md:text-xl text-muted-foreground leading-relaxed max-w-2xl mx-auto">
+              Most businesses think they need to spend more on ads. But the truth is… you're already getting leads — you're just not converting them.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* ============================================================ */}
       {/*  PRICING SECTION                                              */}
       {/* ============================================================ */}
       <section id="pricing" className="py-20 md:py-28 bg-white border-t border-border/50">
         <div className="container">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
-              Simple, transparent pricing
+              Simple pricing. Built to grow with you.
             </h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Pick a plan that fits your business. Upgrade anytime as you grow.
+              Start small. Close more deals. Scale when you're ready.
             </p>
           </div>
 
@@ -523,7 +561,7 @@ export default function Landing() {
             {pricingPlans.map((plan) => (
               <div
                 key={plan.name}
-                className={`relative rounded-2xl p-6 transition-all hover:shadow-md flex flex-col ${
+                className={`relative rounded-2xl p-6 transition-all hover:shadow-lg flex flex-col ${
                   plan.popular
                     ? "border-2 border-messenger bg-gradient-to-br from-messenger/5 to-white dark:from-messenger/10 dark:to-gray-900 shadow-lg"
                     : "border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-900"
@@ -588,7 +626,7 @@ export default function Landing() {
         <div className="container">
           <div className="text-center mb-8">
             <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-3">
-              Start turning your leads into customers today
+              Stop losing customers. Start closing more deals today.
             </h2>
             <p className="text-muted-foreground max-w-md mx-auto">
               Create your free account in 30 seconds.
@@ -604,17 +642,17 @@ export default function Landing() {
       <section className="py-20 md:py-28 bg-messenger">
         <div className="container text-center">
           <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
-            Start turning your leads into customers today.
+            Stop losing customers. Start closing more deals today.
           </h2>
           <p className="text-lg text-white/80 max-w-2xl mx-auto mb-8">
-            Every minute you wait, another lead goes cold. Set up Rocketeer in minutes and start closing more deals.
+            Every minute you wait, another lead goes cold.
           </p>
           <Button
             size="lg"
             className="bg-white text-messenger hover:bg-white/90 text-lg px-8 h-14 shadow-lg font-bold"
             onClick={scrollToAuth}
           >
-            Get Started <ArrowRight className="ml-2 w-5 h-5" />
+            Get More Customers <ArrowRight className="ml-2 w-5 h-5" />
           </Button>
         </div>
       </section>
@@ -629,10 +667,10 @@ export default function Landing() {
               <div className="w-7 h-7 bg-messenger rounded-lg flex items-center justify-center">
                 <Rocket className="w-4 h-4 text-white" />
               </div>
-              <span className="text-lg font-bold text-white">Rocketeer</span>
+              <span className="text-lg font-bold text-white">Rocketeerio</span>
             </div>
             <p className="text-sm text-white/50">
-              &copy; {new Date().getFullYear()} Rocketeer. All rights reserved.
+              &copy; {new Date().getFullYear()} Rocketeerio. All rights reserved.
             </p>
           </div>
         </div>
