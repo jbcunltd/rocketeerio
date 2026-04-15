@@ -282,6 +282,7 @@ function BillingContent() {
                     <div>
                       <span className="text-3xl font-bold">$0</span>
                       <span className="text-muted-foreground">/month</span>
+                      <p className="text-xs text-muted-foreground mt-1">billed monthly</p>
                     </div>
                   ) : plan.slug === "custom" ? (
                     <div>
@@ -292,27 +293,22 @@ function BillingContent() {
                     <div>
                       <span className="text-3xl font-bold">${displayPrice.toFixed(2)}</span>
                       <span className="text-muted-foreground">/month</span>
-                      {billingPeriod === "annual" && (
-                        <p className="text-xs text-muted-foreground mt-1">
-                          ${annualPrice}/year (billed annually)
-                        </p>
-                      )}
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {billingPeriod === "annual"
+                          ? `$${annualPrice}/year (billed annually)`
+                          : "billed monthly"}
+                      </p>
                     </div>
                   )}
                 </div>
 
                 <ul className="space-y-2.5 mb-6 flex-1">
-                  {features.slice(0, 6).map((feature, i) => (
+                  {features.map((feature, i) => (
                     <li key={i} className="flex items-start gap-2 text-sm">
                       <Check className="w-4 h-4 text-green-500 mt-0.5 shrink-0" />
                       <span>{feature}</span>
                     </li>
                   ))}
-                  {features.length > 6 && (
-                    <li className="text-xs text-muted-foreground italic">
-                      +{features.length - 6} more features
-                    </li>
-                  )}
                 </ul>
 
                 {isCurrentPlan ? (
