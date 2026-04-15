@@ -150,11 +150,13 @@ function BillingContent() {
         <span className={`text-sm font-medium ${billingPeriod === "annual" ? "text-foreground" : "text-muted-foreground"}`}>
           Annual
         </span>
-        {billingPeriod === "annual" && (
-          <span className="ml-2 inline-flex items-center rounded-full bg-green-100 px-3 py-1 text-xs font-semibold text-green-800 dark:bg-green-900/30 dark:text-green-400">
-            Save 20%
-          </span>
-        )}
+        <span className={`ml-2 inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${
+          billingPeriod === "annual"
+            ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 visible"
+            : "invisible"
+        }`}>
+          Save 20%
+        </span>
       </div>
 
       {/* Current Subscription Status */}
