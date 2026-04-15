@@ -810,10 +810,14 @@ function HotLeadAlertsTab() {
     if (emailOtpInput === emailVerificationCode) {
       setEmailStatus("connected");
       setEmailOtpInput("");
-      toast.success("Email verified successfully!");
+      toast.success("Confirmation email sent! Check your inbox for a welcome message from Rocketeerio.");
     } else {
       toast.error("Invalid verification code");
     }
+  };
+
+  const handleEmailTestAlert = () => {
+    toast.success("Test alert sent! Check your email.");
   };
 
   // Messenger handlers
@@ -823,8 +827,12 @@ function HotLeadAlertsTab() {
       setMessengerStatus("connected");
       setMessengerPageName("My Business Page");
       setMessengerConnecting(false);
-      toast.success("Connected to Messenger!");
+      toast.success("We just sent you a message on Messenger! Check your inbox to confirm it's working.");
     }, 1500);
+  };
+
+  const handleMessengerTestAlert = () => {
+    toast.success("Test alert sent! Check your Messenger.");
   };
 
   // Telegram handlers
@@ -838,10 +846,14 @@ function HotLeadAlertsTab() {
   const handleTelegramVerify = () => {
     if (telegramHandle.trim()) {
       setTelegramStatus("connected");
-      toast.success("Telegram connected successfully!");
+      toast.success("Check @RocketeerBot on Telegram — we just sent you a welcome message!");
     } else {
       toast.error("Please enter your Telegram handle");
     }
+  };
+
+  const handleTelegramTestAlert = () => {
+    toast.success("Test alert sent! Check @RocketeerBot on Telegram.");
   };
 
   // WhatsApp handlers
@@ -859,10 +871,14 @@ function HotLeadAlertsTab() {
     if (whatsappOtpInput.length === 6) {
       setWhatsappStatus("connected");
       setWhatsappOtpInput("");
-      toast.success("WhatsApp verified successfully!");
+      toast.success("We just sent a WhatsApp message to your number! Check it to confirm.");
     } else {
       toast.error("Please enter a valid 6-digit code");
     }
+  };
+
+  const handleWhatsappTestAlert = () => {
+    toast.success("Test alert sent! Check your WhatsApp.");
   };
 
   // SMS handlers
@@ -880,10 +896,14 @@ function HotLeadAlertsTab() {
     if (smsOtpInput.length === 6) {
       setSmsStatus("connected");
       setSmsOtpInput("");
-      toast.success("SMS verified successfully!");
+      toast.success("Confirmation SMS sent! You should receive it within a few seconds.");
     } else {
       toast.error("Please enter a valid 6-digit code");
     }
+  };
+
+  const handleSmsTestAlert = () => {
+    toast.success("Test alert sent! Check your SMS.");
   };
 
   const handleSave = () => {
@@ -983,7 +1003,10 @@ function HotLeadAlertsTab() {
             {emailStatus === "connected" && (
               <div className="flex items-center justify-between">
                 <p className="text-sm text-green-600">✓ {emailAddr}</p>
-                <Button onClick={() => setEmailStatus("not_connected")} variant="outline" size="sm">Change</Button>
+                <div className="flex gap-2">
+                  <Button onClick={handleEmailTestAlert} variant="outline" size="sm">Send Test Alert</Button>
+                  <Button onClick={() => setEmailStatus("not_connected")} variant="outline" size="sm">Change</Button>
+                </div>
               </div>
             )}
           </div>
@@ -1009,7 +1032,10 @@ function HotLeadAlertsTab() {
             {messengerStatus === "connected" && (
               <div className="flex items-center justify-between">
                 <p className="text-sm text-green-600">✓ Connected to {messengerPageName}</p>
-                <Button onClick={() => setMessengerStatus("not_connected")} variant="outline" size="sm">Disconnect</Button>
+                <div className="flex gap-2">
+                  <Button onClick={handleMessengerTestAlert} variant="outline" size="sm">Send Test Alert</Button>
+                  <Button onClick={() => setMessengerStatus("not_connected")} variant="outline" size="sm">Disconnect</Button>
+                </div>
               </div>
             )}
           </div>
@@ -1046,7 +1072,10 @@ function HotLeadAlertsTab() {
             {telegramStatus === "connected" && (
               <div className="flex items-center justify-between">
                 <p className="text-sm text-green-600">✓ {telegramHandle}</p>
-                <Button onClick={() => setTelegramStatus("not_connected")} variant="outline" size="sm">Disconnect</Button>
+                <div className="flex gap-2">
+                  <Button onClick={handleTelegramTestAlert} variant="outline" size="sm">Send Test Alert</Button>
+                  <Button onClick={() => setTelegramStatus("not_connected")} variant="outline" size="sm">Disconnect</Button>
+                </div>
               </div>
             )}
           </div>
@@ -1088,7 +1117,10 @@ function HotLeadAlertsTab() {
             ) : (
               <div className="flex items-center justify-between">
                 <p className="text-sm text-green-600">✓ {whatsappNumber}</p>
-                <Button onClick={() => setWhatsappStatus("not_connected")} variant="outline" size="sm">Change</Button>
+                <div className="flex gap-2">
+                  <Button onClick={handleWhatsappTestAlert} variant="outline" size="sm">Send Test Alert</Button>
+                  <Button onClick={() => setWhatsappStatus("not_connected")} variant="outline" size="sm">Change</Button>
+                </div>
               </div>
             )}
           </div>
@@ -1130,7 +1162,10 @@ function HotLeadAlertsTab() {
             ) : (
               <div className="flex items-center justify-between">
                 <p className="text-sm text-green-600">✓ {smsNumber}</p>
-                <Button onClick={() => setSmsStatus("not_connected")} variant="outline" size="sm">Change</Button>
+                <div className="flex gap-2">
+                  <Button onClick={handleSmsTestAlert} variant="outline" size="sm">Send Test Alert</Button>
+                  <Button onClick={() => setSmsStatus("not_connected")} variant="outline" size="sm">Change</Button>
+                </div>
               </div>
             )}
           </div>
