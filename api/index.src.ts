@@ -8,6 +8,7 @@ import express from "express";
 import { createExpressMiddleware } from "@trpc/server/adapters/express";
 import { registerAuthRoutes } from "../server/_core/oauth";
 import { registerFacebookRoutes } from "../server/facebook";
+import { registerInstagramRoutes } from "../server/instagram";
 import { registerKbImportRoutes } from "../server/kb-import";
 import { registerPaymongoWebhookRoutes } from "../server/paymongo-webhook";
 import { appRouter } from "../server/routers";
@@ -24,6 +25,9 @@ registerAuthRoutes(app);
 
 // Facebook OAuth & Messenger webhook routes
 registerFacebookRoutes(app);
+
+// Instagram OAuth & DM webhook routes
+registerInstagramRoutes(app);
 
 // Knowledge Base import routes (website crawl, file upload: PDF, DOCX, XLSX, CSV, images, TXT)
 registerKbImportRoutes(app);

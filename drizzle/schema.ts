@@ -24,6 +24,7 @@ export const kbCategoryEnum = pgEnum("kb_category", ["product", "pricing", "faq"
 export const kbSourceEnum = pgEnum("kb_source", ["manual", "website", "pdf", "file"]);
 export const followUpStatusEnum = pgEnum("follow_up_status", ["pending", "sent", "cancelled", "failed"]);
 export const aiModeEnum = pgEnum("ai_mode", ["paused", "testing", "live"]);
+export const platformEnum = pgEnum("platform", ["messenger", "instagram"]);
 export const aiToneEnum = pgEnum("ai_tone", ["casual_taglish", "pure_tagalog", "professional_filipino", "casual_english", "formal_english", "professional_english"]);
 export const aiResponseLengthEnum = pgEnum("ai_response_length", ["short", "medium", "detailed"]);
 export const aiPrimaryGoalEnum = pgEnum("ai_primary_goal", ["site_visit", "booking", "quote_request", "general_support", "order_purchase", "reservation", "appointment", "collect_lead_info", "signup_registration", "custom_goal"]);
@@ -67,6 +68,26 @@ export const facebookPages = pgTable("facebook_pages", {
 export type FacebookPage = typeof facebookPages.$inferSelect;
 export type InsertFacebookPage = typeof facebookPages.$inferInsert;
 
+// ─── Instagram Accounts ─────────────────────────────────────────────
+export const instagramAccounts = pgTable("instagram_accounts", {
+  id: serial("id").primaryKey(),
+  userId: integer("userId").notNull(),
+  facebookPageId: integer("facebookPageId"),
+  igUserId: varchar("igUserId", { length: 128 }).notNull().unique(),
+  igUsername: varchar("igUsername", { length: 255 }).notNull(),
+  igName: varchar("igName", { length: 255 }),
+  profilePicUrl: text("profilePicUrl"),
+  followerCount: integer("followerCount").default(0),
+  pageAccessToken: text("pageAccessToken"),
+  isActive: boolean("isActive").default(true).notNull(),
+  aiMode: aiModeEnum("aiMode").default("testing").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().notNull(),
+});
+
+export type InstagramAccount = typeof instagramAccounts.$inferSelect;
+export type InsertInstagramAccount = typeof instagramAccounts.$inferInsert;
+
 // ─── Leads ───────────────────────────────────────────────────────────
 export const leads = pgTable("leads", {
   id: serial("id").primaryKey(),
@@ -89,6 +110,8 @@ export const leads = pgTable("leads", {
   timelineNotes: text("timelineNotes"),
   status: leadStatusEnum("status").default("active").notNull(),
   source: varchar("source", { length: 128 }).default("messenger"),
+  platform: varchar("platform", { length: 32 }).default("messenger"),
+  igScopedId: varchar("igScopedId", { length: 128 }),
   adId: varchar("adId", { length: 128 }),
   notifiedAt: timestamp("notifiedAt"),
   convertedAt: timestamp("convertedAt"),
@@ -109,6 +132,7 @@ export const conversations = pgTable("conversations", {
   lastMessagePreview: text("lastMessagePreview"),
   messageCount: integer("messageCount").default(0).notNull(),
   isAiActive: boolean("isAiActive").default(true).notNull(),
+  platform: varchar("platform", { length: 32 }).default("messenger"),
   status: conversationStatusEnum("status").default("open").notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().notNull(),

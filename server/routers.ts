@@ -81,6 +81,30 @@ export const appRouter = router({
       }),
   }),
 
+  // ─── Instagram Accounts ────────────────────────────────────────────
+  instagram: router({
+    list: protectedProcedure.query(async ({ ctx }) => {
+      return db.getUserInstagramAccounts(ctx.user.id);
+    }),
+
+    delete: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input }) => {
+        await db.deleteInstagramAccount(input.id);
+        return { success: true };
+      }),
+
+    updateMode: protectedProcedure
+      .input(z.object({
+        id: z.number(),
+        aiMode: z.enum(["paused", "testing", "live"]),
+      }))
+      .mutation(async ({ input }) => {
+        await db.updateInstagramAccountMode(input.id, input.aiMode);
+        return { success: true };
+      }),
+  }),
+
   // ─── Leads ─────────────────────────────────────────────────────────
   leads: router({
     list: protectedProcedure

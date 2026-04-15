@@ -73,6 +73,7 @@ var kbCategoryEnum = pgEnum("kb_category", ["product", "pricing", "faq", "policy
 var kbSourceEnum = pgEnum("kb_source", ["manual", "website", "pdf", "file"]);
 var followUpStatusEnum = pgEnum("follow_up_status", ["pending", "sent", "cancelled", "failed"]);
 var aiModeEnum = pgEnum("ai_mode", ["paused", "testing", "live"]);
+var platformEnum = pgEnum("platform", ["messenger", "instagram"]);
 var aiToneEnum = pgEnum("ai_tone", ["casual_taglish", "pure_tagalog", "professional_filipino", "casual_english", "formal_english", "professional_english"]);
 var aiResponseLengthEnum = pgEnum("ai_response_length", ["short", "medium", "detailed"]);
 var aiPrimaryGoalEnum = pgEnum("ai_primary_goal", ["site_visit", "booking", "quote_request", "general_support", "order_purchase", "reservation", "appointment", "collect_lead_info", "signup_registration", "custom_goal"]);
@@ -105,6 +106,21 @@ var facebookPages = pgTable("facebook_pages", {
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().notNull()
 });
+var instagramAccounts = pgTable("instagram_accounts", {
+  id: serial("id").primaryKey(),
+  userId: integer("userId").notNull(),
+  facebookPageId: integer("facebookPageId"),
+  igUserId: varchar("igUserId", { length: 128 }).notNull().unique(),
+  igUsername: varchar("igUsername", { length: 255 }).notNull(),
+  igName: varchar("igName", { length: 255 }),
+  profilePicUrl: text("profilePicUrl"),
+  followerCount: integer("followerCount").default(0),
+  pageAccessToken: text("pageAccessToken"),
+  isActive: boolean("isActive").default(true).notNull(),
+  aiMode: aiModeEnum("aiMode").default("testing").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().notNull()
+});
 var leads = pgTable("leads", {
   id: serial("id").primaryKey(),
   userId: integer("userId").notNull(),
@@ -126,6 +142,8 @@ var leads = pgTable("leads", {
   timelineNotes: text("timelineNotes"),
   status: leadStatusEnum("status").default("active").notNull(),
   source: varchar("source", { length: 128 }).default("messenger"),
+  platform: varchar("platform", { length: 32 }).default("messenger"),
+  igScopedId: varchar("igScopedId", { length: 128 }),
   adId: varchar("adId", { length: 128 }),
   notifiedAt: timestamp("notifiedAt"),
   convertedAt: timestamp("convertedAt"),
@@ -141,6 +159,7 @@ var conversations = pgTable("conversations", {
   lastMessagePreview: text("lastMessagePreview"),
   messageCount: integer("messageCount").default(0).notNull(),
   isAiActive: boolean("isAiActive").default(true).notNull(),
+  platform: varchar("platform", { length: 32 }).default("messenger"),
   status: conversationStatusEnum("status").default("open").notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().notNull()
@@ -735,6 +754,44 @@ async function seedSubscriptionPlans() {
     await upsertSubscriptionPlan(plan);
   }
   console.log("[Database] Subscription plans seeded");
+}
+async function getUserInstagramAccounts(userId) {
+  const database = await getDb();
+  if (!database) return [];
+  return database.select().from(instagramAccounts).where(eq(instagramAccounts.userId, userId));
+}
+async function getInstagramAccountByIgUserId(igUserId) {
+  const database = await getDb();
+  if (!database) return null;
+  const rows = await database.select().from(instagramAccounts).where(eq(instagramAccounts.igUserId, igUserId));
+  return rows[0] || null;
+}
+async function createInstagramAccount(data) {
+  const database = await getDb();
+  if (!database) return null;
+  const rows = await database.insert(instagramAccounts).values(data).returning({ id: instagramAccounts.id });
+  return rows[0]?.id || null;
+}
+async function updateInstagramAccount(id, data) {
+  const database = await getDb();
+  if (!database) return;
+  await database.update(instagramAccounts).set({ ...data, updatedAt: /* @__PURE__ */ new Date() }).where(eq(instagramAccounts.id, id));
+}
+async function deleteInstagramAccount(id) {
+  const database = await getDb();
+  if (!database) return;
+  await database.delete(instagramAccounts).where(eq(instagramAccounts.id, id));
+}
+async function updateInstagramAccountMode(id, aiMode) {
+  const database = await getDb();
+  if (!database) return;
+  await database.update(instagramAccounts).set({ aiMode, updatedAt: /* @__PURE__ */ new Date() }).where(eq(instagramAccounts.id, id));
+}
+async function getLeadByIgScopedId(igScopedId, igAccountId) {
+  const database = await getDb();
+  if (!database) return null;
+  const rows = await database.select().from(leads).where(eq(leads.igScopedId, igScopedId));
+  return rows[0] || null;
 }
 
 // server/_core/env.ts
@@ -1702,6 +1759,357 @@ function registerFacebookRoutes(app2) {
   });
 }
 
+// server/instagram.ts
+var FB_GRAPH2 = "https://graph.facebook.com/v19.0";
+async function sendInstagramMessage(pageAccessToken, recipientIgScopedId, text2) {
+  const url = `${FB_GRAPH2}/me/messages?access_token=${pageAccessToken}`;
+  const body = {
+    recipient: { id: recipientIgScopedId },
+    message: { text: text2 },
+    messaging_type: "RESPONSE"
+  };
+  console.log(`[Instagram] Sending reply to ${recipientIgScopedId}, length=${text2.length}`);
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body)
+  });
+  if (!res.ok) {
+    const errText = await res.text();
+    console.error("[Instagram] Send failed:", res.status, errText);
+    return false;
+  }
+  console.log(`[Instagram] Reply sent successfully to ${recipientIgScopedId}`);
+  return true;
+}
+async function getInstagramUserProfile(igScopedId, pageAccessToken) {
+  try {
+    const res = await fetch(
+      `${FB_GRAPH2}/${igScopedId}?fields=name,username,profile_pic&access_token=${pageAccessToken}`
+    );
+    if (!res.ok) {
+      console.warn(`[Instagram] Profile fetch failed for ${igScopedId}: ${res.status}`);
+      return null;
+    }
+    const data = await res.json();
+    return {
+      name: data.name || data.username || null,
+      username: data.username || null,
+      avatarUrl: data.profile_pic || null
+    };
+  } catch (err) {
+    console.error(`[Instagram] Profile fetch error for ${igScopedId}:`, err);
+    return null;
+  }
+}
+async function processIncomingInstagramMessage(igAccount, senderIgScopedId, messageText) {
+  console.log(`[IG Webhook] Processing DM from ${senderIgScopedId} to IG account ${igAccount.igUserId}: "${messageText.substring(0, 80)}"`);
+  const mode = igAccount.aiMode || "testing";
+  if (mode === "paused") {
+    console.log(`[IG Webhook] IG account ${igAccount.igUserId} is PAUSED \u2014 ignoring message`);
+    return;
+  }
+  if (mode === "testing") {
+    if (igAccount.pageAccessToken) {
+      await sendInstagramMessage(
+        igAccount.pageAccessToken,
+        senderIgScopedId,
+        "Thanks for your message! We're currently setting things up and will get back to you shortly."
+      );
+    }
+    return;
+  }
+  const dbPageId = igAccount.facebookPageId || 0;
+  let lead = await getLeadByIgScopedId(senderIgScopedId, igAccount.dbAccountId);
+  if (!lead) {
+    console.log(`[IG Webhook] Creating new lead for IG user ${senderIgScopedId}`);
+    const profile = await getInstagramUserProfile(senderIgScopedId, igAccount.pageAccessToken);
+    const leadId = await createLead({
+      userId: igAccount.userId,
+      pageId: dbPageId,
+      psid: void 0,
+      igScopedId: senderIgScopedId,
+      name: profile?.name || `Instagram User`,
+      avatarUrl: profile?.avatarUrl || void 0,
+      source: "instagram",
+      platform: "instagram",
+      status: "active"
+    });
+    if (!leadId) {
+      console.error("[IG Webhook] Failed to create lead");
+      return;
+    }
+    lead = await getLeadById(leadId);
+    if (!lead) {
+      console.error("[IG Webhook] Failed to fetch newly created lead");
+      return;
+    }
+    console.log(`[IG Webhook] Created lead id=${leadId}, name=${lead.name}`);
+  } else {
+    console.log(`[IG Webhook] Found existing lead id=${lead.id}, name=${lead.name}`);
+  }
+  let conv = await getConversationByLeadId(lead.id);
+  if (!conv) {
+    console.log(`[IG Webhook] Creating new conversation for lead ${lead.id}`);
+    const convId = await createConversation({
+      userId: igAccount.userId,
+      pageId: dbPageId,
+      leadId: lead.id,
+      lastMessagePreview: messageText.substring(0, 200),
+      messageCount: 0,
+      platform: "instagram",
+      status: "open"
+    });
+    if (!convId) {
+      console.error("[IG Webhook] Failed to create conversation");
+      return;
+    }
+    conv = await getConversationByLeadId(lead.id);
+    if (!conv) {
+      console.error("[IG Webhook] Failed to fetch newly created conversation");
+      return;
+    }
+    console.log(`[IG Webhook] Created conversation id=${convId}`);
+  } else {
+    console.log(`[IG Webhook] Found existing conversation id=${conv.id}`);
+  }
+  await createMessage({
+    conversationId: conv.id,
+    content: messageText,
+    sender: "lead",
+    messageType: "text"
+  });
+  if (!conv.isAiActive) {
+    console.log(`[IG Webhook] AI disabled for conversation ${conv.id}, skipping auto-reply`);
+    return;
+  }
+  const history = await getMessagesByConversation(conv.id);
+  const historyForAI = history.map((m) => ({ sender: m.sender, content: m.content }));
+  const convDetail = await getConversationById(conv.id);
+  const aiResponse = await generateAIResponse(
+    igAccount.userId,
+    historyForAI,
+    lead.name,
+    convDetail?.page?.pageName ?? "Our Business",
+    dbPageId
+  );
+  await createMessage({
+    conversationId: conv.id,
+    content: aiResponse,
+    sender: "ai",
+    messageType: "text"
+  });
+  if (igAccount.pageAccessToken) {
+    const sent = await sendInstagramMessage(igAccount.pageAccessToken, senderIgScopedId, aiResponse);
+    console.log(`[IG Webhook] Instagram send result: ${sent}`);
+  }
+  await updateConversation(conv.id, {
+    lastMessagePreview: aiResponse.substring(0, 200),
+    lastMessageAt: /* @__PURE__ */ new Date(),
+    messageCount: history.length + 2
+  });
+  try {
+    const allMessages = [...historyForAI, { sender: "ai", content: aiResponse }];
+    const scoreResult = await scoreLead(allMessages);
+    await updateLead(lead.id, {
+      score: scoreResult.score,
+      classification: scoreResult.classification,
+      budgetScore: scoreResult.budgetScore,
+      authorityScore: scoreResult.authorityScore,
+      needScore: scoreResult.needScore,
+      timelineScore: scoreResult.timelineScore,
+      budgetNotes: scoreResult.budgetNotes,
+      authorityNotes: scoreResult.authorityNotes,
+      needNotes: scoreResult.needNotes,
+      timelineNotes: scoreResult.timelineNotes
+    });
+    if (scoreResult.classification === "hot" && !lead.notifiedAt) {
+      await notifyOwner({
+        title: `\u{1F525} Hot Lead from Instagram: ${lead.name || "Unknown"}`,
+        content: `Score: ${scoreResult.score}/100
+Last message: ${messageText}
+Platform: Instagram DM`
+      });
+      await updateLead(lead.id, { notifiedAt: /* @__PURE__ */ new Date() });
+    }
+  } catch (scoreErr) {
+    console.error("[IG Webhook] Lead scoring failed (non-critical):", scoreErr);
+  }
+  console.log(`[IG Webhook] \u2705 Fully processed Instagram DM from ${senderIgScopedId} (lead=${lead.id}, conv=${conv.id})`);
+}
+function registerInstagramRoutes(app2) {
+  app2.get("/api/auth/instagram", async (req, res) => {
+    try {
+      const cookies = req.headers.cookie || "";
+      const sessionCookie = cookies.split(";").map((c) => c.trim()).find((c) => c.startsWith(`${COOKIE_NAME}=`));
+      const token = sessionCookie?.split("=")[1];
+      const session = await sdk.verifySession(token);
+      if (!session) {
+        return res.redirect("/?error=not_authenticated");
+      }
+      const redirectUri = `${ENV.appUrl}/api/auth/instagram/callback`;
+      const scope = "pages_messaging,pages_manage_metadata,pages_read_engagement,instagram_basic,instagram_manage_messages";
+      const state = Buffer.from(JSON.stringify({ userId: session.userId })).toString("base64");
+      const authUrl = `https://www.facebook.com/v19.0/dialog/oauth?client_id=${ENV.facebookAppId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${scope}&state=${state}`;
+      res.redirect(authUrl);
+    } catch (error) {
+      console.error("[Instagram OAuth] Error:", error);
+      res.redirect("/settings?tab=instagram&error=oauth_failed");
+    }
+  });
+  app2.get("/api/auth/instagram/callback", async (req, res) => {
+    try {
+      const { code, state } = req.query;
+      if (!code || !state) {
+        return res.redirect("/settings?tab=instagram&error=missing_code");
+      }
+      const stateData = JSON.parse(Buffer.from(state, "base64").toString());
+      const userId = stateData.userId;
+      const redirectUri = `${ENV.appUrl}/api/auth/instagram/callback`;
+      const tokenUrl = `${FB_GRAPH2}/oauth/access_token?client_id=${ENV.facebookAppId}&redirect_uri=${encodeURIComponent(redirectUri)}&client_secret=${ENV.facebookAppSecret}&code=${code}`;
+      const tokenRes = await fetch(tokenUrl);
+      if (!tokenRes.ok) {
+        console.error("[Instagram OAuth] Token exchange failed:", await tokenRes.text());
+        return res.redirect("/settings?tab=instagram&error=token_exchange_failed");
+      }
+      const tokenData = await tokenRes.json();
+      const userAccessToken = tokenData.access_token;
+      const longLivedUrl = `${FB_GRAPH2}/oauth/access_token?grant_type=fb_exchange_token&client_id=${ENV.facebookAppId}&client_secret=${ENV.facebookAppSecret}&fb_exchange_token=${userAccessToken}`;
+      const longLivedRes = await fetch(longLivedUrl);
+      const longLivedData = longLivedRes.ok ? await longLivedRes.json() : { access_token: userAccessToken };
+      const longLivedToken = longLivedData.access_token || userAccessToken;
+      const pagesUrl = `${FB_GRAPH2}/me/accounts?access_token=${longLivedToken}&fields=id,name,access_token,instagram_business_account{id,username,name,profile_picture_url,followers_count}`;
+      const pagesRes = await fetch(pagesUrl);
+      if (!pagesRes.ok) {
+        console.error("[Instagram OAuth] Failed to get pages");
+        return res.redirect("/settings?tab=instagram&error=pages_fetch_failed");
+      }
+      const pagesData = await pagesRes.json();
+      const pages = pagesData.data || [];
+      let connectedCount = 0;
+      for (const page of pages) {
+        const igAccount = page.instagram_business_account;
+        if (!igAccount) continue;
+        const dbPage = await getPageByFacebookId(page.id);
+        const existing = await getInstagramAccountByIgUserId(igAccount.id);
+        if (existing) {
+          await updateInstagramAccount(existing.id, {
+            igUsername: igAccount.username || existing.igUsername,
+            igName: igAccount.name || existing.igName,
+            profilePicUrl: igAccount.profile_picture_url,
+            followerCount: igAccount.followers_count || 0,
+            pageAccessToken: page.access_token,
+            facebookPageId: dbPage?.id || existing.facebookPageId
+          });
+        } else {
+          await createInstagramAccount({
+            userId,
+            facebookPageId: dbPage?.id || null,
+            igUserId: igAccount.id,
+            igUsername: igAccount.username || "unknown",
+            igName: igAccount.name,
+            profilePicUrl: igAccount.profile_picture_url,
+            followerCount: igAccount.followers_count || 0,
+            pageAccessToken: page.access_token,
+            isActive: true
+          });
+        }
+        try {
+          const subscribeUrl = `${FB_GRAPH2}/${page.id}/subscribed_apps?subscribed_fields=messages,messaging_postbacks&access_token=${page.access_token}`;
+          const subRes = await fetch(subscribeUrl, { method: "POST" });
+          if (subRes.ok) {
+            console.log(`[Instagram] Subscribed page ${page.name} (${page.id}) for IG messaging webhooks`);
+          }
+        } catch (err) {
+          console.error(`[Instagram] Webhook subscription error for page ${page.id}:`, err);
+        }
+        connectedCount++;
+      }
+      if (connectedCount === 0) {
+        return res.redirect("/settings?tab=instagram&error=no_ig_accounts");
+      }
+      res.redirect("/settings?tab=instagram&success=connected");
+    } catch (error) {
+      console.error("[Instagram OAuth] Callback error:", error);
+      res.redirect("/settings?tab=instagram&error=callback_failed");
+    }
+  });
+  app2.get("/api/webhook/instagram", (req, res) => {
+    const mode = req.query["hub.mode"];
+    const token = req.query["hub.verify_token"];
+    const challenge = req.query["hub.challenge"];
+    console.log("[IG Webhook] Verification request:", { mode, token: token ? "***" : "missing" });
+    if (mode === "subscribe" && token === ENV.facebookVerifyToken) {
+      console.log("[IG Webhook] Verification successful");
+      return res.status(200).send(challenge);
+    }
+    console.error("[IG Webhook] Verification failed");
+    return res.sendStatus(403);
+  });
+  app2.post("/api/webhook/instagram", async (req, res) => {
+    console.log("[IG Webhook] POST /api/webhook/instagram received");
+    try {
+      const body = req.body;
+      if (body.object !== "instagram") {
+        console.warn("[IG Webhook] Ignoring non-instagram object:", body.object);
+        return res.sendStatus(200);
+      }
+      for (const entry of body.entry || []) {
+        const igUserId = entry.id;
+        for (const event of entry.messaging || []) {
+          const senderIgScopedId = event.sender?.id;
+          if (!senderIgScopedId || senderIgScopedId === igUserId) continue;
+          if (event.message?.text) {
+            const igAccount = await getInstagramAccountByIgUserId(igUserId);
+            if (!igAccount || !igAccount.pageAccessToken) {
+              console.warn(`[IG Webhook] Unknown/unconfigured IG account: ${igUserId}`);
+              continue;
+            }
+            try {
+              await processIncomingInstagramMessage(
+                {
+                  igUserId: igAccount.igUserId,
+                  pageAccessToken: igAccount.pageAccessToken,
+                  userId: igAccount.userId,
+                  dbAccountId: igAccount.id,
+                  facebookPageId: igAccount.facebookPageId,
+                  aiMode: igAccount.aiMode || "testing"
+                },
+                senderIgScopedId,
+                event.message.text
+              );
+            } catch (err) {
+              console.error(`[IG Webhook] processIncomingInstagramMessage failed:`, err);
+            }
+          }
+        }
+      }
+    } catch (error) {
+      console.error("[IG Webhook] Top-level error:", error);
+    }
+    return res.sendStatus(200);
+  });
+  app2.get("/api/instagram/auth-url", async (req, res) => {
+    try {
+      const cookies = req.headers.cookie || "";
+      const sessionCookie = cookies.split(";").map((c) => c.trim()).find((c) => c.startsWith(`${COOKIE_NAME}=`));
+      const token = sessionCookie?.split("=")[1];
+      const session = await sdk.verifySession(token);
+      if (!session) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+      const redirectUri = `${ENV.appUrl}/api/auth/instagram/callback`;
+      const scope = "pages_messaging,pages_manage_metadata,pages_read_engagement,instagram_basic,instagram_manage_messages";
+      const state = Buffer.from(JSON.stringify({ userId: session.userId })).toString("base64");
+      const authUrl = `https://www.facebook.com/v19.0/dialog/oauth?client_id=${ENV.facebookAppId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${scope}&state=${state}`;
+      return res.json({ url: authUrl, appId: ENV.facebookAppId });
+    } catch (error) {
+      console.error("[Instagram] Auth URL error:", error);
+      return res.status(500).json({ error: "Failed to generate auth URL" });
+    }
+  });
+}
+
 // server/kb-import.ts
 import multer from "multer";
 
@@ -2497,6 +2905,23 @@ var appRouter = router({
       return { success: true };
     })
   }),
+  // ─── Instagram Accounts ────────────────────────────────────────────
+  instagram: router({
+    list: protectedProcedure.query(async ({ ctx }) => {
+      return getUserInstagramAccounts(ctx.user.id);
+    }),
+    delete: protectedProcedure.input(z2.object({ id: z2.number() })).mutation(async ({ input }) => {
+      await deleteInstagramAccount(input.id);
+      return { success: true };
+    }),
+    updateMode: protectedProcedure.input(z2.object({
+      id: z2.number(),
+      aiMode: z2.enum(["paused", "testing", "live"])
+    })).mutation(async ({ input }) => {
+      await updateInstagramAccountMode(input.id, input.aiMode);
+      return { success: true };
+    })
+  }),
   // ─── Leads ─────────────────────────────────────────────────────────
   leads: router({
     list: protectedProcedure.input(z2.object({ classification: z2.string().optional() }).optional()).query(async ({ ctx, input }) => {
@@ -3080,6 +3505,7 @@ app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ limit: "50mb", extended: true }));
 registerAuthRoutes(app);
 registerFacebookRoutes(app);
+registerInstagramRoutes(app);
 registerKbImportRoutes(app);
 registerPaymongoWebhookRoutes(app);
 app.post("/api/cron/follow-ups", async (_req, res) => {

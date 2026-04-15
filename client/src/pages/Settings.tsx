@@ -11,7 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectSeparator, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { trpc } from "@/lib/trpc";
-import { User, Bell, CreditCard, Facebook, Loader2, Save, Trash2, CheckCircle, AlertCircle, ExternalLink, Bot } from "lucide-react";
+import { User, Bell, CreditCard, Facebook, Loader2, Save, Trash2, CheckCircle, AlertCircle, ExternalLink, Bot, Instagram } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -566,6 +566,161 @@ function AiSettingsForm({ pageId }: { pageId: number }) {
   );
 }
 
+function InstagramTab() {
+  const { data: igAccounts, isLoading } = trpc.instagram.list.useQuery();
+  const deleteAccount = trpc.instagram.delete.useMutation();
+  const updateMode = trpc.instagram.updateMode.useMutation();
+  const utils = trpc.useUtils();
+  const [connecting, setConnecting] = useState(false);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("tab") === "instagram") {
+      if (params.get("success") === "connected") {
+        toast.success("Instagram account connected successfully!");
+        utils.instagram.list.invalidate();
+        window.history.replaceState({}, "", "/settings?tab=instagram");
+      }
+      const error = params.get("error");
+      if (error) {
+        const errorMessages: Record<string, string> = {
+          not_authenticated: "Please log in first",
+          oauth_failed: "Instagram authentication failed",
+          missing_code: "Authorization was cancelled",
+          token_exchange_failed: "Failed to get access token",
+          pages_fetch_failed: "Failed to fetch your accounts",
+          no_ig_accounts: "No Instagram Business accounts found. Make sure your Instagram is connected to a Facebook Page.",
+          callback_failed: "Something went wrong during connection",
+        };
+        toast.error(errorMessages[error] || "Connection failed");
+        window.history.replaceState({}, "", "/settings?tab=instagram");
+      }
+    }
+  }, []);
+
+  const handleConnect = async () => {
+    setConnecting(true);
+    try {
+      window.location.href = "/api/auth/instagram";
+    } catch {
+      toast.error("Failed to start Instagram connection");
+      setConnecting(false);
+    }
+  };
+
+  const handleDelete = async (id: number) => {
+    try {
+      await deleteAccount.mutateAsync({ id });
+      utils.instagram.list.invalidate();
+      toast.success("Instagram account disconnected");
+    } catch { toast.error("Failed to disconnect account"); }
+  };
+
+  const handleModeChange = async (id: number, mode: "paused" | "testing" | "live") => {
+    try {
+      await updateMode.mutateAsync({ id, aiMode: mode });
+      utils.instagram.list.invalidate();
+      toast.success(`AI mode updated to ${mode}`);
+    } catch { toast.error("Failed to update AI mode"); }
+  };
+
+  if (isLoading) return <div className="flex items-center justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-messenger" /></div>;
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h3 className="text-lg font-bold mb-1">Connected Instagram Accounts</h3>
+          <p className="text-sm text-muted-foreground">Connect your Instagram Business accounts to enable AI-powered DM responses.</p>
+        </div>
+        <Button onClick={handleConnect} disabled={connecting} className="bg-gradient-to-r from-purple-600 to-pink-500 hover:from-purple-700 hover:to-pink-600 text-white">
+          {connecting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Instagram className="w-4 h-4 mr-2" />}
+          Connect Instagram
+        </Button>
+      </div>
+
+      <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+        <h4 className="font-semibold text-purple-900 mb-2 flex items-center gap-2">
+          <AlertCircle className="w-4 h-4" /> Setup Requirements
+        </h4>
+        <ul className="text-sm text-purple-800 space-y-1.5">
+          <li>1. Your Instagram account must be a <strong>Business</strong> or <strong>Creator</strong> account</li>
+          <li>2. It must be linked to a <strong>Facebook Page</strong></li>
+          <li>3. Grant <strong>instagram_basic</strong> and <strong>instagram_manage_messages</strong> permissions</li>
+          <li>4. After connecting, the AI agent will automatically respond to new Instagram DMs</li>
+          <li>5. The same Knowledge Base is used for both Messenger and Instagram responses</li>
+        </ul>
+      </div>
+
+      {!igAccounts?.length ? (
+        <div className="text-center py-12 bg-white rounded-lg border">
+          <Instagram className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
+          <p className="text-muted-foreground mb-2">No Instagram accounts connected yet.</p>
+          <p className="text-sm text-muted-foreground">Click \"Connect Instagram\" to link your Instagram Business account.</p>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {igAccounts.map(account => (
+            <div key={account.id} className="bg-white rounded-xl border overflow-hidden">
+              <div className="flex items-center justify-between p-4">
+                <div className="flex items-center gap-3">
+                  {account.profilePicUrl ? (
+                    <img src={account.profilePicUrl} alt={account.igUsername} className="w-10 h-10 rounded-lg object-cover" />
+                  ) : (
+                    <div className="w-10 h-10 bg-gradient-to-br from-purple-100 to-pink-100 rounded-lg flex items-center justify-center">
+                      <Instagram className="w-5 h-5 text-purple-600" />
+                    </div>
+                  )}
+                  <div>
+                    <p className="font-medium">@{account.igUsername}</p>
+                    <div className="flex items-center gap-2">
+                      {account.igName && <p className="text-xs text-muted-foreground">{account.igName}</p>}
+                      {account.followerCount ? (
+                        <p className="text-xs text-muted-foreground">{account.followerCount.toLocaleString()} followers</p>
+                      ) : null}
+                    </div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <select
+                    value={account.aiMode}
+                    onChange={(e) => handleModeChange(account.id, e.target.value as any)}
+                    className="text-xs border rounded-md px-2 py-1.5 bg-white"
+                  >
+                    <option value="paused">Paused</option>
+                    <option value="testing">Testing</option>
+                    <option value="live">Live</option>
+                  </select>
+                  <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive" onClick={() => handleDelete(account.id)}>
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {igAccounts && igAccounts.length > 0 && (
+        <div className="bg-gray-50 border rounded-lg p-4">
+          <h4 className="font-semibold text-sm mb-2">Webhook Configuration</h4>
+          <p className="text-xs text-muted-foreground mb-2">These are automatically configured when you connect an account. For reference:</p>
+          <div className="space-y-1.5">
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-medium text-muted-foreground w-24">Callback URL:</span>
+              <code className="text-xs bg-white px-2 py-1 rounded border font-mono">https://rocketeerio.vercel.app/api/webhook/instagram</code>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-medium text-muted-foreground w-24">Verify Token:</span>
+              <code className="text-xs bg-white px-2 py-1 rounded border font-mono">rocketeer_verify_token_2024</code>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function BillingTab() {
   const { user } = useAuth();
   const plans = [
@@ -618,12 +773,14 @@ export default function Settings() {
             <TabsTrigger value="profile"><User className="w-4 h-4 mr-1.5" />Profile</TabsTrigger>
             <TabsTrigger value="notifications"><Bell className="w-4 h-4 mr-1.5" />Notifications</TabsTrigger>
             <TabsTrigger value="pages"><Facebook className="w-4 h-4 mr-1.5" />Pages</TabsTrigger>
+            <TabsTrigger value="instagram"><Instagram className="w-4 h-4 mr-1.5" />Instagram</TabsTrigger>
             <TabsTrigger value="ai-personality"><Bot className="w-4 h-4 mr-1.5" />AI Personality</TabsTrigger>
             <TabsTrigger value="billing"><CreditCard className="w-4 h-4 mr-1.5" />Billing</TabsTrigger>
           </TabsList>
           <TabsContent value="profile"><ProfileTab /></TabsContent>
           <TabsContent value="notifications"><NotificationsTab /></TabsContent>
           <TabsContent value="pages"><PagesTab /></TabsContent>
+          <TabsContent value="instagram"><InstagramTab /></TabsContent>
           <TabsContent value="ai-personality"><AiPersonalityTab /></TabsContent>
           <TabsContent value="billing"><BillingTab /></TabsContent>
         </Tabs>

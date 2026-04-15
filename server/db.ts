@@ -15,6 +15,7 @@ import {
   subscriptionPlans, InsertSubscriptionPlan,
   userSubscriptions, InsertUserSubscription,
   paymentHistory, InsertPaymentHistory,
+  instagramAccounts, InsertInstagramAccount,
 } from "../drizzle/schema";
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -638,4 +639,51 @@ export async function seedSubscriptionPlans() {
     await upsertSubscriptionPlan(plan);
   }
   console.log("[Database] Subscription plans seeded");
+}
+
+// ─── Instagram Accounts ─────────────────────────────────────────────
+
+export async function getUserInstagramAccounts(userId: number) {
+  const database = await getDb();
+  if (!database) return [];
+  return database.select().from(instagramAccounts).where(eq(instagramAccounts.userId, userId));
+}
+
+export async function getInstagramAccountByIgUserId(igUserId: string) {
+  const database = await getDb();
+  if (!database) return null;
+  const rows = await database.select().from(instagramAccounts).where(eq(instagramAccounts.igUserId, igUserId));
+  return rows[0] || null;
+}
+
+export async function createInstagramAccount(data: InsertInstagramAccount) {
+  const database = await getDb();
+  if (!database) return null;
+  const rows = await database.insert(instagramAccounts).values(data).returning({ id: instagramAccounts.id });
+  return rows[0]?.id || null;
+}
+
+export async function updateInstagramAccount(id: number, data: Partial<InsertInstagramAccount>) {
+  const database = await getDb();
+  if (!database) return;
+  await database.update(instagramAccounts).set({ ...data, updatedAt: new Date() }).where(eq(instagramAccounts.id, id));
+}
+
+export async function deleteInstagramAccount(id: number) {
+  const database = await getDb();
+  if (!database) return;
+  await database.delete(instagramAccounts).where(eq(instagramAccounts.id, id));
+}
+
+export async function updateInstagramAccountMode(id: number, aiMode: "paused" | "testing" | "live") {
+  const database = await getDb();
+  if (!database) return;
+  await database.update(instagramAccounts).set({ aiMode, updatedAt: new Date() }).where(eq(instagramAccounts.id, id));
+}
+
+export async function getLeadByIgScopedId(igScopedId: string, igAccountId: number) {
+  const database = await getDb();
+  if (!database) return null;
+  const rows = await database.select().from(leads).where(eq(leads.igScopedId, igScopedId));
+  return rows[0] || null;
 }
