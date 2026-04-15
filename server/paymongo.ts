@@ -40,7 +40,7 @@ async function paymongoRequest<T = any>(
 // ─── Checkout Sessions ──────────────────────────────────────────────
 
 export interface CreateCheckoutParams {
-  amount: number; // in centavos (e.g., 490000 = ₱4,900.00)
+  amount: number; // in cents (e.g., 2900 = $29.00 USD)
   currency?: string;
   description: string;
   planSlug: string;
@@ -52,7 +52,7 @@ export interface CreateCheckoutParams {
 export async function createCheckoutSession(params: CreateCheckoutParams) {
   const {
     amount,
-    currency = "PHP",
+    currency = "USD",
     description,
     planSlug,
     userId,

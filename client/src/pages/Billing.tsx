@@ -2,7 +2,7 @@ import DashboardLayout from "@/components/DashboardLayout";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
 import {
-  CreditCard, Check, Rocket, TrendingUp, Crown,
+  CreditCard, Check, Rocket, TrendingUp, Crown, Zap,
   AlertCircle, Loader2, ExternalLink, XCircle, Clock,
   Receipt
 } from "lucide-react";
@@ -23,6 +23,7 @@ function BillingContent() {
   const search = useSearch();
   const [, navigate] = useLocation();
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
+  const [billingPeriod, setBillingPeriod] = useState<"monthly" | "annual">("monthly");
 
   const plansQuery = trpc.billing.plans.useQuery();
   const subscriptionQuery = trpc.billing.currentSubscription.useQuery();
@@ -38,7 +39,6 @@ function BillingContent() {
       toast.success("Payment successful! Your subscription is now active.");
       subscriptionQuery.refetch();
       paymentHistoryQuery.refetch();
-      // Clean URL
       navigate("/billing", { replace: true });
     } else if (status === "cancelled") {
       toast.info("Checkout was cancelled. You can try again anytime.");
@@ -47,10 +47,17 @@ function BillingContent() {
   }, [search]);
 
   const handleSubscribe = async (planSlug: string) => {
+    if (planSlug === "free") {
+      toast.info("Free plan is active by default for new users.");
+      return;
+    }
+    if (planSlug === "custom") {
+      toast.info("Please contact sales for Custom enterprise pricing.");
+      return;
+    }
     setSelectedPlan(planSlug);
     try {
       const result = await createCheckout.mutateAsync({ planSlug });
-      // Redirect to PayMongo checkout
       window.location.href = result.checkoutUrl;
     } catch (error: any) {
       toast.error(error.message || "Failed to create checkout session");
@@ -77,31 +84,77 @@ function BillingContent() {
   const payments = paymentHistoryQuery.data ?? [];
 
   const planIcons: Record<string, typeof Rocket> = {
-    starter: Rocket,
+    free: Rocket,
     growth: TrendingUp,
-    scale: Crown,
+    pro: Crown,
+    scale: Zap,
+    custom: Crown,
   };
 
   const planColors: Record<string, string> = {
-    starter: "border-blue-200 bg-blue-50/50 dark:border-blue-900 dark:bg-blue-950/30",
-    growth: "border-green-200 bg-green-50/50 dark:border-green-900 dark:bg-green-950/30 ring-2 ring-green-500/20",
-    scale: "border-purple-200 bg-purple-50/50 dark:border-purple-900 dark:bg-purple-950/30",
+    free: "border-slate-200 bg-slate-50/50 dark:border-slate-800 dark:bg-slate-950/30",
+    growth: "border-blue-200 bg-blue-50/50 dark:border-blue-900 dark:bg-blue-950/30",
+    pro: "border-purple-200 bg-purple-50/50 dark:border-purple-900 dark:bg-purple-950/30 ring-2 ring-purple-500/20",
+    scale: "border-amber-200 bg-amber-50/50 dark:border-amber-900 dark:bg-amber-950/30",
+    custom: "border-slate-300 bg-slate-100/50 dark:border-slate-700 dark:bg-slate-900/30",
   };
 
   const planButtonColors: Record<string, string> = {
-    starter: "bg-blue-600 hover:bg-blue-700 text-white",
-    growth: "bg-green-600 hover:bg-green-700 text-white",
-    scale: "bg-purple-600 hover:bg-purple-700 text-white",
+    free: "bg-slate-600 hover:bg-slate-700 text-white",
+    growth: "bg-blue-600 hover:bg-blue-700 text-white",
+    pro: "bg-purple-600 hover:bg-purple-700 text-white",
+    scale: "bg-amber-600 hover:bg-amber-700 text-white",
+    custom: "bg-slate-600 hover:bg-slate-700 text-white",
+  };
+
+  // Annual discount: 20% off (monthly * 12 * 0.8)
+  const getAnnualPrice = (monthlyPrice: string) => {
+    const monthly = parseFloat(monthlyPrice);
+    if (monthly === 0) return "0.00";
+    return (monthly * 12 * 0.8).toFixed(2);
+  };
+
+  const getDisplayPrice = (monthlyPrice: string) => {
+    if (billingPeriod === "monthly") {
+      return parseFloat(monthlyPrice);
+    } else {
+      return parseFloat(getAnnualPrice(monthlyPrice)) / 12;
+    }
   };
 
   return (
-    <div className="flex flex-col gap-8 p-4 md:p-8 max-w-6xl mx-auto">
+    <div className="flex flex-col gap-8 p-4 md:p-8 max-w-7xl mx-auto">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Billing & Plans</h1>
-        <p className="text-muted-foreground mt-1">
-          Manage your subscription and view payment history
+      <div className="text-center">
+        <h1 className="text-3xl font-bold tracking-tight">Simple, Transparent Pricing</h1>
+        <p className="text-muted-foreground mt-2 max-w-2xl mx-auto">
+          Choose the perfect plan for your business. Scale up as you grow.
         </p>
+      </div>
+
+      {/* Billing Period Toggle */}
+      <div className="flex items-center justify-center gap-4">
+        <span className={`text-sm font-medium ${billingPeriod === "monthly" ? "text-foreground" : "text-muted-foreground"}`}>
+          Monthly
+        </span>
+        <button
+          onClick={() => setBillingPeriod(billingPeriod === "monthly" ? "annual" : "monthly")}
+          className="relative inline-flex h-8 w-14 items-center rounded-full bg-muted"
+        >
+          <span
+            className={`inline-block h-6 w-6 transform rounded-full bg-white shadow-lg transition-transform ${
+              billingPeriod === "annual" ? "translate-x-7" : "translate-x-1"
+            }`}
+          />
+        </button>
+        <span className={`text-sm font-medium ${billingPeriod === "annual" ? "text-foreground" : "text-muted-foreground"}`}>
+          Annual
+        </span>
+        {billingPeriod === "annual" && (
+          <span className="ml-2 inline-flex items-center rounded-full bg-green-100 px-3 py-1 text-xs font-semibold text-green-800 dark:bg-green-900/30 dark:text-green-400">
+            Save 20%
+          </span>
+        )}
       </div>
 
       {/* Current Subscription Status */}
@@ -173,104 +226,216 @@ function BillingContent() {
         </div>
       )}
 
-      {/* Pricing Plans */}
-      <div>
-        <h2 className="text-xl font-semibold mb-4">
-          {currentSub ? "Switch Plan" : "Choose a Plan"}
-        </h2>
+      {/* Pricing Plans Grid */}
+      {plansQuery.isLoading ? (
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
+          {plans.map((plan) => {
+            const Icon = planIcons[plan.slug] ?? Rocket;
+            const isCurrentPlan = currentSub?.plan?.slug === plan.slug && currentSub?.status === "active";
+            const isLoading = selectedPlan === plan.slug && createCheckout.isPending;
+            const features = (plan.features as string[]) ?? [];
+            const displayPrice = getDisplayPrice(plan.price);
+            const annualPrice = getAnnualPrice(plan.price);
 
-        {plansQuery.isLoading ? (
-          <div className="flex items-center justify-center py-12">
-            <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {plans.map((plan) => {
-              const Icon = planIcons[plan.slug] ?? Rocket;
-              const isCurrentPlan = currentSub?.plan?.slug === plan.slug && currentSub?.status === "active";
-              const isLoading = selectedPlan === plan.slug && createCheckout.isPending;
-              const features = (plan.features as string[]) ?? [];
-
-              return (
-                <div
-                  key={plan.id}
-                  className={`relative rounded-xl border p-6 transition-all hover:shadow-md ${
-                    planColors[plan.slug] ?? "border-border"
-                  }`}
-                >
-                  {plan.slug === "growth" && (
-                    <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                      <span className="bg-green-600 text-white text-xs font-bold px-3 py-1 rounded-full">
-                        MOST POPULAR
-                      </span>
-                    </div>
-                  )}
-
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                      plan.slug === "starter" ? "bg-blue-100 dark:bg-blue-900/30" :
-                      plan.slug === "growth" ? "bg-green-100 dark:bg-green-900/30" :
-                      "bg-purple-100 dark:bg-purple-900/30"
-                    }`}>
-                      <Icon className={`w-5 h-5 ${
-                        plan.slug === "starter" ? "text-blue-600" :
-                        plan.slug === "growth" ? "text-green-600" :
-                        "text-purple-600"
-                      }`} />
-                    </div>
-                    <h3 className="text-lg font-semibold">{plan.name}</h3>
-                  </div>
-
-                  <div className="mb-6">
-                    <span className="text-3xl font-bold">
-                      ₱{parseFloat(plan.price).toLocaleString()}
+            return (
+              <div
+                key={plan.id}
+                className={`relative rounded-xl border p-6 transition-all hover:shadow-md flex flex-col ${
+                  planColors[plan.slug] ?? "border-border"
+                }`}
+              >
+                {plan.slug === "pro" && (
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                    <span className="bg-purple-600 text-white text-xs font-bold px-3 py-1 rounded-full">
+                      MOST POPULAR
                     </span>
-                    <span className="text-muted-foreground">/month</span>
                   </div>
+                )}
 
-                  <ul className="space-y-3 mb-6">
-                    {features.map((feature, i) => (
-                      <li key={i} className="flex items-start gap-2 text-sm">
-                        <Check className="w-4 h-4 text-green-500 mt-0.5 shrink-0" />
-                        <span>{feature}</span>
-                      </li>
-                    ))}
-                  </ul>
+                <div className="flex items-center gap-3 mb-4">
+                  <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                    plan.slug === "free" ? "bg-slate-100 dark:bg-slate-900/30" :
+                    plan.slug === "growth" ? "bg-blue-100 dark:bg-blue-900/30" :
+                    plan.slug === "pro" ? "bg-purple-100 dark:bg-purple-900/30" :
+                    plan.slug === "scale" ? "bg-amber-100 dark:bg-amber-900/30" :
+                    "bg-slate-100 dark:bg-slate-900/30"
+                  }`}>
+                    <Icon className={`w-5 h-5 ${
+                      plan.slug === "free" ? "text-slate-600" :
+                      plan.slug === "growth" ? "text-blue-600" :
+                      plan.slug === "pro" ? "text-purple-600" :
+                      plan.slug === "scale" ? "text-amber-600" :
+                      "text-slate-600"
+                    }`} />
+                  </div>
+                  <h3 className="text-lg font-semibold">{plan.name}</h3>
+                </div>
 
-                  {isCurrentPlan ? (
-                    <button
-                      disabled
-                      className="w-full py-2.5 px-4 rounded-lg border-2 border-green-500 text-green-600 font-medium text-sm cursor-default"
-                    >
-                      <span className="flex items-center justify-center gap-2">
-                        <Check className="w-4 h-4" /> Current Plan
-                      </span>
-                    </button>
+                <div className="mb-6">
+                  {plan.slug === "free" ? (
+                    <div>
+                      <span className="text-3xl font-bold">$0</span>
+                      <span className="text-muted-foreground">/month</span>
+                    </div>
+                  ) : plan.slug === "custom" ? (
+                    <div>
+                      <span className="text-sm text-muted-foreground">Custom pricing</span>
+                      <p className="text-xs text-muted-foreground mt-1">Contact sales</p>
+                    </div>
                   ) : (
-                    <button
-                      onClick={() => handleSubscribe(plan.slug)}
-                      disabled={isLoading || createCheckout.isPending}
-                      className={`w-full py-2.5 px-4 rounded-lg font-medium text-sm transition-colors disabled:opacity-50 ${
-                        planButtonColors[plan.slug] ?? "bg-primary text-primary-foreground hover:bg-primary/90"
-                      }`}
-                    >
-                      {isLoading ? (
-                        <span className="flex items-center justify-center gap-2">
-                          <Loader2 className="w-4 h-4 animate-spin" /> Redirecting...
-                        </span>
-                      ) : (
-                        <span className="flex items-center justify-center gap-2">
-                          <ExternalLink className="w-4 h-4" />
-                          {currentSub?.status === "active" ? "Switch to " : "Subscribe to "}{plan.name}
-                        </span>
+                    <div>
+                      <span className="text-3xl font-bold">${displayPrice.toFixed(2)}</span>
+                      <span className="text-muted-foreground">/month</span>
+                      {billingPeriod === "annual" && (
+                        <p className="text-xs text-muted-foreground mt-1">
+                          ${annualPrice}/year (billed annually)
+                        </p>
                       )}
-                    </button>
+                    </div>
                   )}
                 </div>
-              );
-            })}
-          </div>
-        )}
+
+                <ul className="space-y-2.5 mb-6 flex-1">
+                  {features.slice(0, 6).map((feature, i) => (
+                    <li key={i} className="flex items-start gap-2 text-sm">
+                      <Check className="w-4 h-4 text-green-500 mt-0.5 shrink-0" />
+                      <span>{feature}</span>
+                    </li>
+                  ))}
+                  {features.length > 6 && (
+                    <li className="text-xs text-muted-foreground italic">
+                      +{features.length - 6} more features
+                    </li>
+                  )}
+                </ul>
+
+                {isCurrentPlan ? (
+                  <button
+                    disabled
+                    className="w-full py-2.5 px-4 rounded-lg border-2 border-green-500 text-green-600 dark:text-green-400 font-medium text-sm cursor-default"
+                  >
+                    <span className="flex items-center justify-center gap-2">
+                      <Check className="w-4 h-4" /> Current Plan
+                    </span>
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => handleSubscribe(plan.slug)}
+                    disabled={isLoading || createCheckout.isPending}
+                    className={`w-full py-2.5 px-4 rounded-lg font-medium text-sm transition-colors disabled:opacity-50 ${
+                      planButtonColors[plan.slug] ?? "bg-primary text-primary-foreground hover:bg-primary/90"
+                    }`}
+                  >
+                    {isLoading ? (
+                      <span className="flex items-center justify-center gap-2">
+                        <Loader2 className="w-4 h-4 animate-spin" /> Redirecting...
+                      </span>
+                    ) : plan.slug === "free" ? (
+                      "Get Started Free"
+                    ) : plan.slug === "custom" ? (
+                      "Contact Sales"
+                    ) : currentSub?.status === "active" ? (
+                      "Upgrade"
+                    ) : (
+                      "Subscribe Now"
+                    )}
+                  </button>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Feature Comparison Table */}
+      <div className="mt-8 rounded-xl border bg-card shadow-sm overflow-hidden">
+        <div className="p-6 pb-4 border-b">
+          <h3 className="text-xl font-semibold">Detailed Feature Comparison</h3>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b bg-muted/50">
+                <th className="px-6 py-3 text-left font-semibold">Feature</th>
+                {plans.map((plan) => (
+                  <th key={plan.id} className="px-6 py-3 text-center font-semibold">
+                    {plan.name}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              <tr className="border-b">
+                <td className="px-6 py-3 font-medium">Active Leads</td>
+                <td className="px-6 py-3 text-center">100</td>
+                <td className="px-6 py-3 text-center">1,000</td>
+                <td className="px-6 py-3 text-center">5,000</td>
+                <td className="px-6 py-3 text-center">20,000</td>
+                <td className="px-6 py-3 text-center">Unlimited</td>
+              </tr>
+              <tr className="border-b">
+                <td className="px-6 py-3 font-medium">AI Conversations/mo</td>
+                <td className="px-6 py-3 text-center">50</td>
+                <td className="px-6 py-3 text-center">500</td>
+                <td className="px-6 py-3 text-center">2,500</td>
+                <td className="px-6 py-3 text-center">10,000</td>
+                <td className="px-6 py-3 text-center">Unlimited</td>
+              </tr>
+              <tr className="border-b">
+                <td className="px-6 py-3 font-medium">Facebook Pages</td>
+                <td className="px-6 py-3 text-center">1</td>
+                <td className="px-6 py-3 text-center">1</td>
+                <td className="px-6 py-3 text-center">3</td>
+                <td className="px-6 py-3 text-center">10</td>
+                <td className="px-6 py-3 text-center">Unlimited</td>
+              </tr>
+              <tr className="border-b">
+                <td className="px-6 py-3 font-medium">Team Seats</td>
+                <td className="px-6 py-3 text-center">1</td>
+                <td className="px-6 py-3 text-center">2</td>
+                <td className="px-6 py-3 text-center">5</td>
+                <td className="px-6 py-3 text-center">Unlimited</td>
+                <td className="px-6 py-3 text-center">Unlimited</td>
+              </tr>
+              <tr className="border-b">
+                <td className="px-6 py-3 font-medium">Custom AI Persona</td>
+                <td className="px-6 py-3 text-center">—</td>
+                <td className="px-6 py-3 text-center">—</td>
+                <td className="px-6 py-3 text-center"><Check className="w-4 h-4 mx-auto text-green-600" /></td>
+                <td className="px-6 py-3 text-center"><Check className="w-4 h-4 mx-auto text-green-600" /></td>
+                <td className="px-6 py-3 text-center"><Check className="w-4 h-4 mx-auto text-green-600" /></td>
+              </tr>
+              <tr className="border-b">
+                <td className="px-6 py-3 font-medium">API Access</td>
+                <td className="px-6 py-3 text-center">—</td>
+                <td className="px-6 py-3 text-center">—</td>
+                <td className="px-6 py-3 text-center"><Check className="w-4 h-4 mx-auto text-green-600" /></td>
+                <td className="px-6 py-3 text-center"><Check className="w-4 h-4 mx-auto text-green-600" /></td>
+                <td className="px-6 py-3 text-center"><Check className="w-4 h-4 mx-auto text-green-600" /></td>
+              </tr>
+              <tr className="border-b">
+                <td className="px-6 py-3 font-medium">White-Label</td>
+                <td className="px-6 py-3 text-center">—</td>
+                <td className="px-6 py-3 text-center">—</td>
+                <td className="px-6 py-3 text-center">—</td>
+                <td className="px-6 py-3 text-center"><Check className="w-4 h-4 mx-auto text-green-600" /></td>
+                <td className="px-6 py-3 text-center"><Check className="w-4 h-4 mx-auto text-green-600" /></td>
+              </tr>
+              <tr>
+                <td className="px-6 py-3 font-medium">Support</td>
+                <td className="px-6 py-3 text-center text-xs">Community</td>
+                <td className="px-6 py-3 text-center text-xs">Email</td>
+                <td className="px-6 py-3 text-center text-xs">Priority</td>
+                <td className="px-6 py-3 text-center text-xs">Slack/Chat</td>
+                <td className="px-6 py-3 text-center text-xs">Dedicated CSM</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {/* Payment Methods Info */}
@@ -323,7 +488,7 @@ function BillingContent() {
                       {payment.description ?? "Payment"}
                     </td>
                     <td className="px-6 py-3 text-sm font-medium">
-                      ₱{parseFloat(payment.amount).toLocaleString()}
+                      ${parseFloat(payment.amount).toLocaleString()}
                     </td>
                     <td className="px-6 py-3">
                       <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${

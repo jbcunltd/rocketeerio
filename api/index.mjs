@@ -2199,7 +2199,7 @@ async function paymongoRequest(endpoint, options = {}) {
 async function createCheckoutSession(params) {
   const {
     amount,
-    currency = "PHP",
+    currency = "USD",
     description,
     planSlug,
     userId,
@@ -3011,8 +3011,11 @@ Timeline: ${scoreResult.timelineNotes}`
         paymongoCheckoutId: checkoutId,
         description: `${plan.name} Plan - Monthly subscription`
       });
-      const planField = plan.slug;
-      await updateUserProfile(ctx.user.id, { plan: planField });
+      const paidPlanSlugs = ["growth", "pro", "scale"];
+      if (paidPlanSlugs.includes(plan.slug)) {
+        const planField = plan.slug;
+        await updateUserProfile(ctx.user.id, { plan: planField });
+      }
       return { checkoutUrl, checkoutId };
     }),
     cancelSubscription: protectedProcedure.mutation(async ({ ctx }) => {

@@ -717,9 +717,13 @@ export const appRouter = router({
           description: `${plan.name} Plan - Monthly subscription`,
         });
 
-        // Update user plan field
-        const planField = plan.slug as "starter" | "growth" | "scale";
-        await db.updateUserProfile(ctx.user.id, { plan: planField });
+        // Update user plan field (only for paid plans)
+        const paidPlanSlugs = ["growth", "pro", "scale"];
+        if (paidPlanSlugs.includes(plan.slug)) {
+          // Map to the allowed plan field in user profile
+          const planField = plan.slug as "starter" | "growth" | "scale";
+          await db.updateUserProfile(ctx.user.id, { plan: planField });
+        }
 
         return { checkoutUrl, checkoutId };
       }),
