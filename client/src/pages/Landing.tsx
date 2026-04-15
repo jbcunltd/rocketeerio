@@ -312,6 +312,51 @@ export default function Landing() {
       </section>
 
       {/* ============================================================ */}
+      {/*  INTEGRATIONS / CHANNELS STRIP                                */}
+      {/* ============================================================ */}
+      <section className="py-10 border-t border-border/50 bg-white">
+        <div className="container">
+          <h3 className="text-center text-xl font-bold text-foreground mb-8">
+            Works where your customers already message you
+          </h3>
+          <p className="text-center text-sm font-medium text-muted-foreground mb-6 tracking-wide uppercase">
+            Supported channels
+          </p>
+          <div className="flex items-center justify-center gap-12">
+            {/* Facebook Messenger */}
+            <div className="flex items-center gap-3">
+              <div className="w-11 h-11 rounded-xl bg-messenger/10 flex items-center justify-center">
+                <svg viewBox="0 0 24 24" className="w-6 h-6 text-messenger" fill="currentColor">
+                  <path d="M12 2C6.36 2 2 6.13 2 11.7c0 2.91 1.2 5.42 3.15 7.2.16.15.26.36.27.58l.05 1.82c.02.56.6.93 1.11.7l2.04-.8c.18-.07.38-.09.57-.05.88.24 1.82.37 2.81.37 5.64 0 10-4.13 10-9.7S17.64 2 12 2zm5.95 7.57l-2.91 4.62c-.46.74-1.44.93-2.13.42l-2.32-1.74a.6.6 0 00-.72 0l-3.13 2.37c-.42.32-.96-.18-.68-.63l2.91-4.62c.46-.74 1.44-.93 2.13-.42l2.32 1.74a.6.6 0 00.72 0l3.13-2.37c.42-.32.96.18.68.63z" />
+                </svg>
+              </div>
+              <span className="text-sm font-semibold text-foreground">Messenger</span>
+            </div>
+            {/* Instagram DMs */}
+            <div className="flex items-center gap-3">
+              <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-purple-500/10 via-pink-500/10 to-orange-400/10 flex items-center justify-center">
+                <svg viewBox="0 0 24 24" className="w-6 h-6" fill="none">
+                  <defs>
+                    <linearGradient id="ig" x1="0" y1="24" x2="24" y2="0">
+                      <stop offset="0%" stopColor="#feda75" />
+                      <stop offset="25%" stopColor="#fa7e1e" />
+                      <stop offset="50%" stopColor="#d62976" />
+                      <stop offset="75%" stopColor="#962fbf" />
+                      <stop offset="100%" stopColor="#4f5bd5" />
+                    </linearGradient>
+                  </defs>
+                  <rect x="2" y="2" width="20" height="20" rx="5" stroke="url(#ig)" strokeWidth="2" />
+                  <circle cx="12" cy="12" r="5" stroke="url(#ig)" strokeWidth="2" />
+                  <circle cx="17.5" cy="6.5" r="1.5" fill="url(#ig)" />
+                </svg>
+              </div>
+              <span className="text-sm font-semibold text-foreground">Instagram</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ============================================================ */}
       {/*  PAIN SECTION                                                 */}
       {/* ============================================================ */}
       <section className="py-20 md:py-28 border-t border-border/50">
@@ -367,8 +412,11 @@ export default function Landing() {
             <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-6">
               Speed wins deals. Every time.
             </h2>
-            <p className="text-lg md:text-xl text-muted-foreground leading-relaxed max-w-2xl mx-auto">
+            <p className="text-lg md:text-xl text-muted-foreground leading-relaxed max-w-2xl mx-auto mb-6">
               Customers don't wait. They message multiple businesses — and the first one to respond usually gets the deal. If you're not replying instantly, you're already behind.
+            </p>
+            <p className="text-base font-semibold text-messenger">
+              The first business to reply usually wins the sale.
             </p>
           </div>
         </div>

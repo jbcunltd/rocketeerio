@@ -11,7 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectSeparator, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { trpc } from "@/lib/trpc";
-import { User, Bell, CreditCard, Facebook, Loader2, Save, Trash2, CheckCircle, AlertCircle, ExternalLink, Bot, Instagram, Headphones } from "lucide-react";
+import { User, Bell, CreditCard, Facebook, Loader2, Save, Trash2, CheckCircle, AlertCircle, ExternalLink, Bot, Instagram, Headphones, MessageSquare, Smartphone, Mail, Radio } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -756,6 +756,156 @@ function BillingTab() {
   );
 }
 
+function HotLeadAlertsTab() {
+  const [whatsappEnabled, setWhatsappEnabled] = useState(false);
+  const [whatsappNumber, setWhatsappNumber] = useState("");
+  const [telegramEnabled, setTelegramEnabled] = useState(false);
+  const [telegramHandle, setTelegramHandle] = useState("");
+  const [messengerEnabled, setMessengerEnabled] = useState(true);
+  const [emailEnabled, setEmailEnabled] = useState(true);
+  const [emailAddr, setEmailAddr] = useState("");
+  const [smsEnabled, setSmsEnabled] = useState(false);
+  const [smsNumber, setSmsNumber] = useState("");
+  const [leadStatus, setLeadStatus] = useState<"hot" | "warm" | "all">("hot");
+
+  const handleSave = () => {
+    toast.success("Hot lead alert preferences saved");
+  };
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h3 className="text-lg font-bold mb-1">Hot Lead Alerts</h3>
+        <p className="text-sm text-muted-foreground mb-4">We monitor every conversation. You step in only when it's time to close.</p>
+      </div>
+
+      {/* Lead Status Trigger */}
+      <div className="border-b pb-6">
+        <h4 className="font-semibold mb-4">Alert Trigger</h4>
+        <div className="space-y-3">
+          <label className="flex items-center p-3 rounded-lg border cursor-pointer hover:bg-gray-50" style={{ borderColor: leadStatus === "hot" ? "#0084FF" : "inherit" }}>
+            <input type="radio" name="leadStatus" value="hot" checked={leadStatus === "hot"} onChange={() => setLeadStatus("hot")} className="mr-3" />
+            <div>
+              <p className="font-medium">🔥 Hot leads <span className="text-xs bg-messenger text-white px-2 py-0.5 rounded ml-2">Recommended</span></p>
+              <p className="text-sm text-muted-foreground">Only get notified about your most qualified leads</p>
+            </div>
+          </label>
+          <label className="flex items-center p-3 rounded-lg border cursor-pointer hover:bg-gray-50">
+            <input type="radio" name="leadStatus" value="warm" checked={leadStatus === "warm"} onChange={() => setLeadStatus("warm")} className="mr-3" />
+            <div>
+              <p className="font-medium">Warm + Hot leads</p>
+              <p className="text-sm text-muted-foreground">Get notified for both warm and hot leads</p>
+            </div>
+          </label>
+          <label className="flex items-center p-3 rounded-lg border cursor-pointer hover:bg-gray-50">
+            <input type="radio" name="leadStatus" value="all" checked={leadStatus === "all"} onChange={() => setLeadStatus("all")} className="mr-3" />
+            <div>
+              <p className="font-medium">All leads</p>
+              <p className="text-sm text-muted-foreground">Get notified for every incoming message</p>
+            </div>
+          </label>
+        </div>
+        <p className="text-xs text-muted-foreground mt-4 italic">Leads go cold fast. We notify you in real-time so you can close before competitors do.</p>
+      </div>
+
+      {/* Channel Toggles */}
+      <div>
+        <h4 className="font-semibold mb-4">Notification Channels</h4>
+        <div className="space-y-4">
+          {/* WhatsApp */}
+          <div className="flex items-start justify-between p-4 bg-white rounded-lg border">
+            <div className="flex-1">
+              <div className="flex items-center gap-2 mb-1">
+                <Smartphone className="w-4 h-4 text-green-500" />
+                <p className="font-medium">WhatsApp</p>
+              </div>
+              <p className="text-sm text-muted-foreground">Get notified instantly on WhatsApp when a lead is ready to buy</p>
+              {whatsappEnabled && (
+                <div className="mt-3">
+                  <Label className="text-xs">Enter your WhatsApp number</Label>
+                  <Input value={whatsappNumber} onChange={e => setWhatsappNumber(e.target.value)} placeholder="+1 (555) 000-0000" className="mt-1.5 max-w-xs" />
+                </div>
+              )}
+            </div>
+            <Switch checked={whatsappEnabled} onCheckedChange={setWhatsappEnabled} />
+          </div>
+
+          {/* Telegram */}
+          <div className="flex items-start justify-between p-4 bg-white rounded-lg border">
+            <div className="flex-1">
+              <div className="flex items-center gap-2 mb-1">
+                <Radio className="w-4 h-4 text-blue-500" />
+                <p className="font-medium">Telegram</p>
+              </div>
+              <p className="text-sm text-muted-foreground">Get a Telegram ping the moment a hot lead comes in</p>
+              {telegramEnabled && (
+                <div className="mt-3">
+                  <Label className="text-xs">Connect Telegram bot</Label>
+                  <Input value={telegramHandle} onChange={e => setTelegramHandle(e.target.value)} placeholder="Your Telegram handle" className="mt-1.5 max-w-xs" />
+                </div>
+              )}
+            </div>
+            <Switch checked={telegramEnabled} onCheckedChange={setTelegramEnabled} />
+          </div>
+
+          {/* Messenger */}
+          <div className="flex items-start justify-between p-4 bg-white rounded-lg border">
+            <div className="flex-1">
+              <div className="flex items-center gap-2 mb-1">
+                <MessageSquare className="w-4 h-4 text-messenger" />
+                <p className="font-medium">Messenger</p>
+              </div>
+              <p className="text-sm text-muted-foreground">Receive alerts right in your Messenger inbox</p>
+            </div>
+            <Switch checked={messengerEnabled} onCheckedChange={setMessengerEnabled} />
+          </div>
+
+          {/* Email */}
+          <div className="flex items-start justify-between p-4 bg-white rounded-lg border">
+            <div className="flex-1">
+              <div className="flex items-center gap-2 mb-1">
+                <Mail className="w-4 h-4 text-orange-500" />
+                <p className="font-medium">Email</p>
+              </div>
+              <p className="text-sm text-muted-foreground">Get email summaries of your hottest leads</p>
+              {emailEnabled && (
+                <div className="mt-3">
+                  <Label className="text-xs">Email address for alerts</Label>
+                  <Input value={emailAddr} onChange={e => setEmailAddr(e.target.value)} placeholder="you@example.com" className="mt-1.5 max-w-xs" />
+                </div>
+              )}
+            </div>
+            <Switch checked={emailEnabled} onCheckedChange={setEmailEnabled} />
+          </div>
+
+          {/* SMS */}
+          <div className="flex items-start justify-between p-4 bg-white rounded-lg border">
+            <div className="flex-1">
+              <div className="flex items-center gap-2 mb-1">
+                <Radio className="w-4 h-4 text-purple-500" />
+                <p className="font-medium">SMS <span className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded ml-2">Pro</span></p>
+              </div>
+              <p className="text-sm text-muted-foreground">Instant SMS for your most urgent leads</p>
+              {smsEnabled && (
+                <div className="mt-3">
+                  <Label className="text-xs">Phone number for SMS alerts</Label>
+                  <Input value={smsNumber} onChange={e => setSmsNumber(e.target.value)} placeholder="+1 (555) 000-0000" className="mt-1.5 max-w-xs" />
+                </div>
+              )}
+            </div>
+            <Switch checked={smsEnabled} onCheckedChange={setSmsEnabled} />
+          </div>
+        </div>
+      </div>
+
+      <Button onClick={handleSave} className="bg-messenger hover:bg-messenger-dark">
+        <Save className="w-4 h-4 mr-2" />
+        Save Alert Preferences
+      </Button>
+    </div>
+  );
+}
+
 function HandoffTab() {
   const settingsQuery = trpc.handoffs.getSettings.useQuery();
   const updateMutation = trpc.handoffs.updateSettings.useMutation({
@@ -865,6 +1015,7 @@ export default function Settings() {
         <Tabs defaultValue={defaultTab}>
           <TabsList className="mb-6">
             <TabsTrigger value="profile"><User className="w-4 h-4 mr-1.5" />Profile</TabsTrigger>
+            <TabsTrigger value="hot-lead-alerts"><BellRing className="w-4 h-4 mr-1.5" />Hot Lead Alerts</TabsTrigger>
             <TabsTrigger value="notifications"><Bell className="w-4 h-4 mr-1.5" />Notifications</TabsTrigger>
             <TabsTrigger value="pages"><Facebook className="w-4 h-4 mr-1.5" />Pages</TabsTrigger>
             <TabsTrigger value="instagram"><Instagram className="w-4 h-4 mr-1.5" />Instagram</TabsTrigger>
@@ -873,6 +1024,7 @@ export default function Settings() {
             <TabsTrigger value="handoff"><Headphones className="w-4 h-4 mr-1.5" />Handoff</TabsTrigger>
           </TabsList>
           <TabsContent value="profile"><ProfileTab /></TabsContent>
+          <TabsContent value="hot-lead-alerts"><HotLeadAlertsTab /></TabsContent>
           <TabsContent value="notifications"><NotificationsTab /></TabsContent>
           <TabsContent value="pages"><PagesTab /></TabsContent>
           <TabsContent value="instagram"><InstagramTab /></TabsContent>
