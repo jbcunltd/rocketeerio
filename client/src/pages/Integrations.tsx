@@ -215,15 +215,15 @@ function IntegrationsContent() {
       </div>
 
       {/* Zapier Guide */}
-      <div className="bg-gradient-to-r from-orange-50 to-amber-50 border border-orange-200 rounded-xl p-6 mb-6">
-        <div className="flex items-start gap-4">
+      <div className="bg-gradient-to-r from-orange-50 to-amber-50 border border-orange-200 rounded-xl p-4 sm:p-6 mb-6">
+        <div className="flex flex-col sm:flex-row items-start gap-4">
           <div className="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center shrink-0">
             <Zap className="w-6 h-6 text-orange-600" />
           </div>
           <div className="flex-1">
-            <div className="flex justify-between items-center mb-1">
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 mb-1 w-full">
               <h3 className="font-bold text-orange-900">Connect with Zapier</h3>
-              <Button variant="ghost" size="sm" onClick={() => setShowZapierGuide(!showZapierGuide)} className="text-orange-700 hover:text-orange-900 hover:bg-orange-100">
+              <Button variant="ghost" size="sm" onClick={() => setShowZapierGuide(!showZapierGuide)} className="text-orange-700 hover:text-orange-900 hover:bg-orange-100 w-full sm:w-auto justify-start sm:justify-center">
                 {showZapierGuide ? "Hide Instructions" : "Show Instructions"}
                 {showZapierGuide ? <ChevronUp className="w-4 h-4 ml-1" /> : <ChevronDown className="w-4 h-4 ml-1" />}
               </Button>
@@ -255,23 +255,23 @@ function IntegrationsContent() {
       </div>
 
       {/* Google Sheets Export */}
-      <div className="bg-white rounded-xl p-6 border border-gray-200 mb-6">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-3">
+      <div className="bg-white rounded-xl p-4 sm:p-6 border border-gray-200 mb-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+          <div className="flex items-center gap-3 min-w-0">
             <div className="w-10 h-10 bg-green-50 rounded-xl flex items-center justify-center">
               <FileSpreadsheet className="w-5 h-5 text-green-600" />
             </div>
-            <div>
-              <h3 className="font-bold">Google Sheets Integration</h3>
+            <div className="min-w-0">
+              <h3 className="font-bold break-words">Google Sheets Integration</h3>
               <p className="text-sm text-muted-foreground">Export leads or auto-sync new leads to Google Sheets.</p>
             </div>
           </div>
-          <div className="flex gap-2">
-            <Button variant="ghost" size="sm" onClick={() => setShowSheetsGuide(!showSheetsGuide)} className="text-gray-600">
+          <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+            <Button variant="ghost" size="sm" onClick={() => setShowSheetsGuide(!showSheetsGuide)} className="text-gray-600 w-full sm:w-auto justify-start sm:justify-center">
               {showSheetsGuide ? "Hide Instructions" : "Show Instructions"}
               {showSheetsGuide ? <ChevronUp className="w-4 h-4 ml-1" /> : <ChevronDown className="w-4 h-4 ml-1" />}
             </Button>
-            <Button onClick={handleExportCSV} disabled={exporting} variant="outline">
+            <Button onClick={handleExportCSV} disabled={exporting} variant="outline" className="w-full sm:w-auto">
               {exporting ? <Loader2 className="w-4 h-4 animate-spin mr-1.5" /> : <Download className="w-4 h-4 mr-1.5" />}
               Export CSV
             </Button>
@@ -279,10 +279,10 @@ function IntegrationsContent() {
         </div>
         
         {showSheetsGuide && (
-          <div className="mb-6 space-y-4 text-sm text-gray-700 bg-gray-50 p-4 rounded-lg border border-gray-100">
+          <div className="mb-6 space-y-4 text-sm text-gray-700 bg-gray-50 p-3 sm:p-4 rounded-lg border border-gray-100 overflow-hidden">
             <p><strong>What this does:</strong> Allows you to either download a one-time file of all your leads (CSV Export) or set up a system where new leads are automatically added to a Google Sheet as they come in (Auto-Sync).</p>
             
-            <div className="grid md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
               <div>
                 <h4 className="font-semibold text-gray-900 mb-2">Option 1: Manual Export (Easy)</h4>
                 <ol className="list-decimal list-inside space-y-2 ml-1">
@@ -317,18 +317,18 @@ function IntegrationsContent() {
       </div>
 
       {/* Webhook Endpoints */}
-      <div className="bg-white rounded-xl p-6 border border-gray-200 mb-6">
-        <div className="flex items-center justify-between mb-4">
+      <div className="bg-white rounded-xl p-4 sm:p-6 border border-gray-200 mb-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
           <div className="flex items-center gap-2">
             <Webhook className="w-5 h-5 text-purple-600" />
             <h3 className="font-bold">Webhook Endpoints</h3>
           </div>
-          <div className="flex gap-2">
-            <Button variant="ghost" size="sm" onClick={() => setShowWebhookGuide(!showWebhookGuide)} className="text-gray-600">
+          <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+            <Button variant="ghost" size="sm" onClick={() => setShowWebhookGuide(!showWebhookGuide)} className="text-gray-600 w-full sm:w-auto justify-start sm:justify-center">
               {showWebhookGuide ? "Hide Instructions" : "Show Instructions"}
               {showWebhookGuide ? <ChevronUp className="w-4 h-4 ml-1" /> : <ChevronDown className="w-4 h-4 ml-1" />}
             </Button>
-            <Button onClick={() => setShowForm(!showForm)} size="sm">
+            <Button onClick={() => setShowForm(!showForm)} size="sm" className="w-full sm:w-auto">
               <Plus className="w-4 h-4 mr-1.5" />
               Add Endpoint
             </Button>
@@ -336,7 +336,7 @@ function IntegrationsContent() {
         </div>
 
         {showWebhookGuide && (
-          <div className="mb-6 space-y-4 text-sm text-gray-700 bg-purple-50/50 p-4 rounded-lg border border-purple-100">
+          <div className="mb-6 space-y-4 text-sm text-gray-700 bg-purple-50/50 p-3 sm:p-4 rounded-lg border border-purple-100 overflow-hidden">
             <p><strong>What this does:</strong> Webhooks are like instant notifications for other apps. When something happens in Rocketeer (like a new lead), we instantly send a message (a "webhook") to another app's URL to let them know.</p>
             
             <h4 className="font-semibold text-gray-900">How to set up a Webhook:</h4>
@@ -357,10 +357,12 @@ function IntegrationsContent() {
         )}
 
         {showForm && (
-          <WebhookForm
-            onClose={() => setShowForm(false)}
-            onSuccess={() => utils.integrations.webhooks.list.invalidate()}
-          />
+          <div className="overflow-x-hidden">
+            <WebhookForm
+              onClose={() => setShowForm(false)}
+              onSuccess={() => utils.integrations.webhooks.list.invalidate()}
+            />
+          </div>
         )}
 
         {!webhooks?.length ? (
@@ -370,15 +372,15 @@ function IntegrationsContent() {
             <p className="text-xs text-muted-foreground mt-1">Add an endpoint to start sending events to external services.</p>
           </div>
         ) : (
-          <div className="space-y-3">
+          <div className="space-y-3 overflow-x-hidden">
             {webhooks.map(wh => (
-              <div key={wh.id} className="p-4 rounded-lg border bg-gray-50/50">
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-3">
+              <div key={wh.id} className="p-3 sm:p-4 rounded-lg border bg-gray-50/50 overflow-hidden">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-2">
+                  <div className="flex items-center gap-3 min-w-0">
                     <div className={`w-2 h-2 rounded-full ${wh.isActive ? "bg-green-500" : "bg-gray-300"}`} />
-                    <span className="font-medium text-sm">{wh.name}</span>
+                    <span className="font-medium text-sm break-words">{wh.name}</span>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
                     <Switch
                       checked={wh.isActive}
                       onCheckedChange={(val) => handleToggleWebhook(wh.id, val)}
@@ -388,8 +390,8 @@ function IntegrationsContent() {
                     </Button>
                   </div>
                 </div>
-                <div className="flex items-center gap-2 mb-2">
-                  <code className="text-xs bg-white px-2 py-1 rounded border font-mono truncate flex-1">{wh.url}</code>
+                <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-2 overflow-hidden">
+                  <code className="text-xs bg-white px-2 py-1 rounded border font-mono truncate flex-1 overflow-x-auto">{wh.url}</code>
                   <button
                     onClick={() => { navigator.clipboard.writeText(wh.url); toast.success("URL copied"); }}
                     className="text-muted-foreground hover:text-foreground"
@@ -397,14 +399,14 @@ function IntegrationsContent() {
                     <Copy className="w-3.5 h-3.5" />
                   </button>
                 </div>
-                <div className="flex flex-wrap gap-1.5">
+                <div className="flex flex-wrap gap-1.5 overflow-hidden">
                   {wh.events.map(event => (
-                    <span key={event} className="text-xs bg-purple-50 text-purple-700 px-2 py-0.5 rounded-full">{event}</span>
+                    <span key={event} className="text-xs bg-purple-50 text-purple-700 px-2 py-0.5 rounded-full break-words">{event}</span>
                   ))}
                 </div>
-                <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 mt-2 text-xs text-muted-foreground overflow-hidden">
                   {wh.lastTriggeredAt && (
-                    <span>Last triggered: {new Date(wh.lastTriggeredAt).toLocaleDateString()}</span>
+                    <span className="break-words">Last triggered: {new Date(wh.lastTriggeredAt).toLocaleDateString()}</span>
                   )}
                   {wh.failCount > 0 && (
                     <span className="text-red-500 flex items-center gap-1">
@@ -419,7 +421,7 @@ function IntegrationsContent() {
       </div>
 
       {/* Webhook Payload Example */}
-      <div className="bg-white rounded-xl p-6 border border-gray-200">
+      <div className="bg-white rounded-xl p-4 sm:p-6 border border-gray-200 overflow-hidden">
         <h3 className="font-bold mb-3">Webhook Payload Format</h3>
         <p className="text-sm text-muted-foreground mb-3">All webhook events are sent as POST requests with this JSON structure:</p>
         <pre className="bg-gray-900 text-green-400 p-4 rounded-lg text-xs overflow-x-auto">
