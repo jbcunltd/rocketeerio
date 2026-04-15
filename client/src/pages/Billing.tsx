@@ -134,12 +134,19 @@ function BillingContent() {
 
       {/* Billing Period Toggle */}
       <div className="flex items-center justify-center gap-4">
-        <span className={`text-sm font-medium ${billingPeriod === "monthly" ? "text-foreground" : "text-muted-foreground"}`}>
+        <button
+          onClick={() => setBillingPeriod("monthly")}
+          className={`text-sm font-medium cursor-pointer transition-colors ${
+            billingPeriod === "monthly"
+              ? "text-foreground"
+              : "text-muted-foreground hover:text-foreground"
+          }`}
+        >
           Monthly
-        </span>
+        </button>
         <button
           onClick={() => setBillingPeriod(billingPeriod === "monthly" ? "annual" : "monthly")}
-          className="relative inline-flex h-8 w-14 items-center rounded-full bg-muted"
+          className="relative inline-flex h-8 w-14 items-center rounded-full bg-muted cursor-pointer"
         >
           <span
             className={`inline-block h-6 w-6 transform rounded-full bg-white shadow-lg transition-transform ${
@@ -147,9 +154,16 @@ function BillingContent() {
             }`}
           />
         </button>
-        <span className={`text-sm font-medium ${billingPeriod === "annual" ? "text-foreground" : "text-muted-foreground"}`}>
+        <button
+          onClick={() => setBillingPeriod("annual")}
+          className={`text-sm font-medium cursor-pointer transition-colors ${
+            billingPeriod === "annual"
+              ? "text-foreground"
+              : "text-muted-foreground hover:text-foreground"
+          }`}
+        >
           Annual
-        </span>
+        </button>
         <span className={`ml-2 inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${
           billingPeriod === "annual"
             ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 visible"
