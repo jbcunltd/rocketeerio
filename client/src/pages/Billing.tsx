@@ -249,14 +249,14 @@ function BillingContent() {
                 }`}
               >
                 {plan.slug === "pro" && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                    <span className="bg-purple-600 text-white text-xs font-bold px-3 py-1 rounded-full">
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-10">
+                    <span className="inline-block bg-purple-600 text-white text-xs font-bold px-3 py-1 rounded-full whitespace-nowrap">
                       MOST POPULAR
                     </span>
                   </div>
                 )}
 
-                <div className="flex items-center gap-3 mb-4">
+                <div className="flex items-center gap-3 mb-4 pt-2">
                   <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
                     plan.slug === "free" ? "bg-slate-100 dark:bg-slate-900/30" :
                     plan.slug === "growth" ? "bg-blue-100 dark:bg-blue-900/30" :
