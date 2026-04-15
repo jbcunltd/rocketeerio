@@ -11,7 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectSeparator, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { trpc } from "@/lib/trpc";
-import { User, Bell, CreditCard, Facebook, Loader2, Save, Trash2, CheckCircle, AlertCircle, ExternalLink, Bot, Instagram, Headphones, MessageSquare, Smartphone, Mail, Radio } from "lucide-react";
+import { User, Bell, CreditCard, Facebook, Loader2, Save, Trash2, CheckCircle, AlertCircle, ExternalLink, Bot, Instagram, Headphones, MessageSquare, Smartphone, Mail, Radio, BellRing } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
