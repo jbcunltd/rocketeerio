@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { trpc } from "@/lib/trpc";
-import { Loader2, Clock, Zap, MessageCircle, Save, Settings2, ArrowRight } from "lucide-react";
+import { Loader2, Clock, Zap, MessageCircle, Save, Settings2, ArrowRight, MessageSquare, Mail, Smartphone, AlertCircle } from "lucide-react";
 import { useLocation } from "wouter";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
@@ -39,28 +39,43 @@ function FollowUpsContent() {
 
   // Local state for settings form
   const [isEnabled, setIsEnabled] = useState(true);
-  const [step1Delay, setStep1Delay] = useState(1440);
+  const [step1Delay, setStep1Delay] = useState(30);
   const [step1Message, setStep1Message] = useState("");
   const [step1Enabled, setStep1Enabled] = useState(true);
-  const [step2Delay, setStep2Delay] = useState(2880);
+  const [step2Delay, setStep2Delay] = useState(120);
   const [step2Message, setStep2Message] = useState("");
   const [step2Enabled, setStep2Enabled] = useState(true);
-  const [step3Delay, setStep3Delay] = useState(10080);
+  const [step3Delay, setStep3Delay] = useState(720);
   const [step3Message, setStep3Message] = useState("");
   const [step3Enabled, setStep3Enabled] = useState(true);
+  const [step4Delay, setStep4Delay] = useState(2880);
+  const [step4Message, setStep4Message] = useState("");
+  const [step4Enabled, setStep4Enabled] = useState(true);
+  const [step5Delay, setStep5Delay] = useState(10080);
+  const [step5Message, setStep5Message] = useState("");
+  const [step5Enabled, setStep5Enabled] = useState(true);
+  const [useOneTimeNotification, setUseOneTimeNotification] = useState(false);
 
   useEffect(() => {
     if (settings) {
       setIsEnabled(settings.isEnabled);
-      setStep1Delay(settings.step1DelayMinutes);
+      setStep1Delay(settings.step1DelayMinutes || 30);
       setStep1Message(settings.step1Message || "");
       setStep1Enabled(settings.step1Enabled);
-      setStep2Delay(settings.step2DelayMinutes);
+      setStep2Delay(settings.step2DelayMinutes || 120);
       setStep2Message(settings.step2Message || "");
       setStep2Enabled(settings.step2Enabled);
-      setStep3Delay(settings.step3DelayMinutes);
+      setStep3Delay(settings.step3DelayMinutes || 720);
       setStep3Message(settings.step3Message || "");
       setStep3Enabled(settings.step3Enabled);
+      // Add steps 4 and 5 if they exist in settings, otherwise use defaults
+      setStep4Delay((settings as any).step4DelayMinutes || 2880);
+      setStep4Message((settings as any).step4Message || "");
+      setStep4Enabled((settings as any).step4Enabled ?? true);
+      setStep5Delay((settings as any).step5DelayMinutes || 10080);
+      setStep5Message((settings as any).step5Message || "");
+      setStep5Enabled((settings as any).step5Enabled ?? true);
+      setUseOneTimeNotification((settings as any).useOneTimeNotification ?? false);
     }
   }, [settings]);
 
@@ -78,6 +93,16 @@ function FollowUpsContent() {
         step3DelayMinutes: step3Delay,
         step3Message: step3Message || undefined,
         step3Enabled,
+        // Add extra fields to the mutation payload
+        ...({
+          step4DelayMinutes: step4Delay,
+          step4Message: step4Message || undefined,
+          step4Enabled,
+          step5DelayMinutes: step5Delay,
+          step5Message: step5Message || undefined,
+          step5Enabled,
+          useOneTimeNotification,
+        } as any)
       });
       utils.followUps.getSettings.invalidate();
       toast.success("Follow-up settings saved!");
@@ -90,10 +115,15 @@ function FollowUpsContent() {
   if (convsLoading || settingsLoading) return <div className="flex items-center justify-center py-20"><Loader2 className="w-8 h-8 animate-spin text-messenger" /></div>;
 
   const steps = [
-    { num: 1, delay: step1Delay, message: step1Message, enabled: step1Enabled, icon: Zap, color: "text-blue-600 bg-blue-50", setDelay: setStep1Delay, setMessage: setStep1Message, setEnabled: setStep1Enabled },
-    { num: 2, delay: step2Delay, message: step2Message, enabled: step2Enabled, icon: Clock, color: "text-purple-600 bg-purple-50", setDelay: setStep2Delay, setMessage: setStep2Message, setEnabled: setStep2Enabled },
-    { num: 3, delay: step3Delay, message: step3Message, enabled: step3Enabled, icon: MessageCircle, color: "text-orange-600 bg-orange-50", setDelay: setStep3Delay, setMessage: setStep3Message, setEnabled: setStep3Enabled },
+    { num: 1, delay: step1Delay, message: step1Message, enabled: step1Enabled, icon: MessageSquare, color: "text-messenger bg-messenger-light", setDelay: setStep1Delay, setMessage: setStep1Message, setEnabled: setStep1Enabled },
+    { num: 2, delay: step2Delay, message: step2Message, enabled: step2Enabled, icon: MessageSquare, color: "text-messenger bg-messenger-light", setDelay: setStep2Delay, setMessage: setStep2Message, setEnabled: setStep2Enabled },
+    { num: 3, delay: step3Delay, message: step3Message, enabled: step3Enabled, icon: MessageSquare, color: "text-messenger bg-messenger-light", setDelay: setStep3Delay, setMessage: setStep3Message, setEnabled: setStep3Enabled },
+    { num: 4, delay: step4Delay, message: step4Message, enabled: step4Enabled, icon: Mail, color: "text-orange-600 bg-orange-50", setDelay: setStep4Delay, setMessage: setStep4Message, setEnabled: setStep4Enabled },
+    { num: 5, delay: step5Delay, message: step5Message, enabled: step5Enabled, icon: Mail, color: "text-orange-600 bg-orange-50", setDelay: setStep5Delay, setMessage: setStep5Message, setEnabled: setStep5Enabled },
   ];
+
+  const within24hSteps = steps.filter(s => s.delay <= 1440);
+  const after24hSteps = steps.filter(s => s.delay > 1440);
 
   return (
     <div>
@@ -116,24 +146,75 @@ function FollowUpsContent() {
 
       {/* Sequence Timeline */}
       <div className="bg-white rounded-xl p-4 sm:p-6 card-shadow border border-border/50 mb-6 overflow-hidden">
-        <h3 className="font-bold mb-4">Follow-Up Timeline</h3>
-        <div className="flex items-center gap-2 flex-wrap overflow-x-auto">
-          <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-green-50 border border-green-200">
-            <div className="w-2 h-2 rounded-full bg-green-500" />
-            <span className="text-sm font-medium text-green-700">First Contact</span>
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="font-bold">Follow-Up Timeline</h3>
+          <div className="flex items-center gap-2 text-xs bg-blue-50 text-blue-700 px-3 py-1.5 rounded-full border border-blue-100">
+            <AlertCircle className="w-3.5 h-3.5" />
+            <span>Facebook 24-Hour Rule Compliant</span>
           </div>
-          {steps.map((step, i) => (
-            <div key={step.num} className="flex items-center gap-2">
-              <ArrowRight className="w-4 h-4 text-muted-foreground" />
-              <div className={`flex items-center gap-2 px-3 py-2 rounded-lg border ${step.enabled ? "bg-white border-border" : "bg-gray-50 border-gray-200 opacity-50"}`}>
-                <step.icon className={`w-4 h-4 ${step.enabled ? "text-messenger" : "text-gray-400"}`} />
-                <div>
-                  <span className="text-sm font-medium">{formatDelay(step.delay)}</span>
-                  <span className="text-xs text-muted-foreground ml-1">Step {step.num}</span>
+        </div>
+        
+        <div className="flex flex-col gap-6">
+          {/* Within 24 Hours Zone */}
+          <div className="relative">
+            <div className="absolute left-0 top-0 bottom-0 w-1 bg-green-400 rounded-full"></div>
+            <div className="pl-4">
+              <h4 className="text-sm font-semibold text-green-700 mb-3 flex items-center gap-2">
+                Within 24 Hours
+                <span className="text-xs font-normal text-muted-foreground bg-gray-100 px-2 py-0.5 rounded">Sent via Messenger</span>
+              </h4>
+              <div className="flex items-center gap-2 flex-wrap overflow-x-auto pb-2">
+                <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-green-50 border border-green-200 shrink-0">
+                  <div className="w-2 h-2 rounded-full bg-green-500" />
+                  <span className="text-sm font-medium text-green-700">Last User Message</span>
                 </div>
+                {within24hSteps.map((step) => (
+                  <div key={step.num} className="flex items-center gap-2 shrink-0">
+                    <ArrowRight className="w-4 h-4 text-muted-foreground" />
+                    <div className={`flex items-center gap-2 px-3 py-2 rounded-lg border ${step.enabled ? "bg-white border-border" : "bg-gray-50 border-gray-200 opacity-50"}`}>
+                      <MessageSquare className={`w-4 h-4 ${step.enabled ? "text-messenger" : "text-gray-400"}`} />
+                      <div>
+                        <span className="text-sm font-medium">{formatDelay(step.delay)}</span>
+                        <span className="text-xs text-muted-foreground ml-1">Step {step.num}</span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
-          ))}
+          </div>
+
+          {/* After 24 Hours Zone */}
+          <div className="relative">
+            <div className="absolute left-0 top-0 bottom-0 w-1 bg-orange-400 rounded-full"></div>
+            <div className="pl-4">
+              <h4 className="text-sm font-semibold text-orange-700 mb-1 flex items-center gap-2">
+                After 24 Hours
+                <span className="text-xs font-normal text-muted-foreground bg-gray-100 px-2 py-0.5 rounded">Sent via Email/SMS</span>
+              </h4>
+              <p className="text-xs text-muted-foreground mb-3 max-w-2xl">
+                Facebook only allows Messenger messages within 24 hours of the last user message. Follow-ups after 24 hours are automatically sent via email or SMS instead.
+              </p>
+              <div className="flex items-center gap-2 flex-wrap overflow-x-auto pb-2">
+                <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-orange-50 border border-orange-200 shrink-0">
+                  <Clock className="w-4 h-4 text-orange-500" />
+                  <span className="text-sm font-medium text-orange-700">24h Window Closes</span>
+                </div>
+                {after24hSteps.map((step) => (
+                  <div key={step.num} className="flex items-center gap-2 shrink-0">
+                    <ArrowRight className="w-4 h-4 text-muted-foreground" />
+                    <div className={`flex items-center gap-2 px-3 py-2 rounded-lg border ${step.enabled ? "bg-white border-border" : "bg-gray-50 border-gray-200 opacity-50"}`}>
+                      <Mail className={`w-4 h-4 ${step.enabled ? "text-orange-500" : "text-gray-400"}`} />
+                      <div>
+                        <span className="text-sm font-medium">{formatDelay(step.delay)}</span>
+                        <span className="text-xs text-muted-foreground ml-1">Step {step.num}</span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -149,6 +230,23 @@ function FollowUpsContent() {
           </div>
 
           <div className="space-y-6">
+            {/* One-Time Notification Option */}
+            <div className="p-4 rounded-lg border bg-blue-50/50 border-blue-100">
+              <div className="flex items-start justify-between">
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Zap className="w-4 h-4 text-blue-600" />
+                    <h4 className="font-semibold text-blue-900">One-Time Notification (OTN)</h4>
+                  </div>
+                  <p className="text-sm text-blue-800/80">
+                    Allow the AI to ask the lead "Can we follow up with you?" before the 24-hour window closes. 
+                    If they say yes, you get permission to send one more Messenger message after 24 hours.
+                  </p>
+                </div>
+                <Switch checked={useOneTimeNotification} onCheckedChange={setUseOneTimeNotification} />
+              </div>
+            </div>
+
             {steps.map(step => (
               <div key={step.num} className={`p-4 rounded-lg border ${step.enabled ? "bg-white" : "bg-gray-50 opacity-70"}`}>
                 <div className="flex items-center justify-between mb-3">
@@ -157,6 +255,9 @@ function FollowUpsContent() {
                       <step.icon className="w-4 h-4" />
                     </div>
                     <span className="font-semibold">Step {step.num}</span>
+                    <span className={`text-xs px-2 py-0.5 rounded-full ${step.delay <= 1440 ? "bg-green-100 text-green-700" : "bg-orange-100 text-orange-700"}`}>
+                      {step.delay <= 1440 ? "Messenger" : "Email/SMS"}
+                    </span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Switch checked={step.enabled} onCheckedChange={step.setEnabled} />
