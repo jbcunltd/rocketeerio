@@ -9,6 +9,7 @@ import {
   json,
   bigint,
   integer,
+  numeric,
 } from "drizzle-orm/pg-core";
 
 // ─── Enums ──────────────────────────────────────────────────────────
@@ -212,3 +213,67 @@ export const pageTesters = pgTable("page_testers", {
 
 export type PageTester = typeof pageTesters.$inferSelect;
 export type InsertPageTester = typeof pageTesters.$inferInsert;
+
+// ─── Subscription Enums ─────────────────────────────────────────────
+export const subscriptionStatusEnum = pgEnum("subscription_status", [
+  "active", "cancelled", "past_due", "paused", "trialing", "expired",
+]);
+export const paymentStatusEnum = pgEnum("payment_status", [
+  "paid", "pending", "failed", "refunded",
+]);
+export const billingIntervalEnum = pgEnum("billing_interval", ["monthly", "yearly"]);
+
+// ─── Subscription Plans ─────────────────────────────────────────────
+export const subscriptionPlans = pgTable("subscription_plans", {
+  id: serial("id").primaryKey(),
+  name: varchar("name", { length: 128 }).notNull(),
+  slug: varchar("slug", { length: 64 }).notNull().unique(),
+  price: numeric("price", { precision: 10, scale: 2 }).notNull(),
+  currency: varchar("currency", { length: 3 }).default("PHP").notNull(),
+  interval: billingIntervalEnum("interval").default("monthly").notNull(),
+  features: json("features").$type<string[]>().default([]).notNull(),
+  paymongoLinkId: varchar("paymongoLinkId", { length: 255 }),
+  isActive: boolean("isActive").default(true).notNull(),
+  sortOrder: integer("sortOrder").default(0).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().notNull(),
+});
+
+export type SubscriptionPlan = typeof subscriptionPlans.$inferSelect;
+export type InsertSubscriptionPlan = typeof subscriptionPlans.$inferInsert;
+
+// ─── User Subscriptions ─────────────────────────────────────────────
+export const userSubscriptions = pgTable("user_subscriptions", {
+  id: serial("id").primaryKey(),
+  userId: integer("userId").notNull(),
+  planId: integer("planId").notNull(),
+  status: subscriptionStatusEnum("status").default("active").notNull(),
+  paymongoSubscriptionId: varchar("paymongoSubscriptionId", { length: 255 }),
+  paymongoCheckoutId: varchar("paymongoCheckoutId", { length: 255 }),
+  currentPeriodStart: timestamp("currentPeriodStart"),
+  currentPeriodEnd: timestamp("currentPeriodEnd"),
+  cancelledAt: timestamp("cancelledAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().notNull(),
+});
+
+export type UserSubscription = typeof userSubscriptions.$inferSelect;
+export type InsertUserSubscription = typeof userSubscriptions.$inferInsert;
+
+// ─── Payment History ────────────────────────────────────────────────
+export const paymentHistory = pgTable("payment_history", {
+  id: serial("id").primaryKey(),
+  userId: integer("userId").notNull(),
+  subscriptionId: integer("subscriptionId"),
+  amount: numeric("amount", { precision: 10, scale: 2 }).notNull(),
+  currency: varchar("currency", { length: 3 }).default("PHP").notNull(),
+  status: paymentStatusEnum("status").default("pending").notNull(),
+  paymongoPaymentId: varchar("paymongoPaymentId", { length: 255 }),
+  paymongoCheckoutId: varchar("paymongoCheckoutId", { length: 255 }),
+  description: text("description"),
+  paidAt: timestamp("paidAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type PaymentHistoryEntry = typeof paymentHistory.$inferSelect;
+export type InsertPaymentHistory = typeof paymentHistory.$inferInsert;

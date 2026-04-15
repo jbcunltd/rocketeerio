@@ -61,7 +61,8 @@ import {
   boolean,
   json,
   bigint,
-  integer
+  integer,
+  numeric
 } from "drizzle-orm/pg-core";
 var roleEnum = pgEnum("role", ["user", "admin"]);
 var planEnum = pgEnum("plan", ["starter", "growth", "scale"]);
@@ -212,6 +213,61 @@ var pageTesters = pgTable("page_testers", {
   pageId: integer("pageId").notNull(),
   psid: varchar("psid", { length: 128 }).notNull(),
   label: varchar("label", { length: 255 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull()
+});
+var subscriptionStatusEnum = pgEnum("subscription_status", [
+  "active",
+  "cancelled",
+  "past_due",
+  "paused",
+  "trialing",
+  "expired"
+]);
+var paymentStatusEnum = pgEnum("payment_status", [
+  "paid",
+  "pending",
+  "failed",
+  "refunded"
+]);
+var billingIntervalEnum = pgEnum("billing_interval", ["monthly", "yearly"]);
+var subscriptionPlans = pgTable("subscription_plans", {
+  id: serial("id").primaryKey(),
+  name: varchar("name", { length: 128 }).notNull(),
+  slug: varchar("slug", { length: 64 }).notNull().unique(),
+  price: numeric("price", { precision: 10, scale: 2 }).notNull(),
+  currency: varchar("currency", { length: 3 }).default("PHP").notNull(),
+  interval: billingIntervalEnum("interval").default("monthly").notNull(),
+  features: json("features").$type().default([]).notNull(),
+  paymongoLinkId: varchar("paymongoLinkId", { length: 255 }),
+  isActive: boolean("isActive").default(true).notNull(),
+  sortOrder: integer("sortOrder").default(0).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().notNull()
+});
+var userSubscriptions = pgTable("user_subscriptions", {
+  id: serial("id").primaryKey(),
+  userId: integer("userId").notNull(),
+  planId: integer("planId").notNull(),
+  status: subscriptionStatusEnum("status").default("active").notNull(),
+  paymongoSubscriptionId: varchar("paymongoSubscriptionId", { length: 255 }),
+  paymongoCheckoutId: varchar("paymongoCheckoutId", { length: 255 }),
+  currentPeriodStart: timestamp("currentPeriodStart"),
+  currentPeriodEnd: timestamp("currentPeriodEnd"),
+  cancelledAt: timestamp("cancelledAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().notNull()
+});
+var paymentHistory = pgTable("payment_history", {
+  id: serial("id").primaryKey(),
+  userId: integer("userId").notNull(),
+  subscriptionId: integer("subscriptionId"),
+  amount: numeric("amount", { precision: 10, scale: 2 }).notNull(),
+  currency: varchar("currency", { length: 3 }).default("PHP").notNull(),
+  status: paymentStatusEnum("status").default("pending").notNull(),
+  paymongoPaymentId: varchar("paymongoPaymentId", { length: 255 }),
+  paymongoCheckoutId: varchar("paymongoCheckoutId", { length: 255 }),
+  description: text("description"),
+  paidAt: timestamp("paidAt"),
   createdAt: timestamp("createdAt").defaultNow().notNull()
 });
 
@@ -538,6 +594,150 @@ async function isTesterPsid(pageId, psid) {
   const result = await db.select({ id: pageTesters.id }).from(pageTesters).where(and(eq(pageTesters.pageId, pageId), eq(pageTesters.psid, psid))).limit(1);
   return result.length > 0;
 }
+async function getActiveSubscriptionPlans() {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(subscriptionPlans).where(eq(subscriptionPlans.isActive, true)).orderBy(subscriptionPlans.sortOrder);
+}
+async function getSubscriptionPlanBySlug(slug) {
+  const db = await getDb();
+  if (!db) return null;
+  const result = await db.select().from(subscriptionPlans).where(eq(subscriptionPlans.slug, slug)).limit(1);
+  return result[0] ?? null;
+}
+async function getSubscriptionPlanById(id) {
+  const db = await getDb();
+  if (!db) return null;
+  const result = await db.select().from(subscriptionPlans).where(eq(subscriptionPlans.id, id)).limit(1);
+  return result[0] ?? null;
+}
+async function upsertSubscriptionPlan(plan) {
+  const db = await getDb();
+  if (!db) return null;
+  const existing = await db.select().from(subscriptionPlans).where(eq(subscriptionPlans.slug, plan.slug)).limit(1);
+  if (existing.length > 0) {
+    await db.update(subscriptionPlans).set({ ...plan, updatedAt: /* @__PURE__ */ new Date() }).where(eq(subscriptionPlans.slug, plan.slug));
+    return existing[0].id;
+  }
+  const result = await db.insert(subscriptionPlans).values(plan).returning({ id: subscriptionPlans.id });
+  return result[0]?.id ?? null;
+}
+async function getUserSubscription(userId) {
+  const db = await getDb();
+  if (!db) return null;
+  const result = await db.select().from(userSubscriptions).where(and(
+    eq(userSubscriptions.userId, userId),
+    eq(userSubscriptions.status, "active")
+  )).orderBy(desc(userSubscriptions.createdAt)).limit(1);
+  if (!result[0]) return null;
+  const plan = await getSubscriptionPlanById(result[0].planId);
+  return { ...result[0], plan };
+}
+async function getUserSubscriptionByCheckoutId(checkoutId) {
+  const db = await getDb();
+  if (!db) return null;
+  const result = await db.select().from(userSubscriptions).where(eq(userSubscriptions.paymongoCheckoutId, checkoutId)).limit(1);
+  return result[0] ?? null;
+}
+async function createUserSubscription(sub) {
+  const db = await getDb();
+  if (!db) return null;
+  const result = await db.insert(userSubscriptions).values(sub).returning({ id: userSubscriptions.id });
+  return result[0]?.id ?? null;
+}
+async function updateUserSubscription(id, data) {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(userSubscriptions).set({ ...data, updatedAt: /* @__PURE__ */ new Date() }).where(eq(userSubscriptions.id, id));
+}
+async function cancelUserSubscription(userId) {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(userSubscriptions).set({ status: "cancelled", cancelledAt: /* @__PURE__ */ new Date(), updatedAt: /* @__PURE__ */ new Date() }).where(and(
+    eq(userSubscriptions.userId, userId),
+    eq(userSubscriptions.status, "active")
+  ));
+}
+async function createPaymentRecord(payment) {
+  const db = await getDb();
+  if (!db) return null;
+  const result = await db.insert(paymentHistory).values(payment).returning({ id: paymentHistory.id });
+  return result[0]?.id ?? null;
+}
+async function getPaymentsByUser(userId, limit = 20) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(paymentHistory).where(eq(paymentHistory.userId, userId)).orderBy(desc(paymentHistory.createdAt)).limit(limit);
+}
+async function updatePaymentByCheckoutId(checkoutId, data) {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(paymentHistory).set(data).where(eq(paymentHistory.paymongoCheckoutId, checkoutId));
+}
+async function seedSubscriptionPlans() {
+  const plans = [
+    {
+      name: "Starter",
+      slug: "starter",
+      price: "2490.00",
+      currency: "PHP",
+      interval: "monthly",
+      features: [
+        "1 Facebook Page",
+        "Up to 500 conversations/mo",
+        "AI auto-replies",
+        "BANT lead scoring",
+        "Email notifications",
+        "Basic knowledge base"
+      ],
+      sortOrder: 1,
+      isActive: true
+    },
+    {
+      name: "Growth",
+      slug: "growth",
+      price: "7490.00",
+      currency: "PHP",
+      interval: "monthly",
+      features: [
+        "Up to 5 Facebook Pages",
+        "Unlimited conversations",
+        "AI auto-replies + follow-ups",
+        "BANT lead scoring",
+        "SMS + Email notifications",
+        "Advanced knowledge base",
+        "Priority support",
+        "Conversion analytics"
+      ],
+      sortOrder: 2,
+      isActive: true
+    },
+    {
+      name: "Scale",
+      slug: "scale",
+      price: "14990.00",
+      currency: "PHP",
+      interval: "monthly",
+      features: [
+        "Unlimited Facebook Pages",
+        "Unlimited conversations",
+        "AI auto-replies + follow-ups",
+        "Advanced BANT scoring",
+        "SMS + Email + Webhook alerts",
+        "Custom AI persona",
+        "Dedicated account manager",
+        "API access",
+        "White-label option"
+      ],
+      sortOrder: 3,
+      isActive: true
+    }
+  ];
+  for (const plan of plans) {
+    await upsertSubscriptionPlan(plan);
+  }
+  console.log("[Database] Subscription plans seeded");
+}
 
 // server/_core/env.ts
 var ENV = {
@@ -550,7 +750,10 @@ var ENV = {
   facebookAppId: process.env.FACEBOOK_APP_ID ?? "",
   facebookAppSecret: process.env.FACEBOOK_APP_SECRET ?? "",
   facebookVerifyToken: process.env.FACEBOOK_VERIFY_TOKEN ?? "rocketeer_verify_token_2024",
-  appUrl: process.env.APP_URL ?? "https://rocketeerio.vercel.app"
+  appUrl: process.env.APP_URL ?? "https://rocketeerio.vercel.app",
+  // PayMongo
+  paymongoSecretKey: process.env.PAYMONGO_SECRET_KEY ?? "sk_test_placeholder",
+  paymongoPublicKey: process.env.PAYMONGO_PUBLIC_KEY ?? "pk_test_placeholder"
 };
 
 // server/_core/sdk.ts
@@ -1969,6 +2172,213 @@ function registerKbImportRoutes(app2) {
   });
 }
 
+// server/paymongo.ts
+var PAYMONGO_API = "https://api.paymongo.com/v1";
+function getAuthHeader() {
+  return "Basic " + Buffer.from(ENV.paymongoSecretKey + ":").toString("base64");
+}
+async function paymongoRequest(endpoint, options = {}) {
+  const url = `${PAYMONGO_API}${endpoint}`;
+  const res = await fetch(url, {
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: getAuthHeader(),
+      ...options.headers
+    }
+  });
+  const body = await res.json();
+  if (!res.ok) {
+    console.error("[PayMongo] API error:", res.status, JSON.stringify(body));
+    throw new Error(
+      body?.errors?.[0]?.detail ?? `PayMongo API error: ${res.status}`
+    );
+  }
+  return body;
+}
+async function createCheckoutSession(params) {
+  const {
+    amount,
+    currency = "PHP",
+    description,
+    planSlug,
+    userId,
+    successUrl,
+    cancelUrl
+  } = params;
+  const response = await paymongoRequest("/checkout_sessions", {
+    method: "POST",
+    body: JSON.stringify({
+      data: {
+        attributes: {
+          send_email_receipt: true,
+          show_description: true,
+          show_line_items: true,
+          payment_method_types: [
+            "card",
+            "gcash",
+            "maya",
+            "grab_pay"
+          ],
+          line_items: [
+            {
+              name: description,
+              quantity: 1,
+              amount,
+              currency
+            }
+          ],
+          description: `Rocketeer ${description} subscription`,
+          success_url: successUrl,
+          cancel_url: cancelUrl,
+          metadata: {
+            plan_slug: planSlug,
+            user_id: String(userId)
+          }
+        }
+      }
+    })
+  });
+  return {
+    checkoutId: response.data.id,
+    checkoutUrl: response.data.attributes.checkout_url
+  };
+}
+var PAYMONGO_EVENTS = {
+  CHECKOUT_SESSION_PAYMENT_PAID: "checkout_session.payment.paid",
+  PAYMENT_PAID: "payment.paid",
+  PAYMENT_FAILED: "payment.failed",
+  SOURCE_CHARGEABLE: "source.chargeable"
+};
+
+// server/paymongo-webhook.ts
+function registerPaymongoWebhookRoutes(app2) {
+  app2.post("/api/webhook/paymongo", async (req, res) => {
+    try {
+      const event = req.body;
+      console.log("[PayMongo Webhook] Received event:", JSON.stringify(event?.data?.attributes?.type ?? "unknown"));
+      if (!event?.data?.attributes) {
+        console.warn("[PayMongo Webhook] Invalid payload structure");
+        res.status(400).json({ error: "Invalid payload" });
+        return;
+      }
+      const eventType = event.data.attributes.type;
+      const eventData = event.data.attributes.data;
+      switch (eventType) {
+        case PAYMONGO_EVENTS.CHECKOUT_SESSION_PAYMENT_PAID: {
+          await handleCheckoutPaymentPaid(eventData);
+          break;
+        }
+        case PAYMONGO_EVENTS.PAYMENT_PAID: {
+          await handlePaymentPaid(eventData);
+          break;
+        }
+        case PAYMONGO_EVENTS.PAYMENT_FAILED: {
+          await handlePaymentFailed(eventData);
+          break;
+        }
+        default:
+          console.log("[PayMongo Webhook] Unhandled event type:", eventType);
+      }
+      res.status(200).json({ received: true });
+    } catch (error) {
+      console.error("[PayMongo Webhook] Processing error:", error);
+      res.status(200).json({ received: true, error: "Processing error" });
+    }
+  });
+  app2.get("/api/webhook/paymongo", (_req, res) => {
+    res.json({ status: "ok", message: "PayMongo webhook endpoint is active" });
+  });
+}
+async function handleCheckoutPaymentPaid(eventData) {
+  try {
+    const checkoutId = eventData?.id;
+    const attributes = eventData?.attributes;
+    const paymentId = attributes?.payments?.[0]?.id;
+    const metadata = attributes?.metadata;
+    console.log("[PayMongo Webhook] Checkout payment paid:", {
+      checkoutId,
+      paymentId,
+      userId: metadata?.user_id,
+      planSlug: metadata?.plan_slug
+    });
+    if (!checkoutId) {
+      console.warn("[PayMongo Webhook] No checkout ID in event data");
+      return;
+    }
+    const subscription = await getUserSubscriptionByCheckoutId(checkoutId);
+    if (subscription) {
+      await updateUserSubscription(subscription.id, {
+        status: "active",
+        paymongoSubscriptionId: paymentId ?? void 0
+      });
+      console.log("[PayMongo Webhook] Subscription activated for user:", subscription.userId);
+    }
+    await updatePaymentByCheckoutId(checkoutId, {
+      status: "paid",
+      paymongoPaymentId: paymentId ?? void 0,
+      paidAt: /* @__PURE__ */ new Date()
+    });
+    if (metadata?.user_id && metadata?.plan_slug) {
+      const planSlug = metadata.plan_slug;
+      await updateUserProfile(parseInt(metadata.user_id, 10), {
+        plan: planSlug
+      });
+      console.log("[PayMongo Webhook] User plan updated to:", planSlug);
+    }
+  } catch (error) {
+    console.error("[PayMongo Webhook] Error handling checkout payment:", error);
+  }
+}
+async function handlePaymentPaid(eventData) {
+  try {
+    const paymentId = eventData?.id;
+    const attributes = eventData?.attributes;
+    const amount = attributes?.amount;
+    const metadata = attributes?.metadata;
+    console.log("[PayMongo Webhook] Payment paid:", {
+      paymentId,
+      amount,
+      userId: metadata?.user_id
+    });
+    if (metadata?.user_id) {
+      const userId = parseInt(metadata.user_id, 10);
+      await createPaymentRecord({
+        userId,
+        amount: String((amount ?? 0) / 100),
+        currency: attributes?.currency ?? "PHP",
+        status: "paid",
+        paymongoPaymentId: paymentId,
+        description: `Payment received via ${attributes?.source?.type ?? "unknown"}`,
+        paidAt: /* @__PURE__ */ new Date()
+      });
+    }
+  } catch (error) {
+    console.error("[PayMongo Webhook] Error handling payment paid:", error);
+  }
+}
+async function handlePaymentFailed(eventData) {
+  try {
+    const paymentId = eventData?.id;
+    const metadata = eventData?.attributes?.metadata;
+    console.log("[PayMongo Webhook] Payment failed:", {
+      paymentId,
+      userId: metadata?.user_id
+    });
+    if (metadata?.user_id) {
+      const userId = parseInt(metadata.user_id, 10);
+      const subscription = await getUserSubscription(userId);
+      if (subscription) {
+        await updateUserSubscription(subscription.id, {
+          status: "past_due"
+        });
+      }
+    }
+  } catch (error) {
+    console.error("[PayMongo Webhook] Error handling payment failed:", error);
+  }
+}
+
 // server/_core/systemRouter.ts
 import { z } from "zod";
 
@@ -2547,6 +2957,69 @@ Timeline: ${scoreResult.timelineNotes}`
       await updateUserProfile(userId, { onboardingCompleted: true });
       return { success: true };
     })
+  }),
+  // ─── Billing / Subscriptions ────────────────────────────────────────
+  billing: router({
+    plans: publicProcedure.query(async () => {
+      const plans = await getActiveSubscriptionPlans();
+      if (plans.length === 0) {
+        await seedSubscriptionPlans();
+        return getActiveSubscriptionPlans();
+      }
+      return plans;
+    }),
+    currentSubscription: protectedProcedure.query(async ({ ctx }) => {
+      return getUserSubscription(ctx.user.id);
+    }),
+    paymentHistory: protectedProcedure.query(async ({ ctx }) => {
+      return getPaymentsByUser(ctx.user.id);
+    }),
+    createCheckout: protectedProcedure.input(z2.object({ planSlug: z2.string() })).mutation(async ({ ctx, input }) => {
+      const plan = await getSubscriptionPlanBySlug(input.planSlug);
+      if (!plan) throw new Error("Plan not found");
+      const existing = await getUserSubscription(ctx.user.id);
+      if (existing && existing.status === "active") {
+        throw new Error("You already have an active subscription. Cancel it first to switch plans.");
+      }
+      const amountInCentavos = Math.round(parseFloat(plan.price) * 100);
+      const baseUrl = ENV.appUrl;
+      const { checkoutId, checkoutUrl } = await createCheckoutSession({
+        amount: amountInCentavos,
+        currency: plan.currency,
+        description: `${plan.name} Plan`,
+        planSlug: plan.slug,
+        userId: ctx.user.id,
+        successUrl: `${baseUrl}/billing?status=success&checkout_id={id}`,
+        cancelUrl: `${baseUrl}/billing?status=cancelled`
+      });
+      const now = /* @__PURE__ */ new Date();
+      const periodEnd = new Date(now);
+      periodEnd.setMonth(periodEnd.getMonth() + 1);
+      await createUserSubscription({
+        userId: ctx.user.id,
+        planId: plan.id,
+        status: "active",
+        paymongoCheckoutId: checkoutId,
+        currentPeriodStart: now,
+        currentPeriodEnd: periodEnd
+      });
+      await createPaymentRecord({
+        userId: ctx.user.id,
+        amount: plan.price,
+        currency: plan.currency,
+        status: "pending",
+        paymongoCheckoutId: checkoutId,
+        description: `${plan.name} Plan - Monthly subscription`
+      });
+      const planField = plan.slug;
+      await updateUserProfile(ctx.user.id, { plan: planField });
+      return { checkoutUrl, checkoutId };
+    }),
+    cancelSubscription: protectedProcedure.mutation(async ({ ctx }) => {
+      await cancelUserSubscription(ctx.user.id);
+      await updateUserProfile(ctx.user.id, { plan: "starter" });
+      return { success: true };
+    })
   })
 });
 
@@ -2607,6 +3080,7 @@ app.use(express.urlencoded({ limit: "50mb", extended: true }));
 registerAuthRoutes(app);
 registerFacebookRoutes(app);
 registerKbImportRoutes(app);
+registerPaymongoWebhookRoutes(app);
 app.post("/api/cron/follow-ups", async (_req, res) => {
   try {
     await processFollowUps();

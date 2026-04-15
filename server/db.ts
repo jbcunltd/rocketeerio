@@ -12,6 +12,9 @@ import {
   notificationPreferences, InsertNotificationPreference,
   pageAiSettings, InsertPageAiSetting,
   pageTesters, InsertPageTester,
+  subscriptionPlans, InsertSubscriptionPlan,
+  userSubscriptions, InsertUserSubscription,
+  paymentHistory, InsertPaymentHistory,
 } from "../drizzle/schema";
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -441,4 +444,198 @@ export async function isTesterPsid(pageId: number, psid: string): Promise<boolea
     .where(and(eq(pageTesters.pageId, pageId), eq(pageTesters.psid, psid)))
     .limit(1);
   return result.length > 0;
+}
+
+
+// ─── Subscription Plans ─────────────────────────────────────────────
+
+export async function getActiveSubscriptionPlans() {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(subscriptionPlans)
+    .where(eq(subscriptionPlans.isActive, true))
+    .orderBy(subscriptionPlans.sortOrder);
+}
+
+export async function getSubscriptionPlanBySlug(slug: string) {
+  const db = await getDb();
+  if (!db) return null;
+  const result = await db.select().from(subscriptionPlans)
+    .where(eq(subscriptionPlans.slug, slug))
+    .limit(1);
+  return result[0] ?? null;
+}
+
+export async function getSubscriptionPlanById(id: number) {
+  const db = await getDb();
+  if (!db) return null;
+  const result = await db.select().from(subscriptionPlans)
+    .where(eq(subscriptionPlans.id, id))
+    .limit(1);
+  return result[0] ?? null;
+}
+
+export async function upsertSubscriptionPlan(plan: InsertSubscriptionPlan) {
+  const db = await getDb();
+  if (!db) return null;
+  const existing = await db.select().from(subscriptionPlans)
+    .where(eq(subscriptionPlans.slug, plan.slug!))
+    .limit(1);
+  if (existing.length > 0) {
+    await db.update(subscriptionPlans)
+      .set({ ...plan, updatedAt: new Date() })
+      .where(eq(subscriptionPlans.slug, plan.slug!));
+    return existing[0].id;
+  }
+  const result = await db.insert(subscriptionPlans).values(plan).returning({ id: subscriptionPlans.id });
+  return result[0]?.id ?? null;
+}
+
+// ─── User Subscriptions ─────────────────────────────────────────────
+
+export async function getUserSubscription(userId: number) {
+  const db = await getDb();
+  if (!db) return null;
+  const result = await db.select().from(userSubscriptions)
+    .where(and(
+      eq(userSubscriptions.userId, userId),
+      eq(userSubscriptions.status, "active")
+    ))
+    .orderBy(desc(userSubscriptions.createdAt))
+    .limit(1);
+  if (!result[0]) return null;
+
+  // Join with plan data
+  const plan = await getSubscriptionPlanById(result[0].planId);
+  return { ...result[0], plan };
+}
+
+export async function getUserSubscriptionByCheckoutId(checkoutId: string) {
+  const db = await getDb();
+  if (!db) return null;
+  const result = await db.select().from(userSubscriptions)
+    .where(eq(userSubscriptions.paymongoCheckoutId, checkoutId))
+    .limit(1);
+  return result[0] ?? null;
+}
+
+export async function createUserSubscription(sub: InsertUserSubscription) {
+  const db = await getDb();
+  if (!db) return null;
+  const result = await db.insert(userSubscriptions).values(sub).returning({ id: userSubscriptions.id });
+  return result[0]?.id ?? null;
+}
+
+export async function updateUserSubscription(id: number, data: Partial<InsertUserSubscription>) {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(userSubscriptions)
+    .set({ ...data, updatedAt: new Date() })
+    .where(eq(userSubscriptions.id, id));
+}
+
+export async function cancelUserSubscription(userId: number) {
+  const db = await getDb();
+  if (!db) return;
+  // Cancel all active subscriptions for the user
+  await db.update(userSubscriptions)
+    .set({ status: "cancelled", cancelledAt: new Date(), updatedAt: new Date() })
+    .where(and(
+      eq(userSubscriptions.userId, userId),
+      eq(userSubscriptions.status, "active")
+    ));
+}
+
+// ─── Payment History ────────────────────────────────────────────────
+
+export async function createPaymentRecord(payment: InsertPaymentHistory) {
+  const db = await getDb();
+  if (!db) return null;
+  const result = await db.insert(paymentHistory).values(payment).returning({ id: paymentHistory.id });
+  return result[0]?.id ?? null;
+}
+
+export async function getPaymentsByUser(userId: number, limit = 20) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(paymentHistory)
+    .where(eq(paymentHistory.userId, userId))
+    .orderBy(desc(paymentHistory.createdAt))
+    .limit(limit);
+}
+
+export async function updatePaymentByCheckoutId(checkoutId: string, data: Partial<InsertPaymentHistory>) {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(paymentHistory)
+    .set(data)
+    .where(eq(paymentHistory.paymongoCheckoutId, checkoutId));
+}
+
+// ─── Seed Default Plans ─────────────────────────────────────────────
+
+export async function seedSubscriptionPlans() {
+  const plans: InsertSubscriptionPlan[] = [
+    {
+      name: "Starter",
+      slug: "starter",
+      price: "2490.00",
+      currency: "PHP",
+      interval: "monthly",
+      features: [
+        "1 Facebook Page",
+        "Up to 500 conversations/mo",
+        "AI auto-replies",
+        "BANT lead scoring",
+        "Email notifications",
+        "Basic knowledge base",
+      ],
+      sortOrder: 1,
+      isActive: true,
+    },
+    {
+      name: "Growth",
+      slug: "growth",
+      price: "7490.00",
+      currency: "PHP",
+      interval: "monthly",
+      features: [
+        "Up to 5 Facebook Pages",
+        "Unlimited conversations",
+        "AI auto-replies + follow-ups",
+        "BANT lead scoring",
+        "SMS + Email notifications",
+        "Advanced knowledge base",
+        "Priority support",
+        "Conversion analytics",
+      ],
+      sortOrder: 2,
+      isActive: true,
+    },
+    {
+      name: "Scale",
+      slug: "scale",
+      price: "14990.00",
+      currency: "PHP",
+      interval: "monthly",
+      features: [
+        "Unlimited Facebook Pages",
+        "Unlimited conversations",
+        "AI auto-replies + follow-ups",
+        "Advanced BANT scoring",
+        "SMS + Email + Webhook alerts",
+        "Custom AI persona",
+        "Dedicated account manager",
+        "API access",
+        "White-label option",
+      ],
+      sortOrder: 3,
+      isActive: true,
+    },
+  ];
+
+  for (const plan of plans) {
+    await upsertSubscriptionPlan(plan);
+  }
+  console.log("[Database] Subscription plans seeded");
 }

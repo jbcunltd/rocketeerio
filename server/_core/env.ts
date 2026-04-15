@@ -9,4 +9,7 @@ export const ENV = {
   facebookAppSecret: process.env.FACEBOOK_APP_SECRET ?? "",
   facebookVerifyToken: process.env.FACEBOOK_VERIFY_TOKEN ?? "rocketeer_verify_token_2024",
   appUrl: process.env.APP_URL ?? "https://rocketeerio.vercel.app",
+  // PayMongo
+  paymongoSecretKey: process.env.PAYMONGO_SECRET_KEY ?? "sk_test_placeholder",
+  paymongoPublicKey: process.env.PAYMONGO_PUBLIC_KEY ?? "pk_test_placeholder",
 };

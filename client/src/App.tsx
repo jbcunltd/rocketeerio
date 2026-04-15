@@ -12,6 +12,7 @@ import Leads from "./pages/Leads";
 import KnowledgeBase from "./pages/KnowledgeBase";
 import FollowUps from "./pages/FollowUps";
 import Settings from "./pages/Settings";
+import Billing from "./pages/Billing";
 import Onboarding from "./pages/Onboarding";
 
 function Router() {
@@ -26,6 +27,7 @@ function Router() {
       <Route path="/knowledge-base" component={KnowledgeBase} />
       <Route path="/follow-ups" component={FollowUps} />
       <Route path="/settings" component={Settings} />
+      <Route path="/billing" component={Billing} />
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />
     </Switch>

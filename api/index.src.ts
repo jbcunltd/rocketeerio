@@ -9,6 +9,7 @@ import { createExpressMiddleware } from "@trpc/server/adapters/express";
 import { registerAuthRoutes } from "../server/_core/oauth";
 import { registerFacebookRoutes } from "../server/facebook";
 import { registerKbImportRoutes } from "../server/kb-import";
+import { registerPaymongoWebhookRoutes } from "../server/paymongo-webhook";
 import { appRouter } from "../server/routers";
 import { processFollowUps } from "../server/follow-up-worker";
 import { createContext } from "../server/_core/context";
@@ -26,6 +27,9 @@ registerFacebookRoutes(app);
 
 // Knowledge Base import routes (website crawl, file upload: PDF, DOCX, XLSX, CSV, images, TXT)
 registerKbImportRoutes(app);
+
+// PayMongo webhook routes
+registerPaymongoWebhookRoutes(app);
 
 // Follow-up cron endpoint
 app.post("/api/cron/follow-ups", async (_req, res) => {

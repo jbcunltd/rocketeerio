@@ -6,6 +6,8 @@ import { z } from "zod";
 import * as db from "./db";
 import { generateAIResponse, scoreLead } from "./ai-engine";
 import { notifyOwner } from "./_core/notification";
+import { createCheckoutSession } from "./paymongo";
+import { ENV } from "./_core/env";
 
 export const appRouter = router({
   system: systemRouter,
@@ -642,6 +644,90 @@ export const appRouter = router({
       // Mark onboarding as complete
       await db.updateUserProfile(userId, { onboardingCompleted: true });
 
+      return { success: true };
+    }),
+  }),
+
+  // ─── Billing / Subscriptions ────────────────────────────────────────
+  billing: router({
+    plans: publicProcedure.query(async () => {
+      const plans = await db.getActiveSubscriptionPlans();
+      if (plans.length === 0) {
+        // Auto-seed plans if none exist
+        await db.seedSubscriptionPlans();
+        return db.getActiveSubscriptionPlans();
+      }
+      return plans;
+    }),
+
+    currentSubscription: protectedProcedure.query(async ({ ctx }) => {
+      return db.getUserSubscription(ctx.user.id);
+    }),
+
+    paymentHistory: protectedProcedure.query(async ({ ctx }) => {
+      return db.getPaymentsByUser(ctx.user.id);
+    }),
+
+    createCheckout: protectedProcedure
+      .input(z.object({ planSlug: z.string() }))
+      .mutation(async ({ ctx, input }) => {
+        const plan = await db.getSubscriptionPlanBySlug(input.planSlug);
+        if (!plan) throw new Error("Plan not found");
+
+        // Check if user already has an active subscription
+        const existing = await db.getUserSubscription(ctx.user.id);
+        if (existing && existing.status === "active") {
+          throw new Error("You already have an active subscription. Cancel it first to switch plans.");
+        }
+
+        const amountInCentavos = Math.round(parseFloat(plan.price) * 100);
+        const baseUrl = ENV.appUrl;
+
+        const { checkoutId, checkoutUrl } = await createCheckoutSession({
+          amount: amountInCentavos,
+          currency: plan.currency,
+          description: `${plan.name} Plan`,
+          planSlug: plan.slug,
+          userId: ctx.user.id,
+          successUrl: `${baseUrl}/billing?status=success&checkout_id={id}`,
+          cancelUrl: `${baseUrl}/billing?status=cancelled`,
+        });
+
+        // Create pending subscription record
+        const now = new Date();
+        const periodEnd = new Date(now);
+        periodEnd.setMonth(periodEnd.getMonth() + 1);
+
+        await db.createUserSubscription({
+          userId: ctx.user.id,
+          planId: plan.id,
+          status: "active",
+          paymongoCheckoutId: checkoutId,
+          currentPeriodStart: now,
+          currentPeriodEnd: periodEnd,
+        });
+
+        // Create pending payment record
+        await db.createPaymentRecord({
+          userId: ctx.user.id,
+          amount: plan.price,
+          currency: plan.currency,
+          status: "pending",
+          paymongoCheckoutId: checkoutId,
+          description: `${plan.name} Plan - Monthly subscription`,
+        });
+
+        // Update user plan field
+        const planField = plan.slug as "starter" | "growth" | "scale";
+        await db.updateUserProfile(ctx.user.id, { plan: planField });
+
+        return { checkoutUrl, checkoutId };
+      }),
+
+    cancelSubscription: protectedProcedure.mutation(async ({ ctx }) => {
+      await db.cancelUserSubscription(ctx.user.id);
+      // Reset user to starter plan
+      await db.updateUserProfile(ctx.user.id, { plan: "starter" });
       return { success: true };
     }),
   }),
