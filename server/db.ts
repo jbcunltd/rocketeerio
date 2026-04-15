@@ -708,3 +708,110 @@ export async function upsertFollowUpSettings(userId: number, data: Partial<Inser
     await database.insert(followUpSettings).values({ userId, ...data });
   }
 }
+
+// ─── Analytics ──────────────────────────────────────────────────────
+
+export async function getAnalyticsOverview(userId: number) {
+  const database = await getDb();
+  if (!database) return {
+    totalConversations: 0, totalLeads: 0, hotLeads: 0, warmLeads: 0, coldLeads: 0,
+    convertedLeads: 0, conversionRate: 0, avgScore: 0, totalMessages: 0,
+    aiMessages: 0, humanMessages: 0, avgResponseTime: 0,
+  };
+
+  const [convResult] = await database.select({ count: count() }).from(conversations).where(eq(conversations.userId, userId));
+  const totalConversations = convResult?.count ?? 0;
+
+  const [totalLeadsResult] = await database.select({ count: count() }).from(leads).where(eq(leads.userId, userId));
+  const totalLeads = totalLeadsResult?.count ?? 0;
+
+  const [hotResult] = await database.select({ count: count() }).from(leads).where(and(eq(leads.userId, userId), eq(leads.classification, "hot")));
+  const hotLeads = hotResult?.count ?? 0;
+
+  const [warmResult] = await database.select({ count: count() }).from(leads).where(and(eq(leads.userId, userId), eq(leads.classification, "warm")));
+  const warmLeads = warmResult?.count ?? 0;
+
+  const [coldResult] = await database.select({ count: count() }).from(leads).where(and(eq(leads.userId, userId), eq(leads.classification, "cold")));
+  const coldLeads = coldResult?.count ?? 0;
+
+  const [convertedResult] = await database.select({ count: count() }).from(leads).where(and(eq(leads.userId, userId), eq(leads.status, "converted")));
+  const convertedLeads = convertedResult?.count ?? 0;
+  const conversionRate = totalLeads > 0 ? Math.round((convertedLeads / totalLeads) * 100) : 0;
+
+  const [avgResult] = await database.select({ avg: avg(leads.score) }).from(leads).where(eq(leads.userId, userId));
+  const avgScore = avgResult?.avg ? Math.round(Number(avgResult.avg)) : 0;
+
+  const [totalMsgResult] = await database.select({ count: count() }).from(messages)
+    .innerJoin(conversations, eq(messages.conversationId, conversations.id))
+    .where(eq(conversations.userId, userId));
+  const totalMessages = totalMsgResult?.count ?? 0;
+
+  const [aiMsgResult] = await database.select({ count: count() }).from(messages)
+    .innerJoin(conversations, eq(messages.conversationId, conversations.id))
+    .where(and(eq(conversations.userId, userId), eq(messages.sender, "ai")));
+  const aiMessages = aiMsgResult?.count ?? 0;
+
+  const humanMessages = totalMessages - aiMessages;
+
+  return {
+    totalConversations, totalLeads, hotLeads, warmLeads, coldLeads,
+    convertedLeads, conversionRate, avgScore, totalMessages,
+    aiMessages, humanMessages, avgResponseTime: 0,
+  };
+}
+
+export async function getConversationsOverTime(userId: number, days: number = 30) {
+  const database = await getDb();
+  if (!database) return [];
+  const startDate = new Date();
+  startDate.setDate(startDate.getDate() - days);
+  startDate.setHours(0, 0, 0, 0);
+  const result = await database.select({
+    date: sql<string>`DATE(${conversations.createdAt})`,
+    total: count(),
+  })
+    .from(conversations)
+    .where(and(eq(conversations.userId, userId), gte(conversations.createdAt, startDate)))
+    .groupBy(sql`DATE(${conversations.createdAt})`)
+    .orderBy(sql`DATE(${conversations.createdAt})`);
+  return result;
+}
+
+export async function getLeadsByClassification(userId: number) {
+  const database = await getDb();
+  if (!database) return [];
+  const result = await database.select({
+    classification: leads.classification,
+    count: count(),
+  })
+    .from(leads)
+    .where(eq(leads.userId, userId))
+    .groupBy(leads.classification);
+  return result;
+}
+
+export async function getLeadsByStatus(userId: number) {
+  const database = await getDb();
+  if (!database) return [];
+  const result = await database.select({
+    status: leads.status,
+    count: count(),
+  })
+    .from(leads)
+    .where(eq(leads.userId, userId))
+    .groupBy(leads.status);
+  return result;
+}
+
+export async function getConversationsByPlatform(userId: number) {
+  const database = await getDb();
+  if (!database) return [];
+  const result = await database.select({
+    platform: conversations.platform,
+    count: count(),
+  })
+    .from(conversations)
+    .where(eq(conversations.userId, userId))
+    .groupBy(conversations.platform);
+  return result;
+}

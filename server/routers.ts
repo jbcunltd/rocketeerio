@@ -538,7 +538,38 @@ export const appRouter = router({
       }),
   }),
 
-  // ─── Demo Data Seeding ─────────────────────────────────────────────
+  // ─── Analytics ─────────────────────────────────────────────────
+  analytics: router({
+    overview: protectedProcedure.query(async ({ ctx }) => {
+      return db.getAnalyticsOverview(ctx.user.id);
+    }),
+
+    conversationsOverTime: protectedProcedure
+      .input(z.object({ days: z.number().default(30) }).optional())
+      .query(async ({ ctx, input }) => {
+        return db.getConversationsOverTime(ctx.user.id, input?.days ?? 30);
+      }),
+
+    leadsByClassification: protectedProcedure.query(async ({ ctx }) => {
+      return db.getLeadsByClassification(ctx.user.id);
+    }),
+
+    leadsByStatus: protectedProcedure.query(async ({ ctx }) => {
+      return db.getLeadsByStatus(ctx.user.id);
+    }),
+
+    conversationsByPlatform: protectedProcedure.query(async ({ ctx }) => {
+      return db.getConversationsByPlatform(ctx.user.id);
+    }),
+
+    leadActivity: protectedProcedure
+      .input(z.object({ days: z.number().default(30) }).optional())
+      .query(async ({ ctx, input }) => {
+        return db.getLeadActivityByDay(ctx.user.id, input?.days ?? 30);
+      }),
+  }),
+
+  // ─── Demo Data Seeding ─────────────────────────────────────────
   seed: router({
     generate: protectedProcedure.mutation(async ({ ctx }) => {
       const userId = ctx.user.id;
