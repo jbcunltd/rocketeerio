@@ -832,6 +832,80 @@ export const appRouter = router({
       return { success: true };
     }),
   }),
+
+  // ─── Integrations (Webhooks / Zapier / Sheets) ─────────────────
+  integrations: router({
+    webhooks: router({
+      list: protectedProcedure.query(async ({ ctx }) => {
+        return db.getUserWebhookEndpoints(ctx.user.id);
+      }),
+
+      create: protectedProcedure
+        .input(z.object({
+          name: z.string().min(1),
+          url: z.string().url(),
+          events: z.array(z.string()).min(1),
+          secret: z.string().optional(),
+        }))
+        .mutation(async ({ ctx, input }) => {
+          const id = await db.createWebhookEndpoint({
+            userId: ctx.user.id,
+            name: input.name,
+            url: input.url,
+            events: input.events,
+            secret: input.secret || null,
+          });
+          return { id };
+        }),
+
+      update: protectedProcedure
+        .input(z.object({
+          id: z.number(),
+          name: z.string().optional(),
+          url: z.string().url().optional(),
+          events: z.array(z.string()).optional(),
+          isActive: z.boolean().optional(),
+        }))
+        .mutation(async ({ input }) => {
+          const { id, ...data } = input;
+          await db.updateWebhookEndpoint(id, data);
+          return { success: true };
+        }),
+
+      delete: protectedProcedure
+        .input(z.object({ id: z.number() }))
+        .mutation(async ({ input }) => {
+          await db.deleteWebhookEndpoint(input.id);
+          return { success: true };
+        }),
+    }),
+
+    exportLeads: protectedProcedure
+      .input(z.object({ format: z.enum(["csv", "json"]) }).optional())
+      .query(async ({ ctx, input }) => {
+        const allLeads = await db.getLeadsForExport(ctx.user.id);
+        const format = input?.format || "csv";
+
+        if (format === "json") {
+          return { format: "json", data: allLeads };
+        }
+
+        // CSV format
+        const headers = ["Name", "Email", "Phone", "Classification", "Status", "Score", "Platform", "Created At"];
+        const rows = allLeads.map((lead: any) => [
+          lead.name || "",
+          lead.email || "",
+          lead.phone || "",
+          lead.classification || "",
+          lead.status || "",
+          lead.score?.toString() || "",
+          lead.platform || "messenger",
+          lead.createdAt ? new Date(lead.createdAt).toISOString() : "",
+        ]);
+        const csv = [headers.join(","), ...rows.map(r => r.map(v => `"${(v || "").replace(/"/g, '""')}"`).join(","))].join("\n");
+        return { format: "csv", data: csv };
+      }),
+  }),
 });
 
 export type AppRouter = typeof appRouter;

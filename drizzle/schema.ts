@@ -210,6 +210,24 @@ export const followUpSettings = pgTable("follow_up_settings", {
 export type FollowUpSetting = typeof followUpSettings.$inferSelect;
 export type InsertFollowUpSetting = typeof followUpSettings.$inferInsert;
 
+// ─── Webhook Endpoints (Zapier/external integrations) ──────────────
+export const webhookEndpoints = pgTable("webhook_endpoints", {
+  id: serial("id").primaryKey(),
+  userId: integer("userId").notNull(),
+  name: text("name").notNull(),
+  url: text("url").notNull(),
+  secret: text("secret"),
+  events: text("events").array().notNull(),
+  isActive: boolean("isActive").default(true).notNull(),
+  lastTriggeredAt: timestamp("lastTriggeredAt"),
+  failCount: integer("failCount").default(0).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().notNull(),
+});
+
+export type WebhookEndpoint = typeof webhookEndpoints.$inferSelect;
+export type InsertWebhookEndpoint = typeof webhookEndpoints.$inferInsert;
+
 // ─── Notification Preferences ────────────────────────────────────────
 export const notificationPreferences = pgTable("notification_preferences", {
   id: serial("id").primaryKey(),

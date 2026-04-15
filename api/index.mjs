@@ -213,6 +213,19 @@ var followUpSettings = pgTable("follow_up_settings", {
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().notNull()
 });
+var webhookEndpoints = pgTable("webhook_endpoints", {
+  id: serial("id").primaryKey(),
+  userId: integer("userId").notNull(),
+  name: text("name").notNull(),
+  url: text("url").notNull(),
+  secret: text("secret"),
+  events: text("events").array().notNull(),
+  isActive: boolean("isActive").default(true).notNull(),
+  lastTriggeredAt: timestamp("lastTriggeredAt"),
+  failCount: integer("failCount").default(0).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().notNull()
+});
 var notificationPreferences = pgTable("notification_preferences", {
   id: serial("id").primaryKey(),
   userId: integer("userId").notNull().unique(),
@@ -914,6 +927,32 @@ async function getConversationsByPlatform(userId) {
     count: count()
   }).from(conversations).where(eq(conversations.userId, userId)).groupBy(conversations.platform);
   return result;
+}
+async function getUserWebhookEndpoints(userId) {
+  const database = await getDb();
+  if (!database) return [];
+  return database.select().from(webhookEndpoints).where(eq(webhookEndpoints.userId, userId));
+}
+async function createWebhookEndpoint(data) {
+  const database = await getDb();
+  if (!database) return null;
+  const rows = await database.insert(webhookEndpoints).values(data).returning({ id: webhookEndpoints.id });
+  return rows[0]?.id || null;
+}
+async function updateWebhookEndpoint(id, data) {
+  const database = await getDb();
+  if (!database) return;
+  await database.update(webhookEndpoints).set({ ...data, updatedAt: /* @__PURE__ */ new Date() }).where(eq(webhookEndpoints.id, id));
+}
+async function deleteWebhookEndpoint(id) {
+  const database = await getDb();
+  if (!database) return;
+  await database.delete(webhookEndpoints).where(eq(webhookEndpoints.id, id));
+}
+async function getLeadsForExport(userId) {
+  const database = await getDb();
+  if (!database) return [];
+  return database.select().from(leads).where(eq(leads.userId, userId)).orderBy(desc(leads.createdAt));
 }
 
 // server/_core/env.ts
@@ -3625,6 +3664,64 @@ Timeline: ${scoreResult.timelineNotes}`
       await cancelUserSubscription(ctx.user.id);
       await updateUserProfile(ctx.user.id, { plan: "starter" });
       return { success: true };
+    })
+  }),
+  // ─── Integrations (Webhooks / Zapier / Sheets) ─────────────────
+  integrations: router({
+    webhooks: router({
+      list: protectedProcedure.query(async ({ ctx }) => {
+        return getUserWebhookEndpoints(ctx.user.id);
+      }),
+      create: protectedProcedure.input(z2.object({
+        name: z2.string().min(1),
+        url: z2.string().url(),
+        events: z2.array(z2.string()).min(1),
+        secret: z2.string().optional()
+      })).mutation(async ({ ctx, input }) => {
+        const id = await createWebhookEndpoint({
+          userId: ctx.user.id,
+          name: input.name,
+          url: input.url,
+          events: input.events,
+          secret: input.secret || null
+        });
+        return { id };
+      }),
+      update: protectedProcedure.input(z2.object({
+        id: z2.number(),
+        name: z2.string().optional(),
+        url: z2.string().url().optional(),
+        events: z2.array(z2.string()).optional(),
+        isActive: z2.boolean().optional()
+      })).mutation(async ({ input }) => {
+        const { id, ...data } = input;
+        await updateWebhookEndpoint(id, data);
+        return { success: true };
+      }),
+      delete: protectedProcedure.input(z2.object({ id: z2.number() })).mutation(async ({ input }) => {
+        await deleteWebhookEndpoint(input.id);
+        return { success: true };
+      })
+    }),
+    exportLeads: protectedProcedure.input(z2.object({ format: z2.enum(["csv", "json"]) }).optional()).query(async ({ ctx, input }) => {
+      const allLeads = await getLeadsForExport(ctx.user.id);
+      const format = input?.format || "csv";
+      if (format === "json") {
+        return { format: "json", data: allLeads };
+      }
+      const headers = ["Name", "Email", "Phone", "Classification", "Status", "Score", "Platform", "Created At"];
+      const rows = allLeads.map((lead) => [
+        lead.name || "",
+        lead.email || "",
+        lead.phone || "",
+        lead.classification || "",
+        lead.status || "",
+        lead.score?.toString() || "",
+        lead.platform || "messenger",
+        lead.createdAt ? new Date(lead.createdAt).toISOString() : ""
+      ]);
+      const csv = [headers.join(","), ...rows.map((r) => r.map((v) => `"${(v || "").replace(/"/g, '""')}"`).join(","))].join("\n");
+      return { format: "csv", data: csv };
     })
   })
 });

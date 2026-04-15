@@ -14,6 +14,7 @@ import FollowUps from "./pages/FollowUps";
 import Settings from "./pages/Settings";
 import Billing from "./pages/Billing";
 import Analytics from "./pages/Analytics";
+import Integrations from "./pages/Integrations";
 import Onboarding from "./pages/Onboarding";
 
 function Router() {
@@ -30,6 +31,7 @@ function Router() {
       <Route path="/settings" component={Settings} />
       <Route path="/billing" component={Billing} />
       <Route path="/analytics" component={Analytics} />
+      <Route path="/integrations" component={Integrations} />
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />
     </Switch>

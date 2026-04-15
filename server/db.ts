@@ -17,6 +17,7 @@ import {
   paymentHistory, InsertPaymentHistory,
   instagramAccounts, InsertInstagramAccount,
   followUpSettings, InsertFollowUpSetting,
+  webhookEndpoints, InsertWebhookEndpoint,
 } from "../drizzle/schema";
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -814,4 +815,59 @@ export async function getConversationsByPlatform(userId: number) {
     .where(eq(conversations.userId, userId))
     .groupBy(conversations.platform);
   return result;
+}
+
+// ─── Webhook Endpoints ──────────────────────────────────────────────
+
+export async function getUserWebhookEndpoints(userId: number) {
+  const database = await getDb();
+  if (!database) return [];
+  return database.select().from(webhookEndpoints).where(eq(webhookEndpoints.userId, userId));
+}
+
+export async function createWebhookEndpoint(data: InsertWebhookEndpoint) {
+  const database = await getDb();
+  if (!database) return null;
+  const rows = await database.insert(webhookEndpoints).values(data).returning({ id: webhookEndpoints.id });
+  return rows[0]?.id || null;
+}
+
+export async function updateWebhookEndpoint(id: number, data: Partial<InsertWebhookEndpoint>) {
+  const database = await getDb();
+  if (!database) return;
+  await database.update(webhookEndpoints).set({ ...data, updatedAt: new Date() }).where(eq(webhookEndpoints.id, id));
+}
+
+export async function deleteWebhookEndpoint(id: number) {
+  const database = await getDb();
+  if (!database) return;
+  await database.delete(webhookEndpoints).where(eq(webhookEndpoints.id, id));
+}
+
+export async function getActiveWebhooksForEvent(userId: number, event: string) {
+  const database = await getDb();
+  if (!database) return [];
+  const all = await database.select().from(webhookEndpoints)
+    .where(and(eq(webhookEndpoints.userId, userId), eq(webhookEndpoints.isActive, true)));
+  return all.filter(wh => wh.events.includes(event));
+}
+
+export async function markWebhookTriggered(id: number, success: boolean) {
+  const database = await getDb();
+  if (!database) return;
+  if (success) {
+    await database.update(webhookEndpoints).set({ lastTriggeredAt: new Date(), failCount: 0 }).where(eq(webhookEndpoints.id, id));
+  } else {
+    await database.update(webhookEndpoints).set({
+      failCount: sql`${webhookEndpoints.failCount} + 1`,
+    }).where(eq(webhookEndpoints.id, id));
+  }
+}
+
+// ─── Leads Export (for Google Sheets) ───────────────────────────────
+
+export async function getLeadsForExport(userId: number) {
+  const database = await getDb();
+  if (!database) return [];
+  return database.select().from(leads).where(eq(leads.userId, userId)).orderBy(desc(leads.createdAt));
 }
