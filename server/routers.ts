@@ -8,7 +8,7 @@ import { generateAIResponse, scoreLead } from "./ai-engine";
 import { notifyOwner } from "./_core/notification";
 import { createCheckoutSession } from "./paymongo";
 import { ENV } from "./_core/env";
-import { checkPageLimit, checkLeadLimit, checkConversationLimit, enforcePlanLimit, getPlanUsage, PLAN_LIMITS, getPlanLimits } from "./plan-limits";
+import { checkPageLimit, checkLeadLimit, checkConversationLimit, enforcePlanLimit, getPlanUsage, PLAN_LIMITS } from "./plan-limits";
 import { dispatchLeadAlert } from "./hot-lead-alerts";
 
 export const appRouter = router({
@@ -96,55 +96,6 @@ export const appRouter = router({
       .mutation(async ({ input }) => {
         await db.deletePage(input.id);
         return { success: true };
-      }),
-
-    /** Disconnect Facebook: clear all page tokens but keep page data intact */
-    disconnectFacebook: protectedProcedure
-      .mutation(async ({ ctx }) => {
-        await db.clearUserPageTokens(ctx.user.id);
-        return { success: true };
-      }),
-
-    /** Connect a single page from the page picker (selective connect) */
-    connectSinglePage: protectedProcedure
-      .input(z.object({
-        facebookPageId: z.string(),
-        pageName: z.string(),
-        pageAccessToken: z.string(),
-        category: z.string().optional(),
-        avatarUrl: z.string().optional(),
-        followerCount: z.number().optional(),
-      }))
-      .mutation(async ({ ctx, input }) => {
-        // Check if page already exists in our DB
-        const existing = await db.getPageByFacebookId(input.facebookPageId);
-        if (existing) {
-          // Update token and metadata
-          await db.updatePage(existing.id, {
-            pageAccessToken: input.pageAccessToken,
-            pageName: input.pageName,
-            category: input.category,
-            avatarUrl: input.avatarUrl,
-            followerCount: input.followerCount || 0,
-          });
-          return { id: existing.id, alreadyExisted: true };
-        }
-
-        // Plan enforcement
-        const pageCheck = await checkPageLimit(ctx.user.id, ctx.user.plan);
-        enforcePlanLimit(pageCheck, "Facebook Pages");
-
-        const id = await db.createPage({
-          userId: ctx.user.id,
-          pageId: input.facebookPageId,
-          pageName: input.pageName,
-          pageAccessToken: input.pageAccessToken,
-          category: input.category,
-          avatarUrl: input.avatarUrl,
-          followerCount: input.followerCount || 0,
-          isActive: true,
-        });
-        return { id, alreadyExisted: false };
       }),
   }),
 
