@@ -672,7 +672,7 @@ export function registerFacebookRoutes(app: Express) {
         console.error(`[Facebook] Webhook subscription error for ${fbPageId}:`, err);
       }
 
-      return res.json({ success: true });
+      return res.json({ success: true, pageId: fbPageId });
     } catch (error) {
       console.error("[Facebook] Subscribe page error:", error);
       return res.status(500).json({ error: "Failed to connect page" });

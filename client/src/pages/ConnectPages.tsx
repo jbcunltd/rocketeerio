@@ -80,9 +80,8 @@ export default function ConnectPages() {
         return;
       }
       toast.success(`${page.name} connected successfully!`);
-      setPages(prev => prev.map(p =>
-        p.fbPageId === page.fbPageId ? { ...p, isConnected: true } : p
-      ));
+      // Redirect to dashboard with the newly connected page
+      navigate(`/dashboard?pageId=${data.pageId}`);
     } catch {
       toast.error("Failed to connect page. Please try again.");
     } finally {
