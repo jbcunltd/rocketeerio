@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import SEO from "@/components/SEO";
 
 export function Terms() {
   useEffect(() => {
@@ -7,6 +8,11 @@ export function Terms() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
+      <SEO
+        title="Terms of Service"
+        description="Rocketeerio Terms of Service — understand the terms governing your use of our platform."
+        path="/terms"
+      />
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 lg:py-20">
         <div className="prose prose-sm sm:prose lg:prose-lg max-w-none">
           <h1 className="text-3xl sm:text-4xl font-bold mb-2">Terms of Service</h1>

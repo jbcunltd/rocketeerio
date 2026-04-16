@@ -1,0 +1,22 @@
+# Rocketeerio — robots.txt
+# Allow crawling of public pages, block dashboard/app routes.
+
+User-agent: *
+Allow: /
+Allow: /privacy
+Allow: /terms
+
+Disallow: /dashboard
+Disallow: /conversations
+Disallow: /leads
+Disallow: /knowledge-base
+Disallow: /follow-ups
+Disallow: /settings
+Disallow: /billing
+Disallow: /analytics
+Disallow: /integrations
+Disallow: /agent-inbox
+Disallow: /onboarding
+Disallow: /api/
+
+Sitemap: https://rocketeerio.com/sitemap.xml

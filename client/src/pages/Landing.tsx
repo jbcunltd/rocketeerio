@@ -1,6 +1,9 @@
 import { Button } from "@/components/ui/button";
+import SEO from "@/components/SEO";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
+import { fbEvent } from "@/lib/facebook-pixel";
+import { gtagEvent } from "@/lib/gtag";
 import {
   CheckCircle2, ArrowRight, Rocket, Star, TrendingUp,
   Zap, MessageSquare, BellRing, DollarSign, Clock, Users,
@@ -44,6 +47,20 @@ function AuthForm() {
       if (!res.ok) {
         setError(data.error || "Something went wrong");
         return;
+      }
+
+      // Fire conversion events on successful signup
+      if (mode === "signup") {
+        fbEvent("CompleteRegistration", { content_name: "Signup" });
+        gtagEvent("sign_up", { method: "email" });
+        // Google Ads conversion (label configured via env)
+        const adsId = import.meta.env.VITE_GOOGLE_ADS_ID as string | undefined;
+        const adsLabel = import.meta.env.VITE_GOOGLE_ADS_CONVERSION_LABEL as string | undefined;
+        if (adsId && adsLabel && (window as any).gtag) {
+          (window as any).gtag("event", "conversion", {
+            send_to: `${adsId}/${adsLabel}`,
+          });
+        }
       }
 
       await utils.auth.me.invalidate();
@@ -251,6 +268,10 @@ export default function Landing() {
 
   return (
     <div className="min-h-screen bg-background">
+      <SEO
+        path="/"
+        description="Stop losing leads you already paid for. Rocketeerio replies instantly to your Facebook and Instagram messages and alerts you when it's time to close."
+      />
       {/* ============================================================ */}
       {/*  NAVIGATION                                                   */}
       {/* ============================================================ */}
