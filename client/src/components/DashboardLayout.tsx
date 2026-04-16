@@ -29,15 +29,15 @@ import { useIsMobile } from "@/hooks/useMobile";
 import {
   LayoutDashboard, MessageCircle, Users,
   LogOut, PanelLeft, BookOpen, Zap, CreditCard, BarChart3, Headphones,
-  User, Bell, Settings
+  User, Bell, Settings, BellRing, Bot
 } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
 import { Button } from "./ui/button";
 
-// Page-level nav items (change per active page)
-const pageNavItems = [
+// Main nav items
+const mainNavItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard" },
   { icon: MessageCircle, label: "Conversations", path: "/conversations" },
   { icon: Headphones, label: "Agent Inbox", path: "/agent-inbox" },
@@ -45,8 +45,17 @@ const pageNavItems = [
   { icon: BookOpen, label: "Knowledge Base", path: "/knowledge-base" },
   { icon: Zap, label: "Follow-Ups", path: "/follow-ups" },
   { icon: BarChart3, label: "Analytics", path: "/analytics" },
-  { icon: Settings, label: "Page Settings", path: "/settings" },
 ];
+
+// Configure section items
+const configureNavItems = [
+  { icon: MessageCircle, label: "Channels", path: "/settings?tab=channels" },
+  { icon: Settings, label: "AI Personality", path: "/settings?tab=ai-personality" },
+  { icon: BellRing, label: "Hot Lead Alerts", path: "/settings?tab=hot-lead-alerts" },
+  { icon: Headphones, label: "Live Agent Handoff", path: "/settings?tab=handoff" },
+];
+
+const pageNavItems = [...mainNavItems, ...configureNavItems];
 
 const SIDEBAR_WIDTH_KEY = "sidebar-width";
 const DEFAULT_WIDTH = 260;
@@ -212,10 +221,33 @@ function DashboardLayoutContent({
               </div>
             )}
 
-            {/* Page-level navigation */}
+            {/* Main navigation */}
             <SidebarMenu className="px-2 py-1">
-              {pageNavItems.map(item => {
+              {mainNavItems.map(item => {
                 const isActive = location.startsWith(item.path);
+                return (
+                  <SidebarMenuItem key={item.path}>
+                    <SidebarMenuButton
+                      isActive={isActive}
+                      onClick={() => setLocation(item.path)}
+                      tooltip={item.label}
+                      className="h-10 transition-all font-normal"
+                    >
+                      <item.icon className={`h-4 w-4 ${isActive ? "text-messenger" : ""}`} />
+                      <span className={isActive ? "font-semibold" : ""}>{item.label}</span>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                );
+              })}
+            </SidebarMenu>
+
+            {/* Configure section */}
+            <div className="mt-4 px-3 py-2">
+              <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-2">Configure</p>
+            </div>
+            <SidebarMenu className="px-2 py-1">
+              {configureNavItems.map(item => {
+                const isActive = location.includes(item.path.split("?")[1]);
                 return (
                   <SidebarMenuItem key={item.path}>
                     <SidebarMenuButton
