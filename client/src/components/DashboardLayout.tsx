@@ -28,7 +28,7 @@ import { useActivePage } from "@/contexts/ActivePageContext";
 import { useIsMobile } from "@/hooks/useMobile";
 import {
   LayoutDashboard, MessageCircle, Users,
-  LogOut, PanelLeft, Rocket, BookOpen, Zap, CreditCard, BarChart3, Headphones,
+  LogOut, PanelLeft, BookOpen, Zap, CreditCard, BarChart3, Headphones,
   User, Bell, Settings
 } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
@@ -183,9 +183,7 @@ function DashboardLayoutContent({
               </button>
               {!isCollapsed && (
                 <div className="flex items-center gap-2 min-w-0">
-                  <div className="w-7 h-7 bg-messenger rounded-lg flex items-center justify-center shrink-0">
-                    <Rocket className="w-4 h-4 text-white" />
-                  </div>
+                  <img src="/favicon.svg" alt="Rocketeer" className="w-7 h-7 shrink-0" />
                   <span className="font-bold tracking-tight truncate text-foreground">Rocketeer</span>
                 </div>
               )}
