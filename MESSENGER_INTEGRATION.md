@@ -75,7 +75,7 @@ Go to [Meta Developer Console](https://developers.facebook.com/apps/197184897677
 **b) Configure Webhooks:**
 1. Go to **Webhooks** (or **Messenger > Settings**)
 2. Click **Edit Subscription** (or **Add Callback URL**)
-3. Set Callback URL: `https://rocketeerio.vercel.app/api/webhook/messenger`
+3. Set Callback URL: `https://rocketeerio.vercel.app/api/webhook/facebook`
 4. Set Verify Token: `rocketeer_verify_token_2024`
 5. Subscribe to fields: `messages`, `messaging_postbacks`
 
@@ -109,7 +109,7 @@ Facebook User sends message
         ↓
 Facebook Platform
         ↓
-POST /api/webhook/messenger
+POST /api/webhook/facebook
         ↓
 processIncomingMessage()
   ├── Find/create lead (with FB profile lookup)

@@ -488,7 +488,7 @@ export function registerFacebookRoutes(app: Express) {
   });
 
   // ─── Messenger Webhook: Verification ───────────────────────────────
-  app.get("/api/webhook/messenger", (req: Request, res: Response) => {
+  app.get("/api/webhook/facebook", (req: Request, res: Response) => {
     const mode = req.query["hub.mode"];
     const token = req.query["hub.verify_token"];
     const challenge = req.query["hub.challenge"];
@@ -509,8 +509,8 @@ export function registerFacebookRoutes(app: Express) {
   // On Vercel (especially Hobby plan), the serverless function is terminated
   // immediately after the response is sent. Fire-and-forget async work will
   // be killed. Facebook allows up to 20 seconds for the webhook response.
-  app.post("/api/webhook/messenger", async (req: Request, res: Response) => {
-    console.log("[Webhook] POST /api/webhook/messenger received");
+  app.post("/api/webhook/facebook", async (req: Request, res: Response) => {
+    console.log("[Webhook] POST /api/webhook/facebook received");
 
     try {
       const body = req.body;
