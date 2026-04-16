@@ -1077,3 +1077,16 @@ export async function clearUserPageTokens(userId: number) {
     .set({ pageAccessToken: null, updatedAt: new Date() })
     .where(eq(facebookPages.userId, userId));
 }
+
+export async function getUserHasFacebookToken(userId: number) {
+  const db = await getDb();
+  if (!db) return false;
+  const result = await db.select({ id: facebookPages.id })
+    .from(facebookPages)
+    .where(and(
+      eq(facebookPages.userId, userId),
+      sql`${facebookPages.pageAccessToken} IS NOT NULL`
+    ))
+    .limit(1);
+  return result.length > 0;
+}

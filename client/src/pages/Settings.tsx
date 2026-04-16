@@ -148,7 +148,8 @@ function NotificationsTab() {
 }
 
 function ConnectedAccountsTab() {
-  const { data: pages, isLoading } = trpc.pages.list.useQuery();
+  const { data: pages, isLoading: pagesLoading } = trpc.pages.list.useQuery();
+  const { data: hasFbToken, isLoading: tokenLoading } = trpc.pages.hasFacebookToken.useQuery();
   const disconnectFb = trpc.pages.disconnectFacebook.useMutation();
   const utils = trpc.useUtils();
   const [connecting, setConnecting] = useState(false);
@@ -189,9 +190,8 @@ function ConnectedAccountsTab() {
   const handleDisconnect = async () => {
     try {
       await disconnectFb.mutateAsync();
-      await utils.pages.list.invalidate();
-      // Force a refetch to immediately update the UI
-      await utils.pages.list.refetch();
+      await utils.pages.hasFacebookToken.invalidate();
+      await utils.pages.hasFacebookToken.refetch();
       toast.success("Facebook disconnected. Your page data has been preserved.");
       setShowDisconnectConfirm(false);
     } catch {
@@ -199,9 +199,9 @@ function ConnectedAccountsTab() {
     }
   };
 
-  if (isLoading) return <div className="flex items-center justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-messenger" /></div>;
+  if (pagesLoading || tokenLoading) return <div className="flex items-center justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-messenger" /></div>;
 
-  const hasFacebookConnected = pages && pages.length > 0;
+  const hasFacebookConnected = hasFbToken === true;
 
   return (
     <div className="space-y-6">

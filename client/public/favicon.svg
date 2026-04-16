@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <!-- Blue background with rounded corners -->
+  <rect width="512" height="512" rx="96" ry="96" fill="#2563EB"/>
+
+  <!-- All helmet elements rotated ~12 degrees around center -->
+  <g transform="rotate(-12, 256, 265)">
+
+    <!-- OUTER HELMET DOME — solid white filled shape -->
+    <!-- Large rounded dome, slightly wider than tall, centered at ~256,230 -->
+    <ellipse cx="256" cy="222" rx="150" ry="155" fill="white"/>
+
+    <!-- NECK BASE / COLLAR — white rounded rectangle -->
+    <rect x="162" y="348" width="188" height="48" rx="24" fill="white"/>
+
+    <!-- LEFT EAR PIECE — white rounded pill -->
+    <ellipse cx="106" cy="258" rx="28" ry="38" fill="white"/>
+
+    <!-- RIGHT EAR PIECE — white rounded pill -->
+    <ellipse cx="406" cy="244" rx="28" ry="38" fill="white"/>
+
+    <!-- VISOR CUTOUT — blue ellipse punched into the dome (negative space) -->
+    <!-- Slightly smaller than dome, creating a thick white ring around it -->
+    <ellipse cx="256" cy="222" rx="110" ry="115" fill="#2563EB"/>
+
+    <!-- VISOR REFLECTION — small white crescent arc in upper-left of visor -->
+    <!-- A thick white arc suggesting glassy reflection -->
+    <path d="M 192 166 A 76 76 0 0 1 272 144" 
+          fill="none" stroke="white" stroke-width="17" stroke-linecap="round"/>
+
+    <!-- SECOND SMALLER REFLECTION DOT -->
+    <circle cx="290" cy="152" r="10" fill="white"/>
+
+  </g>
+</svg>
