@@ -142,13 +142,13 @@ function FollowUpsContent() {
     <div>
       {/* Page context banner */}
       {activePage && (
-        <div className="flex items-center gap-2 mb-4 px-4 py-2.5 bg-blue-50 border border-blue-200 rounded-lg">
+        <div className="flex items-center gap-2 mb-4 px-4 py-2.5 bg-messenger-light border border-messenger-light rounded-lg">
           {activePage.avatarUrl ? (
             <img src={activePage.avatarUrl} alt={activePage.pageName} className="w-5 h-5 rounded" />
           ) : (
             <Facebook className="w-4 h-4 text-[#1877F2]" />
           )}
-          <p className="text-sm text-blue-800">Showing follow-ups for <strong>{activePage.pageName}</strong></p>
+          <p className="text-sm text-messenger-dark">Showing follow-ups for <strong>{activePage.pageName}</strong></p>
         </div>
       )}
 
@@ -200,7 +200,7 @@ function FollowUpsContent() {
       <div className="bg-white rounded-xl p-4 sm:p-6 card-shadow border border-border/50 mb-6 overflow-hidden">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4">
           <h3 className="font-bold">Follow-Up Timeline</h3>
-          <div className="hidden sm:flex items-center gap-2 text-xs bg-blue-50 text-blue-700 px-3 py-1.5 rounded-full border border-blue-100 shrink-0">
+          <div className="hidden sm:flex items-center gap-2 text-xs bg-messenger-light text-messenger-dark px-3 py-1.5 rounded-full border border-messenger-light shrink-0">
             <AlertCircle className="w-3.5 h-3.5" />
             <span>Facebook 24-Hour Rule Compliant</span>
           </div>
@@ -272,7 +272,7 @@ function FollowUpsContent() {
 
         {/* Mobile: Vertical timeline */}
         <div className="sm:hidden space-y-3">
-          <div className="flex items-center gap-2 text-xs bg-blue-50 text-blue-700 px-3 py-1.5 rounded-full border border-blue-100 w-fit">
+          <div className="flex items-center gap-2 text-xs bg-messenger-light text-messenger-dark px-3 py-1.5 rounded-full border border-messenger-light w-fit">
             <AlertCircle className="w-3.5 h-3.5" />
             <span>24-Hour Compliant</span>
           </div>
@@ -374,14 +374,14 @@ function FollowUpsContent() {
 
           <div className="space-y-6">
             {/* One-Time Notification Option */}
-            <div className="p-4 rounded-lg border bg-blue-50/50 border-blue-100">
+            <div className="p-4 rounded-lg border bg-messenger-light/50 border-messenger-light">
               <div className="flex items-start justify-between">
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-1">
-                    <Zap className="w-4 h-4 text-blue-600" />
-                    <h4 className="font-semibold text-blue-900">One-Time Notification (OTN)</h4>
+                    <Zap className="w-4 h-4 text-messenger" />
+                    <h4 className="font-semibold text-messenger-dark">One-Time Notification (OTN)</h4>
                   </div>
-                  <p className="text-sm text-blue-800/80">
+                  <p className="text-sm text-messenger-dark/80">
                     Allow the AI to ask the lead "Can we follow up with you?" before the 24-hour window closes. 
                     If they say yes, you get permission to send one more Messenger message after 24 hours.
                   </p>

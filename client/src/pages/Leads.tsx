@@ -61,13 +61,13 @@ function LeadsContent() {
     <div>
       {/* Page context banner */}
       {activePage && (
-        <div className="flex items-center gap-2 mb-4 px-4 py-2.5 bg-blue-50 border border-blue-200 rounded-lg">
+        <div className="flex items-center gap-2 mb-4 px-4 py-2.5 bg-messenger-light border border-messenger-light rounded-lg">
           {activePage.avatarUrl ? (
             <img src={activePage.avatarUrl} alt={activePage.pageName} className="w-5 h-5 rounded" />
           ) : (
             <Facebook className="w-4 h-4 text-[#1877F2]" />
           )}
-          <p className="text-sm text-blue-800">Showing leads for <strong>{activePage.pageName}</strong></p>
+          <p className="text-sm text-messenger-dark">Showing leads for <strong>{activePage.pageName}</strong></p>
         </div>
       )}
 
@@ -160,7 +160,7 @@ function LeadsContent() {
                       <td className="p-3">
                         <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
                           lead.status === "converted" ? "bg-green-50 text-green-600" :
-                          lead.status === "active" ? "bg-blue-50 text-blue-600" :
+                          lead.status === "active" ? "bg-messenger-light text-messenger" :
                           "bg-muted text-muted-foreground"
                         }`}>{lead.status}</span>
                       </td>
@@ -196,7 +196,7 @@ function LeadsContent() {
                     <div className="flex items-center gap-3 mt-1">
                       <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
                         lead.status === "converted" ? "bg-green-50 text-green-600" :
-                        lead.status === "active" ? "bg-blue-50 text-blue-600" :
+                        lead.status === "active" ? "bg-messenger-light text-messenger" :
                         "bg-muted text-muted-foreground"
                       }`}>{lead.status}</span>
                       {lead.source && <span className="text-xs text-muted-foreground">{lead.source}</span>}

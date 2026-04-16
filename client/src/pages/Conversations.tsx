@@ -73,13 +73,13 @@ function ConversationsContent() {
     <div>
       {/* Page context banner */}
       {activePage && (
-        <div className="flex items-center gap-2 mb-4 px-4 py-2.5 bg-blue-50 border border-blue-200 rounded-lg">
+        <div className="flex items-center gap-2 mb-4 px-4 py-2.5 bg-messenger-light border border-messenger-light rounded-lg">
           {activePage.avatarUrl ? (
             <img src={activePage.avatarUrl} alt={activePage.pageName} className="w-5 h-5 rounded" />
           ) : (
             <Facebook className="w-4 h-4 text-[#1877F2]" />
           )}
-          <p className="text-sm text-blue-800">Showing conversations for <strong>{activePage.pageName}</strong></p>
+          <p className="text-sm text-messenger-dark">Showing conversations for <strong>{activePage.pageName}</strong></p>
         </div>
       )}
 

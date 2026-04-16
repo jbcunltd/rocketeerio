@@ -300,11 +300,11 @@ function ConnectedAccountsTab() {
       )}
 
       {/* Setup Guide */}
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-        <h4 className="font-semibold text-blue-900 mb-2 flex items-center gap-2">
+      <div className="bg-messenger-light border border-messenger-light rounded-lg p-4">
+        <h4 className="font-semibold text-messenger-dark mb-2 flex items-center gap-2">
           <AlertCircle className="w-4 h-4" /> How It Works
         </h4>
-        <ul className="text-sm text-blue-800 space-y-1.5">
+        <ul className="text-sm text-messenger-dark space-y-1.5">
           <li>1. Connect your Facebook account above (grants access to your Pages)</li>
           <li>2. After connecting, choose which pages to add from the page picker</li>
           <li>3. Each page gets its own AI personality, knowledge base, leads, and conversations</li>
@@ -728,7 +728,7 @@ function AiSettingsForm({ pageId }: { pageId: number }) {
       {/* Agent Name */}
       <div className="bg-white rounded-lg border p-5">
         <div className="flex items-center gap-2 mb-3">
-          <div className="w-8 h-8 bg-blue-50 rounded-lg flex items-center justify-center">
+          <div className="w-8 h-8 bg-messenger-light rounded-lg flex items-center justify-center">
             <Bot className="w-4 h-4 text-messenger" />
           </div>
           <div>
@@ -818,7 +818,7 @@ function AiSettingsForm({ pageId }: { pageId: number }) {
 
       {/* Custom Goal */}
       {primaryGoal === "custom_goal" && (
-        <div className="bg-white rounded-lg border p-5 border-blue-200 bg-blue-50">
+        <div className="bg-white rounded-lg border p-5 border-messenger-light bg-messenger-light">
           <Label className="font-bold text-sm">Custom Goal Description</Label>
           <p className="text-xs text-muted-foreground mt-0.5 mb-2">Describe what you want the AI to push conversations toward</p>
           <Textarea
@@ -1020,15 +1020,15 @@ function HotLeadAlertsTab() {
           {/* Telegram */}
           <div className="p-4 bg-white rounded-lg border">
             <div className="flex items-start justify-between mb-4">
-              <div className="flex items-center gap-3"><Radio className="w-5 h-5 text-blue-500" /><div><p className="font-medium">Telegram</p><p className="text-xs text-muted-foreground">Telegram ping on hot leads</p></div></div>
+              <div className="flex items-center gap-3"><Radio className="w-5 h-5 text-messenger-light0" /><div><p className="font-medium">Telegram</p><p className="text-xs text-muted-foreground">Telegram ping on hot leads</p></div></div>
               {getStatusBadge(telegramStatus)}
             </div>
-            {telegramStatus === "not_connected" && <Button onClick={handleTelegramConnect} size="sm" className="bg-blue-500 hover:bg-blue-600">Get Connection Code</Button>}
+            {telegramStatus === "not_connected" && <Button onClick={handleTelegramConnect} size="sm" className="bg-messenger-light0 hover:bg-messenger">Get Connection Code</Button>}
             {telegramStatus === "pending" && (
-              <div className="space-y-3 bg-blue-50 p-3 rounded">
-                <p className="text-sm">Message <strong>@RocketeerBot</strong> with code: <strong className="text-lg text-blue-600">{telegramCode}</strong></p>
+              <div className="space-y-3 bg-messenger-light p-3 rounded">
+                <p className="text-sm">Message <strong>@RocketeerBot</strong> with code: <strong className="text-lg text-messenger">{telegramCode}</strong></p>
                 <div><Label className="text-xs">Your Telegram handle</Label><Input value={telegramHandle} onChange={e => setTelegramHandle(e.target.value)} placeholder="@yourhandle" className="mt-1.5 max-w-xs" /></div>
-                <Button onClick={handleTelegramVerify} size="sm" className="bg-blue-500 hover:bg-blue-600">Verify</Button>
+                <Button onClick={handleTelegramVerify} size="sm" className="bg-messenger-light0 hover:bg-messenger">Verify</Button>
               </div>
             )}
             {telegramStatus === "connected" && (
@@ -1320,16 +1320,16 @@ export default function Settings() {
           <div className="flex-1 min-w-0">
             {/* Page context banner for page-level tabs */}
             {PAGE_TABS.some(t => t.id === activeTab) && activePage && (
-              <div className="flex items-center gap-2 mb-4 px-4 py-2.5 bg-blue-50 border border-blue-200 rounded-lg">
+              <div className="flex items-center gap-2 mb-4 px-4 py-2.5 bg-messenger-light border border-messenger-light rounded-lg">
                 {activePage.avatarUrl ? (
                   <img src={activePage.avatarUrl} alt={activePage.pageName} className="w-6 h-6 rounded" />
                 ) : (
                   <Facebook className="w-4 h-4 text-[#1877F2]" />
                 )}
-                <p className="text-sm text-blue-800">
+                <p className="text-sm text-messenger-dark">
                   Editing settings for <strong>{activePage.pageName}</strong>
                 </p>
-                <span className="text-xs text-blue-600 ml-auto">Switch pages in the sidebar</span>
+                <span className="text-xs text-messenger ml-auto">Switch pages in the sidebar</span>
               </div>
             )}
 

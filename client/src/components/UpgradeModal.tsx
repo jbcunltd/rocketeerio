@@ -17,7 +17,7 @@ interface UpgradeModalProps {
 
 const PLAN_DISPLAY: Record<string, { name: string; price: string; color: string }> = {
   free: { name: "Free", price: "$0", color: "text-gray-500" },
-  growth: { name: "Growth", price: "$29/mo", color: "text-blue-500" },
+  growth: { name: "Growth", price: "$29/mo", color: "text-messenger-light0" },
   pro: { name: "Pro", price: "$79/mo", color: "text-purple-500" },
   scale: { name: "Scale", price: "$149/mo", color: "text-orange-500" },
   custom: { name: "Custom", price: "Contact us", color: "text-emerald-500" },
@@ -69,7 +69,7 @@ export function UpgradeModal({
           <ArrowRight className="w-5 h-5 text-muted-foreground" />
           <div className="text-center p-3 rounded-lg bg-primary/5 border border-primary/20">
             <p className="text-xs text-muted-foreground">Recommended</p>
-            <p className={`font-semibold ${next?.color || "text-blue-500"}`}>{next?.name || "Growth"}</p>
+            <p className={`font-semibold ${next?.color || "text-messenger-light0"}`}>{next?.name || "Growth"}</p>
             <p className="text-xs text-muted-foreground">{next?.price || "$29/mo"}</p>
           </div>
         </div>

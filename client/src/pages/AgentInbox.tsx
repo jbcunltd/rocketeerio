@@ -32,13 +32,13 @@ function AgentInboxContent() {
     <div>
       {/* Page context banner */}
       {activePage && (
-        <div className="flex items-center gap-2 mb-4 px-4 py-2.5 bg-blue-50 border border-blue-200 rounded-lg">
+        <div className="flex items-center gap-2 mb-4 px-4 py-2.5 bg-messenger-light border border-messenger-light rounded-lg">
           {activePage.avatarUrl ? (
             <img src={activePage.avatarUrl} alt={activePage.pageName} className="w-5 h-5 rounded" />
           ) : (
             <Facebook className="w-4 h-4 text-[#1877F2]" />
           )}
-          <p className="text-sm text-blue-800">Showing agent inbox for <strong>{activePage.pageName}</strong></p>
+          <p className="text-sm text-messenger-dark">Showing agent inbox for <strong>{activePage.pageName}</strong></p>
         </div>
       )}
 
@@ -220,7 +220,7 @@ function ConversationPanel({ convId, onResolved }: { convId: number; onResolved:
               msg.sender === "lead"
                 ? "bg-gray-100 text-foreground rounded-bl-md"
                 : msg.sender === "ai"
-                ? "bg-blue-500 text-white rounded-br-md"
+                ? "bg-messenger-light0 text-white rounded-br-md"
                 : "bg-green-500 text-white rounded-br-md"
             }`}>
               <div className="flex items-center gap-1.5 mb-0.5">

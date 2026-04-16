@@ -80,8 +80,8 @@ export function PageSwitcher({ collapsed }: { collapsed?: boolean }) {
           onClick={handleAddPage}
           className="flex items-center gap-2 w-full rounded-lg px-2.5 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
         >
-          <div className="w-7 h-7 rounded-full bg-blue-500/10 flex items-center justify-center shrink-0">
-            <Plus className="w-3.5 h-3.5 text-blue-500" />
+          <div className="w-7 h-7 rounded-full bg-messenger-light0/10 flex items-center justify-center shrink-0">
+            <Plus className="w-3.5 h-3.5 text-messenger-light0" />
           </div>
           {!collapsed && <span className="truncate">Connect a Page</span>}
         </button>
@@ -101,7 +101,7 @@ export function PageSwitcher({ collapsed }: { collapsed?: boolean }) {
             {activePage?.avatarUrl ? (
               <AvatarImage src={activePage.avatarUrl} alt={activePage.pageName} />
             ) : null}
-            <AvatarFallback className="text-xs bg-blue-500/10 text-blue-600">
+            <AvatarFallback className="text-xs bg-messenger-light0/10 text-messenger">
               {activePage?.pageName?.charAt(0)?.toUpperCase() || <Facebook className="w-3.5 h-3.5" />}
             </AvatarFallback>
           </Avatar>
@@ -135,7 +135,7 @@ export function PageSwitcher({ collapsed }: { collapsed?: boolean }) {
           {activePage?.avatarUrl ? (
             <AvatarImage src={activePage.avatarUrl} alt={activePage.pageName} />
           ) : null}
-          <AvatarFallback className="text-xs bg-blue-500/10 text-blue-600">
+          <AvatarFallback className="text-xs bg-messenger-light0/10 text-messenger">
             {activePage?.pageName?.charAt(0)?.toUpperCase() || <Facebook className="w-3.5 h-3.5" />}
           </AvatarFallback>
         </Avatar>
@@ -217,7 +217,7 @@ function DropdownContent({
                 {page.avatarUrl ? (
                   <AvatarImage src={page.avatarUrl} alt={page.pageName} />
                 ) : null}
-                <AvatarFallback className="text-[10px] bg-blue-500/10 text-blue-600">
+                <AvatarFallback className="text-[10px] bg-messenger-light0/10 text-messenger">
                   {page.pageName?.charAt(0)?.toUpperCase() || "P"}
                 </AvatarFallback>
               </Avatar>
@@ -250,9 +250,9 @@ function DropdownContent({
       <div className="border-t mt-1 pt-1">
         <button
           onClick={onAddPage}
-          className="flex items-center gap-2.5 w-full px-3 py-2 text-left hover:bg-accent transition-colors text-blue-600"
+          className="flex items-center gap-2.5 w-full px-3 py-2 text-left hover:bg-accent transition-colors text-messenger"
         >
-          <div className="w-7 h-7 rounded-full bg-blue-500/10 flex items-center justify-center shrink-0">
+          <div className="w-7 h-7 rounded-full bg-messenger-light0/10 flex items-center justify-center shrink-0">
             <Plus className="w-3.5 h-3.5" />
           </div>
           <span className="text-sm font-medium">+ Add Page</span>

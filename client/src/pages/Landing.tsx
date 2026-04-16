@@ -722,7 +722,7 @@ export default function Landing() {
                 )}
                 {plan.badge && (
                   <div className="mb-3 inline-block">
-                    <span className="inline-block bg-blue-100 text-blue-700 text-xs font-semibold px-2.5 py-1 rounded">
+                    <span className="inline-block bg-messenger-light text-messenger-dark text-xs font-semibold px-2.5 py-1 rounded">
                       {plan.badge}
                     </span>
                   </div>

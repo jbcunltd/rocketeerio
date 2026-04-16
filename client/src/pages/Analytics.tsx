@@ -102,13 +102,13 @@ function AnalyticsContent() {
     <div>
       {/* Page context banner */}
       {activePage && (
-        <div className="flex items-center gap-2 mb-4 px-4 py-2.5 bg-blue-50 border border-blue-200 rounded-lg">
+        <div className="flex items-center gap-2 mb-4 px-4 py-2.5 bg-messenger-light border border-messenger-light rounded-lg">
           {activePage.avatarUrl ? (
             <img src={activePage.avatarUrl} alt={activePage.pageName} className="w-5 h-5 rounded" />
           ) : (
             <Facebook className="w-4 h-4 text-[#1877F2]" />
           )}
-          <p className="text-sm text-blue-800">Showing analytics for <strong>{activePage.pageName}</strong></p>
+          <p className="text-sm text-messenger-dark">Showing analytics for <strong>{activePage.pageName}</strong></p>
         </div>
       )}
 
@@ -136,7 +136,7 @@ function AnalyticsContent() {
 
       {/* Key Metrics */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4 mb-6">
-        <StatCard icon={MessageCircle} label="Conversations" value={overview?.totalConversations || 0} color="bg-blue-50 text-blue-600" />
+        <StatCard icon={MessageCircle} label="Conversations" value={overview?.totalConversations || 0} color="bg-messenger-light text-messenger" />
         <StatCard icon={Users} label="Total Leads" value={overview?.totalLeads || 0} color="bg-purple-50 text-purple-600" />
         <StatCard icon={Flame} label="Hot Leads" value={overview?.hotLeads || 0} color="bg-red-50 text-red-600" />
         <StatCard icon={Target} label="Conversion Rate" value={`${overview?.conversionRate || 0}%`} color="bg-green-50 text-green-600" />
@@ -174,7 +174,7 @@ function AnalyticsContent() {
       {/* Lead Activity Chart */}
       <div className="bg-white rounded-xl p-4 sm:p-6 border border-gray-200 mb-6 overflow-hidden">
         <div className="flex items-center gap-2 mb-4">
-          <BarChart3 className="w-5 h-5 text-blue-600" />
+          <BarChart3 className="w-5 h-5 text-messenger" />
           <h3 className="font-bold">Lead Activity by Day</h3>
         </div>
         {activityData.length > 0 ? (
@@ -264,7 +264,7 @@ function AnalyticsContent() {
         {/* Platform Distribution */}
         <div className="bg-white rounded-xl p-4 sm:p-6 border border-gray-200">
           <div className="flex items-center gap-2 mb-4">
-            <MessageCircle className="w-5 h-5 text-blue-500" />
+            <MessageCircle className="w-5 h-5 text-messenger-light0" />
             <h3 className="font-bold text-sm">Platform Distribution</h3>
           </div>
           {platformChartData.length > 0 ? (
@@ -306,9 +306,9 @@ function AnalyticsContent() {
             <p className="text-2xl font-bold text-indigo-700">{overview?.aiMessages || 0}</p>
             <p className="text-sm text-indigo-600">AI Messages</p>
           </div>
-          <div className="p-4 rounded-lg bg-blue-50 border border-blue-100">
-            <p className="text-2xl font-bold text-blue-700">{overview?.humanMessages || 0}</p>
-            <p className="text-sm text-blue-600">Lead Messages</p>
+          <div className="p-4 rounded-lg bg-messenger-light border border-messenger-light">
+            <p className="text-2xl font-bold text-messenger-dark">{overview?.humanMessages || 0}</p>
+            <p className="text-sm text-messenger">Lead Messages</p>
           </div>
         </div>
       </div>

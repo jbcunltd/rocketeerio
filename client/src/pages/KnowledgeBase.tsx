@@ -11,7 +11,7 @@ import { useState, useRef } from "react";
 import { toast } from "sonner";
 
 const categoryColors: Record<string, string> = {
-  product: "bg-blue-50 text-blue-600",
+  product: "bg-messenger-light text-messenger",
   pricing: "bg-green-50 text-green-600",
   faq: "bg-purple-50 text-purple-600",
   policy: "bg-amber-50 text-amber-600",
@@ -90,8 +90,8 @@ function WebsiteImportSection({ onComplete }: { onComplete: () => void }) {
   return (
     <div className="bg-white rounded-xl p-4 sm:p-5 card-shadow border border-border/50">
       <div className="flex items-center gap-2 mb-3">
-        <div className="w-8 h-8 bg-blue-50 rounded-lg flex items-center justify-center shrink-0">
-          <Globe className="w-4 h-4 text-blue-600" />
+        <div className="w-8 h-8 bg-messenger-light rounded-lg flex items-center justify-center shrink-0">
+          <Globe className="w-4 h-4 text-messenger" />
         </div>
         <div className="min-w-0">
           <h3 className="font-bold text-sm">Import from Website</h3>
@@ -107,7 +107,7 @@ function WebsiteImportSection({ onComplete }: { onComplete: () => void }) {
           disabled={isImporting}
           onKeyDown={e => e.key === "Enter" && handleImport()}
         />
-        <Button onClick={handleImport} disabled={isImporting} className="bg-blue-600 hover:bg-blue-700 text-white whitespace-nowrap">
+        <Button onClick={handleImport} disabled={isImporting} className="bg-messenger hover:bg-messenger-dark text-white whitespace-nowrap">
           {isImporting ? (
             <><Loader2 className="w-4 h-4 animate-spin mr-2" /> Crawling...</>
           ) : (
@@ -116,7 +116,7 @@ function WebsiteImportSection({ onComplete }: { onComplete: () => void }) {
         </Button>
       </div>
       {isImporting && progress && (
-        <div className="mt-3 flex items-center gap-2 text-sm text-blue-600">
+        <div className="mt-3 flex items-center gap-2 text-sm text-messenger">
           <RefreshCw className="w-3.5 h-3.5 animate-spin" />
           <span>{progress}</span>
         </div>
@@ -307,13 +307,13 @@ function KnowledgeBaseContent() {
     <div>
       {/* Page context banner */}
       {activePage && (
-        <div className="flex items-center gap-2 mb-4 px-4 py-2.5 bg-blue-50 border border-blue-200 rounded-lg">
+        <div className="flex items-center gap-2 mb-4 px-4 py-2.5 bg-messenger-light border border-messenger-light rounded-lg">
           {activePage.avatarUrl ? (
             <img src={activePage.avatarUrl} alt={activePage.pageName} className="w-5 h-5 rounded" />
           ) : (
             <Facebook className="w-4 h-4 text-[#1877F2]" />
           )}
-          <p className="text-sm text-blue-800">Knowledge base for <strong>{activePage.pageName}</strong></p>
+          <p className="text-sm text-messenger-dark">Knowledge base for <strong>{activePage.pageName}</strong></p>
         </div>
       )}
 
@@ -390,7 +390,7 @@ function KnowledgeBaseContent() {
             {entryCounts.website > 0 && (
               <button
                 onClick={() => setFilterSource("website")}
-                className={`px-2.5 py-1 rounded-full text-xs font-medium transition-colors flex items-center gap-1 ${filterSource === "website" ? "bg-blue-600 text-white" : "bg-blue-50 text-blue-600 hover:bg-blue-100"}`}
+                className={`px-2.5 py-1 rounded-full text-xs font-medium transition-colors flex items-center gap-1 ${filterSource === "website" ? "bg-messenger text-white" : "bg-messenger-light text-messenger hover:bg-messenger-light"}`}
               >
                 <Globe className="w-3 h-3" /> Website ({entryCounts.website})
               </button>

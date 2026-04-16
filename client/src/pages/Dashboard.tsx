@@ -174,7 +174,7 @@ function DashboardContent() {
 
       {/* 2x2 Metric Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-5">
-        <StatCard icon={MessageCircle} label="Conversations" value={stats?.totalConversations ?? 0} color="bg-blue-50 text-blue-600" />
+        <StatCard icon={MessageCircle} label="Conversations" value={stats?.totalConversations ?? 0} color="bg-messenger-light text-messenger" />
         <StatCard icon={Flame} label="Hot Leads" value={stats?.hotLeadsToday ?? 0} color="bg-red-50 text-red-500" />
         <StatCard icon={Users} label="Total Leads" value={stats?.totalLeads ?? 0} color="bg-purple-50 text-purple-600" />
         <StatCard icon={Bot} label="AI Rate" value={`${aiRate}%`} color="bg-green-50 text-green-600" />
@@ -183,8 +183,8 @@ function DashboardContent() {
       {!hasData ? (
         /* Empty State */
         <div className="bg-white rounded-xl p-8 sm:p-12 border border-gray-200 text-center">
-          <div className="w-14 h-14 bg-blue-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
-            <Rocket className="w-7 h-7 text-blue-600" />
+          <div className="w-14 h-14 bg-messenger-light rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <Rocket className="w-7 h-7 text-messenger" />
           </div>
           <h2 className="text-lg font-bold mb-2">Get Started with Rocketeerio</h2>
           <p className="text-sm text-muted-foreground max-w-md mx-auto mb-5">
@@ -278,8 +278,8 @@ function DashboardContent() {
                       className="w-full text-left flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors"
                     >
                       {/* Avatar */}
-                      <div className="w-9 h-9 bg-blue-50 rounded-full flex items-center justify-center shrink-0">
-                        <span className="text-sm font-bold text-blue-600">
+                      <div className="w-9 h-9 bg-messenger-light rounded-full flex items-center justify-center shrink-0">
+                        <span className="text-sm font-bold text-messenger">
                           {(lead?.name || "?").charAt(0).toUpperCase()}
                         </span>
                       </div>

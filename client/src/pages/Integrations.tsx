@@ -306,9 +306,9 @@ function IntegrationsContent() {
               </div>
             </div>
             
-            <div className="flex items-start gap-2 bg-blue-50 p-3 rounded-md mt-2 border border-blue-100">
-              <Info className="w-4 h-4 text-blue-600 mt-0.5 shrink-0" />
-              <p className="text-xs text-blue-800"><strong>Easier Alternative:</strong> If Option 2 seems too technical, we highly recommend using the <strong>Zapier Integration</strong> (above) to connect to Google Sheets. It's much simpler and requires no coding!</p>
+            <div className="flex items-start gap-2 bg-messenger-light p-3 rounded-md mt-2 border border-messenger-light">
+              <Info className="w-4 h-4 text-messenger mt-0.5 shrink-0" />
+              <p className="text-xs text-messenger-dark"><strong>Easier Alternative:</strong> If Option 2 seems too technical, we highly recommend using the <strong>Zapier Integration</strong> (above) to connect to Google Sheets. It's much simpler and requires no coding!</p>
             </div>
           </div>
         )}
