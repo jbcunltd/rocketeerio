@@ -2046,7 +2046,7 @@ function registerFacebookRoutes(app2) {
         return res.redirect("/?error=not_authenticated");
       }
       const redirectUri = `${ENV.appUrl}/api/auth/facebook/callback`;
-      const scope = "pages_messaging,pages_manage_metadata,pages_read_engagement";
+      const scope = "pages_messaging,pages_manage_metadata,pages_show_list";
       const state = Buffer.from(JSON.stringify({ userId: session.userId })).toString("base64");
       const authUrl = `https://www.facebook.com/v19.0/dialog/oauth?client_id=${ENV.facebookAppId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${scope}&state=${state}`;
       res.redirect(authUrl);
@@ -2199,7 +2199,7 @@ function registerFacebookRoutes(app2) {
         return res.status(401).json({ error: "Not authenticated" });
       }
       const redirectUri = `${ENV.appUrl}/api/auth/facebook/callback`;
-      const scope = "pages_messaging,pages_manage_metadata,pages_read_engagement";
+      const scope = "pages_messaging,pages_manage_metadata,pages_show_list";
       const state = Buffer.from(JSON.stringify({ userId: session.userId })).toString("base64");
       const authUrl = `https://www.facebook.com/v19.0/dialog/oauth?client_id=${ENV.facebookAppId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${scope}&state=${state}`;
       return res.json({ url: authUrl, appId: ENV.facebookAppId });
@@ -2441,7 +2441,7 @@ function registerInstagramRoutes(app2) {
         return res.redirect("/?error=not_authenticated");
       }
       const redirectUri = `${ENV.appUrl}/api/auth/instagram/callback`;
-      const scope = "pages_messaging,pages_manage_metadata,pages_read_engagement,instagram_basic,instagram_manage_messages";
+      const scope = "pages_messaging,pages_manage_metadata,pages_show_list,instagram_basic,instagram_manage_messages";
       const state = Buffer.from(JSON.stringify({ userId: session.userId })).toString("base64");
       const authUrl = `https://www.facebook.com/v19.0/dialog/oauth?client_id=${ENV.facebookAppId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${scope}&state=${state}`;
       res.redirect(authUrl);
@@ -2592,7 +2592,7 @@ function registerInstagramRoutes(app2) {
         return res.status(401).json({ error: "Not authenticated" });
       }
       const redirectUri = `${ENV.appUrl}/api/auth/instagram/callback`;
-      const scope = "pages_messaging,pages_manage_metadata,pages_read_engagement,instagram_basic,instagram_manage_messages";
+      const scope = "pages_messaging,pages_manage_metadata,pages_show_list,instagram_basic,instagram_manage_messages";
       const state = Buffer.from(JSON.stringify({ userId: session.userId })).toString("base64");
       const authUrl = `https://www.facebook.com/v19.0/dialog/oauth?client_id=${ENV.facebookAppId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${scope}&state=${state}`;
       return res.json({ url: authUrl, appId: ENV.facebookAppId });
