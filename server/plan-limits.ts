@@ -59,7 +59,7 @@ export const PLAN_LIMITS: Record<PlanSlug, PlanLimits> = {
   pro: {
     name: "Pro",
     slug: "pro",
-    price: 69,
+    price: 79,
     maxFacebookPages: 3,
     maxActiveLeads: 5000,
     maxConversationsPerMonth: 2500,
@@ -105,7 +105,7 @@ export const PLAN_LIMITS: Record<PlanSlug, PlanLimits> = {
 
 /** Get the next upgrade plan slug */
 export function getNextPlan(currentPlan: PlanSlug): PlanSlug | null {
-  const order: PlanSlug[] = ["free", "growth", "pro", "scale"];
+  const order: PlanSlug[] = ["free", "growth", "pro", "scale", "custom"];
   const idx = order.indexOf(currentPlan);
   if (idx === -1 || idx >= order.length - 1) return null;
   return order[idx + 1];

@@ -18,7 +18,7 @@ interface UpgradeModalProps {
 const PLAN_DISPLAY: Record<string, { name: string; price: string; color: string }> = {
   free: { name: "Free", price: "$0", color: "text-gray-500" },
   growth: { name: "Growth", price: "$29/mo", color: "text-blue-500" },
-  pro: { name: "Pro", price: "$69/mo", color: "text-purple-500" },
+  pro: { name: "Pro", price: "$79/mo", color: "text-purple-500" },
   scale: { name: "Scale", price: "$149/mo", color: "text-orange-500" },
   custom: { name: "Custom", price: "Contact us", color: "text-emerald-500" },
 };

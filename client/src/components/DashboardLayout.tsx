@@ -27,15 +27,17 @@ import { PageSwitcher } from "@/components/PageSwitcher";
 import { useActivePage } from "@/contexts/ActivePageContext";
 import { useIsMobile } from "@/hooks/useMobile";
 import {
-  LayoutDashboard, MessageCircle, Users, Settings,
-  LogOut, PanelLeft, Rocket, BookOpen, Zap, CreditCard, BarChart3, Plug, Headphones
+  LayoutDashboard, MessageCircle, Users,
+  LogOut, PanelLeft, Rocket, BookOpen, Zap, CreditCard, BarChart3, Headphones,
+  User, Bell, Settings
 } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
 import { Button } from "./ui/button";
 
-const menuItems = [
+// Page-level nav items (change per active page)
+const pageNavItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard" },
   { icon: MessageCircle, label: "Conversations", path: "/conversations" },
   { icon: Headphones, label: "Agent Inbox", path: "/agent-inbox" },
@@ -43,9 +45,6 @@ const menuItems = [
   { icon: BookOpen, label: "Knowledge Base", path: "/knowledge-base" },
   { icon: Zap, label: "Follow-Ups", path: "/follow-ups" },
   { icon: BarChart3, label: "Analytics", path: "/analytics" },
-  { icon: Plug, label: "Integrations", path: "/integrations" },
-  { icon: CreditCard, label: "Billing", path: "/billing" },
-  { icon: Settings, label: "Settings", path: "/settings" },
 ];
 
 const SIDEBAR_WIDTH_KEY = "sidebar-width";
@@ -125,7 +124,10 @@ function DashboardLayoutContent({
   const isCollapsed = state === "collapsed";
   const [isResizing, setIsResizing] = useState(false);
   const sidebarRef = useRef<HTMLDivElement>(null);
-  const activeMenuItem = menuItems.find(item => location.startsWith(item.path));
+  const activeMenuItem = pageNavItems.find(item => location.startsWith(item.path))
+    || (location.startsWith("/settings") ? { label: "Page Settings" } : null)
+    || (location.startsWith("/billing") ? { label: "Billing & Plans" } : null)
+    || (location.startsWith("/integrations") ? { label: "Integrations" } : null);
   const isMobile = useIsMobile();
 
   // Use active page from context for AI mode indicator
@@ -211,8 +213,9 @@ function DashboardLayoutContent({
               </div>
             )}
 
+            {/* Page-level navigation */}
             <SidebarMenu className="px-2 py-1">
-              {menuItems.map(item => {
+              {pageNavItems.map(item => {
                 const isActive = location.startsWith(item.path);
                 return (
                   <SidebarMenuItem key={item.path}>
@@ -246,12 +249,35 @@ function DashboardLayoutContent({
                   </div>
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48">
-                <DropdownMenuItem onClick={() => setLocation("/settings")} className="cursor-pointer">
-                  <Settings className="mr-2 h-4 w-4" />
-                  <span>Settings</span>
+              <DropdownMenuContent align="end" className="w-56">
+                <div className="px-2 py-1.5">
+                  <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Account</p>
+                </div>
+                <DropdownMenuItem onClick={() => setLocation("/settings?tab=profile")} className="cursor-pointer">
+                  <User className="mr-2 h-4 w-4" />
+                  <span>Account Settings</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setLocation("/billing")} className="cursor-pointer">
+                  <CreditCard className="mr-2 h-4 w-4" />
+                  <span>Billing & Plans</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setLocation("/settings?tab=notifications")} className="cursor-pointer">
+                  <Bell className="mr-2 h-4 w-4" />
+                  <span>Notifications</span>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
+                {activePage && (
+                  <>
+                    <div className="px-2 py-1.5">
+                      <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Page Settings</p>
+                    </div>
+                    <DropdownMenuItem onClick={() => setLocation("/settings?tab=channels")} className="cursor-pointer">
+                      <Settings className="mr-2 h-4 w-4" />
+                      <span>{activePage.pageName} Settings</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                  </>
+                )}
                 <DropdownMenuItem onClick={logout} className="cursor-pointer text-destructive focus:text-destructive">
                   <LogOut className="mr-2 h-4 w-4" />
                   <span>Sign out</span>

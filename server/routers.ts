@@ -361,15 +361,18 @@ export const appRouter = router({
 
   // ─── Knowledge Base ────────────────────────────────────────────────
   knowledgeBase: router({
-    list: protectedProcedure.query(async ({ ctx }) => {
-      return db.getKnowledgeBase(ctx.user.id);
-    }),
+    list: protectedProcedure
+      .input(z.object({ pageId: z.number().optional() }).optional())
+      .query(async ({ ctx, input }) => {
+        return db.getKnowledgeBase(ctx.user.id, input?.pageId);
+      }),
 
     create: protectedProcedure
       .input(z.object({
         title: z.string(),
         content: z.string(),
         category: z.enum(["product", "pricing", "faq", "policy", "general"]).default("general"),
+        pageId: z.number().optional(),
       }))
       .mutation(async ({ ctx, input }) => {
         const id = await db.createKnowledgeEntry({
@@ -450,24 +453,27 @@ export const appRouter = router({
       }),
 
     // ─── Follow-Up Settings ────────────────────────────────────────
-    getSettings: protectedProcedure.query(async ({ ctx }) => {
-      const settings = await db.getFollowUpSettings(ctx.user.id);
-      return settings || {
-        isEnabled: true,
-        step1DelayMinutes: 1440,
-        step1Message: "Hi! Just checking in \u2014 did you have any other questions about what we discussed?",
-        step1Enabled: true,
-        step2DelayMinutes: 2880,
-        step2Message: "Hey! I wanted to follow up on our conversation. Is there anything else I can help you with?",
-        step2Enabled: true,
-        step3DelayMinutes: 10080,
-        step3Message: "Hi there! I noticed we chatted earlier. I\u2019d love to help you move forward \u2014 feel free to ask me anything!",
-        step3Enabled: true,
-      };
-    }),
+    getSettings: protectedProcedure
+      .input(z.object({ pageId: z.number().optional() }).optional())
+      .query(async ({ ctx, input }) => {
+        const settings = await db.getFollowUpSettings(ctx.user.id, input?.pageId);
+        return settings || {
+          isEnabled: true,
+          step1DelayMinutes: 1440,
+          step1Message: "Hi! Just checking in \u2014 did you have any other questions about what we discussed?",
+          step1Enabled: true,
+          step2DelayMinutes: 2880,
+          step2Message: "Hey! I wanted to follow up on our conversation. Is there anything else I can help you with?",
+          step2Enabled: true,
+          step3DelayMinutes: 10080,
+          step3Message: "Hi there! I noticed we chatted earlier. I\u2019d love to help you move forward \u2014 feel free to ask me anything!",
+          step3Enabled: true,
+        };
+      }),
 
     updateSettings: protectedProcedure
       .input(z.object({
+        pageId: z.number().optional(),
         isEnabled: z.boolean().optional(),
         step1DelayMinutes: z.number().min(1).optional(),
         step1Message: z.string().optional(),
@@ -480,7 +486,8 @@ export const appRouter = router({
         step3Enabled: z.boolean().optional(),
       }))
       .mutation(async ({ ctx, input }) => {
-        await db.upsertFollowUpSettings(ctx.user.id, input);
+        const { pageId, ...data } = input;
+        await db.upsertFollowUpSettings(ctx.user.id, data, pageId);
         return { success: true };
       }),
   }),
@@ -999,22 +1006,26 @@ export const appRouter = router({
   }),
   // ─── Handoff Settings ──────────────────────────────────────────────
   handoffs: router({
-    getSettings: protectedProcedure.query(async ({ ctx }) => {
-      return db.getHandoffSettings(ctx.user.id);
-    }),
+    getSettings: protectedProcedure
+      .input(z.object({ pageId: z.number().optional() }).optional())
+      .query(async ({ ctx, input }) => {
+        return db.getHandoffSettings(ctx.user.id, input?.pageId);
+      }),
     updateSettings: protectedProcedure
       .input(z.object({
+        pageId: z.number().optional(),
         autoHandoffEnabled: z.boolean().optional(),
         notifyOnHandoff: z.boolean().optional(),
         sentimentThreshold: z.number().min(0).max(1).optional(),
         handoffKeywords: z.array(z.string()).optional(),
       }))
       .mutation(async ({ ctx, input }) => {
+        const { pageId, ...rest } = input;
         await db.upsertHandoffSettings(ctx.user.id, {
-          ...input,
-          handoffKeywords: input.handoffKeywords ? JSON.stringify(input.handoffKeywords) : undefined,
-          sentimentThreshold: input.sentimentThreshold !== undefined ? String(input.sentimentThreshold) : undefined,
-        });
+          ...rest,
+          handoffKeywords: rest.handoffKeywords ? JSON.stringify(rest.handoffKeywords) : undefined,
+          sentimentThreshold: rest.sentimentThreshold !== undefined ? String(rest.sentimentThreshold) : undefined,
+        }, pageId);
         return { success: true };
       }),
     active: protectedProcedure.query(async ({ ctx }) => {

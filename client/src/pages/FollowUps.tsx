@@ -39,7 +39,10 @@ function FollowUpsContent() {
     if (!activePageId) return allConversations;
     return allConversations.filter((c: any) => c.page?.id === activePageId);
   }, [allConversations, activePageId]);
-  const { data: settings, isLoading: settingsLoading } = trpc.followUps.getSettings.useQuery();
+  const { data: settings, isLoading: settingsLoading } = trpc.followUps.getSettings.useQuery(
+    { pageId: activePageId ?? undefined },
+    { enabled: !!activePageId }
+  );
   const updateSettings = trpc.followUps.updateSettings.useMutation();
   const utils = trpc.useUtils();
   const [, setLocation] = useLocation();
@@ -92,6 +95,7 @@ function FollowUpsContent() {
     setSaving(true);
     try {
       await updateSettings.mutateAsync({
+        pageId: activePageId ?? undefined,
         isEnabled,
         step1DelayMinutes: step1Delay,
         step1Message: step1Message || undefined,

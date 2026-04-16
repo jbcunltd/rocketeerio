@@ -242,10 +242,12 @@ export async function createMessage(data: InsertMessage) {
 
 // ─── Knowledge Base ──────────────────────────────────────────────────
 
-export async function getKnowledgeBase(userId: number) {
+export async function getKnowledgeBase(userId: number, pageId?: number) {
   const db = await getDb();
   if (!db) return [];
-  return db.select().from(knowledgeBase).where(eq(knowledgeBase.userId, userId)).orderBy(desc(knowledgeBase.createdAt));
+  const conditions = [eq(knowledgeBase.userId, userId)];
+  if (pageId !== undefined) conditions.push(eq(knowledgeBase.pageId, pageId));
+  return db.select().from(knowledgeBase).where(and(...conditions)).orderBy(desc(knowledgeBase.createdAt));
 }
 
 export async function createKnowledgeEntry(data: InsertKnowledgeBaseEntry) {
@@ -267,16 +269,20 @@ export async function deleteKnowledgeEntry(entryId: number) {
   await db.delete(knowledgeBase).where(eq(knowledgeBase.id, entryId));
 }
 
-export async function getActiveKnowledgeBase(userId: number) {
+export async function getActiveKnowledgeBase(userId: number, pageId?: number) {
   const db = await getDb();
   if (!db) return [];
-  return db.select().from(knowledgeBase).where(and(eq(knowledgeBase.userId, userId), eq(knowledgeBase.isActive, true)));
+  const conditions = [eq(knowledgeBase.userId, userId), eq(knowledgeBase.isActive, true)];
+  if (pageId !== undefined) conditions.push(eq(knowledgeBase.pageId, pageId));
+  return db.select().from(knowledgeBase).where(and(...conditions));
 }
 
-export async function deleteKnowledgeBySource(userId: number, source: "manual" | "website" | "pdf") {
+export async function deleteKnowledgeBySource(userId: number, source: "manual" | "website" | "pdf", pageId?: number) {
   const db = await getDb();
   if (!db) return;
-  await db.delete(knowledgeBase).where(and(eq(knowledgeBase.userId, userId), eq(knowledgeBase.source, source)));
+  const conditions = [eq(knowledgeBase.userId, userId), eq(knowledgeBase.source, source)];
+  if (pageId !== undefined) conditions.push(eq(knowledgeBase.pageId, pageId));
+  await db.delete(knowledgeBase).where(and(...conditions));
 }
 
 // ─── Follow-Up Sequences ────────────────────────────────────────────
@@ -731,21 +737,25 @@ export async function getLeadByIgScopedId(igScopedId: string, igAccountId: numbe
 
 // ─── Follow-Up Settings ─────────────────────────────────────────────
 
-export async function getFollowUpSettings(userId: number) {
+export async function getFollowUpSettings(userId: number, pageId?: number) {
   const database = await getDb();
   if (!database) return null;
-  const rows = await database.select().from(followUpSettings).where(eq(followUpSettings.userId, userId));
+  const conditions = [eq(followUpSettings.userId, userId)];
+  if (pageId !== undefined) conditions.push(eq(followUpSettings.pageId, pageId));
+  const rows = await database.select().from(followUpSettings).where(and(...conditions));
   return rows[0] || null;
 }
 
-export async function upsertFollowUpSettings(userId: number, data: Partial<InsertFollowUpSetting>) {
+export async function upsertFollowUpSettings(userId: number, data: Partial<InsertFollowUpSetting>, pageId?: number) {
   const database = await getDb();
   if (!database) return;
-  const existing = await getFollowUpSettings(userId);
+  const existing = await getFollowUpSettings(userId, pageId);
   if (existing) {
-    await database.update(followUpSettings).set({ ...data, updatedAt: new Date() }).where(eq(followUpSettings.userId, userId));
+    const conditions = [eq(followUpSettings.userId, userId)];
+    if (pageId !== undefined) conditions.push(eq(followUpSettings.pageId, pageId));
+    await database.update(followUpSettings).set({ ...data, updatedAt: new Date() }).where(and(...conditions));
   } else {
-    await database.insert(followUpSettings).values({ userId, ...data });
+    await database.insert(followUpSettings).values({ userId, pageId: pageId ?? null, ...data });
   }
 }
 
@@ -986,25 +996,28 @@ export async function upsertIntegrationSettings(userId: number, data: Partial<In
 
 // ─── Handoff Settings ───────────────────────────────────────────────
 
-export async function getHandoffSettings(userId: number) {
+export async function getHandoffSettings(userId: number, pageId?: number) {
   const database = await getDb();
   if (!database) return null;
+  const conditions = [eq(handoffSettings.userId, userId)];
+  if (pageId !== undefined) conditions.push(eq(handoffSettings.pageId, pageId));
   const result = await database.select().from(handoffSettings)
-    .where(eq(handoffSettings.userId, userId)).limit(1);
+    .where(and(...conditions)).limit(1);
   return result[0] ?? null;
 }
 
-export async function upsertHandoffSettings(userId: number, data: Partial<InsertHandoffSetting>) {
+export async function upsertHandoffSettings(userId: number, data: Partial<InsertHandoffSetting>, pageId?: number) {
   const database = await getDb();
   if (!database) return;
-  const existing = await database.select().from(handoffSettings)
-    .where(eq(handoffSettings.userId, userId)).limit(1);
-  if (existing.length > 0) {
+  const existing = await getHandoffSettings(userId, pageId);
+  if (existing) {
+    const conditions = [eq(handoffSettings.userId, userId)];
+    if (pageId !== undefined) conditions.push(eq(handoffSettings.pageId, pageId));
     await database.update(handoffSettings)
       .set({ ...data, updatedAt: new Date() })
-      .where(eq(handoffSettings.userId, userId));
+      .where(and(...conditions));
   } else {
-    await database.insert(handoffSettings).values({ userId, ...data });
+    await database.insert(handoffSettings).values({ userId, pageId: pageId ?? null, ...data });
   }
 }
 

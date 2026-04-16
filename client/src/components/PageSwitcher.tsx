@@ -3,8 +3,9 @@ import { UpgradeModal } from "@/components/UpgradeModal";
 import { trpc } from "@/lib/trpc";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/_core/hooks/useAuth";
-import { ChevronsUpDown, Plus, Check, Facebook } from "lucide-react";
+import { ChevronsUpDown, Plus, Check, Facebook, Settings } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
+import { useLocation } from "wouter";
 
 export function PageSwitcher({ collapsed }: { collapsed?: boolean }) {
   const { activePage, pages, setActivePageId, isLoading } = useActivePage();
@@ -12,6 +13,7 @@ export function PageSwitcher({ collapsed }: { collapsed?: boolean }) {
   const [open, setOpen] = useState(false);
   const [showUpgrade, setShowUpgrade] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const [, navigate] = useLocation();
 
   // Fetch plan limit check
   const { data: canAddData } = trpc.pages.checkCanAdd.useQuery(undefined, {
@@ -55,6 +57,12 @@ export function PageSwitcher({ collapsed }: { collapsed?: boolean }) {
   const handleSelectPage = (pageId: number) => {
     setActivePageId(pageId);
     setOpen(false);
+  };
+
+  const handlePageSettings = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setOpen(false);
+    navigate("/settings");
   };
 
   if (isLoading) {
@@ -107,6 +115,7 @@ export function PageSwitcher({ collapsed }: { collapsed?: boolean }) {
                 activePageId={activePage?.id ?? null}
                 onSelect={handleSelectPage}
                 onAddPage={handleAddPage}
+                onPageSettings={handlePageSettings}
               />
             </div>
           )}
@@ -150,6 +159,7 @@ export function PageSwitcher({ collapsed }: { collapsed?: boolean }) {
             activePageId={activePage?.id ?? null}
             onSelect={handleSelectPage}
             onAddPage={handleAddPage}
+            onPageSettings={handlePageSettings}
           />
         </div>
       )}
@@ -172,6 +182,7 @@ function DropdownContent({
   activePageId,
   onSelect,
   onAddPage,
+  onPageSettings,
 }: {
   pages: Array<{
     id: number;
@@ -182,6 +193,7 @@ function DropdownContent({
   activePageId: number | null;
   onSelect: (id: number) => void;
   onAddPage: () => void;
+  onPageSettings: (e: React.MouseEvent) => void;
 }) {
   return (
     <>
@@ -220,7 +232,16 @@ function DropdownContent({
                 )}
               </div>
               {isActive && (
-                <Check className="w-4 h-4 text-messenger shrink-0" />
+                <div className="flex items-center gap-1 shrink-0">
+                  <button
+                    onClick={onPageSettings}
+                    className="p-1 rounded hover:bg-background/80 text-muted-foreground hover:text-foreground transition-colors"
+                    title="Page Settings"
+                  >
+                    <Settings className="w-3.5 h-3.5" />
+                  </button>
+                  <Check className="w-4 h-4 text-messenger" />
+                </div>
               )}
             </button>
           );

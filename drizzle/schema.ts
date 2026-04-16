@@ -163,6 +163,7 @@ export type InsertMessage = typeof messages.$inferInsert;
 export const knowledgeBase = pgTable("knowledge_base", {
   id: serial("id").primaryKey(),
   userId: integer("userId").notNull(),
+  pageId: integer("pageId"),
   title: varchar("title", { length: 255 }).notNull(),
   content: text("content").notNull(),
   category: kbCategoryEnum("category").default("general").notNull(),
@@ -196,7 +197,8 @@ export type InsertFollowUpSequence = typeof followUpSequences.$inferInsert;
 // ─── Follow-Up Settings (configurable per user) ───────────────────
 export const followUpSettings = pgTable("follow_up_settings", {
   id: serial("id").primaryKey(),
-  userId: integer("userId").notNull().unique(),
+  userId: integer("userId").notNull(),
+  pageId: integer("pageId"),
   isEnabled: boolean("isEnabled").default(true).notNull(),
   step1DelayMinutes: integer("step1DelayMinutes").default(1440).notNull(),
   step1Message: text("step1Message"),
@@ -378,6 +380,7 @@ export type InsertIntegrationSetting = typeof integrationSettings.$inferInsert;
 export const handoffSettings = pgTable("handoff_settings", {
   id: serial("id").primaryKey(),
   userId: integer("userId").notNull(),
+  pageId: integer("pageId"),
   autoHandoffEnabled: boolean("autoHandoffEnabled").default(true).notNull(),
   notifyOnHandoff: boolean("notifyOnHandoff").default(true).notNull(),
   handoffKeywords: json("handoffKeywords"),

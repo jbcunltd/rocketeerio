@@ -228,7 +228,11 @@ function FileImportSection({ onComplete }: { onComplete: () => void }) {
 
 function KnowledgeBaseContent() {
   const { activePage } = useActivePage();
-  const { data: entries, isLoading } = trpc.knowledgeBase.list.useQuery();
+  const activePageId = activePage?.id;
+  const { data: entries, isLoading } = trpc.knowledgeBase.list.useQuery(
+    { pageId: activePageId },
+    { enabled: !!activePageId }
+  );
   const createEntry = trpc.knowledgeBase.create.useMutation();
   const updateEntry = trpc.knowledgeBase.update.useMutation();
   const deleteEntry = trpc.knowledgeBase.delete.useMutation();
@@ -252,7 +256,7 @@ function KnowledgeBaseContent() {
         await updateEntry.mutateAsync({ id: editId, title: title.trim(), content: content.trim(), category });
         toast.success("Entry updated");
       } else {
-        await createEntry.mutateAsync({ title: title.trim(), content: content.trim(), category });
+        await createEntry.mutateAsync({ title: title.trim(), content: content.trim(), category, pageId: activePageId });
         toast.success("Entry added");
       }
       utils.knowledgeBase.list.invalidate();

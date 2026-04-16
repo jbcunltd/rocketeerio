@@ -954,7 +954,11 @@ function HotLeadAlertsTab() {
 
 function HandoffTab() {
   const { activePage } = useActivePage();
-  const settingsQuery = trpc.handoffs.getSettings.useQuery();
+  const activePageId = activePage?.id;
+  const settingsQuery = trpc.handoffs.getSettings.useQuery(
+    { pageId: activePageId },
+    { enabled: !!activePageId }
+  );
   const updateMutation = trpc.handoffs.updateSettings.useMutation({
     onSuccess: () => { settingsQuery.refetch(); toast.success("Handoff settings saved"); },
     onError: () => toast.error("Failed to save handoff settings"),
@@ -979,6 +983,7 @@ function HandoffTab() {
   const handleSave = () => {
     const keywordArray = keywords.split("\n").map(k => k.trim()).filter(Boolean);
     updateMutation.mutate({
+      pageId: activePageId,
       autoHandoffEnabled: autoEnabled,
       notifyOnHandoff,
       sentimentThreshold,
