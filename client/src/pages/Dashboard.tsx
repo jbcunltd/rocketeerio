@@ -186,7 +186,7 @@ function DashboardContent() {
           <div className="w-14 h-14 bg-blue-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
             <Rocket className="w-7 h-7 text-blue-600" />
           </div>
-          <h2 className="text-lg font-bold mb-2">Get Started with Rocketeer</h2>
+          <h2 className="text-lg font-bold mb-2">Get Started with Rocketeerio</h2>
           <p className="text-sm text-muted-foreground max-w-md mx-auto mb-5">
             Connect your Facebook Page, add your business info, and let the AI start qualifying leads for you.
           </p>

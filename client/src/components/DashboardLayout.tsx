@@ -81,7 +81,7 @@ export default function DashboardLayout({
           </div>
           <div className="flex flex-col items-center gap-3">
             <h1 className="text-2xl font-bold tracking-tight text-center">
-              Welcome to Rocketeer
+              Welcome to Rocketeerio
             </h1>
             <p className="text-sm text-muted-foreground text-center max-w-sm">
               Sign in to access your AI sales dashboard and start qualifying leads automatically.
@@ -183,8 +183,8 @@ function DashboardLayoutContent({
               </button>
               {!isCollapsed && (
                 <div className="flex items-center gap-2 min-w-0">
-                  <img src="/favicon.svg" alt="Rocketeer" className="w-7 h-7 shrink-0" />
-                  <span className="font-bold tracking-tight truncate text-foreground">Rocketeer</span>
+                  <img src="/favicon.svg" alt="Rocketeerio" className="w-7 h-7 shrink-0" />
+                  <span className="font-bold tracking-tight truncate text-foreground">Rocketeerio</span>
                 </div>
               )}
             </div>
@@ -286,7 +286,7 @@ function DashboardLayoutContent({
             <div className="flex items-center gap-2">
               <SidebarTrigger className="h-9 w-9 rounded-lg bg-background" />
               <span className="tracking-tight text-foreground font-semibold">
-                {activeMenuItem?.label ?? "Rocketeer"}
+                {activeMenuItem?.label ?? "Rocketeerio"}
               </span>
             </div>
             {activePage && (

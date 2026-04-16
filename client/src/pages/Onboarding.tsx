@@ -80,7 +80,7 @@ export default function Onboarding() {
         notificationEmail: notifEmail,
       });
       await updateProfile.mutateAsync({ onboardingCompleted: true });
-      toast.success("Setup complete! Welcome to Rocketeer.");
+      toast.success("Setup complete! Welcome to Rocketeerio.");
       setLocation("/dashboard");
     } catch { toast.error("Failed to save preferences"); }
   };
@@ -100,7 +100,7 @@ export default function Onboarding() {
             <div className="w-8 h-8 bg-messenger rounded-lg flex items-center justify-center">
               <Rocket className="w-5 h-5 text-white" />
             </div>
-            <span className="text-xl font-bold">Rocketeer</span>
+            <span className="text-xl font-bold">Rocketeerio</span>
           </div>
         </div>
       </div>

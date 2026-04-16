@@ -133,7 +133,7 @@ export default function ConnectPages() {
           {!loading && !error && (
             <p className="text-gray-500 mt-2">
               We found <strong>{pages.length}</strong> Facebook Page{pages.length !== 1 ? "s" : ""} managed by you.
-              Select which ones to connect to Rocketeer.
+              Select which ones to connect to Rocketeerio.
             </p>
           )}
         </div>

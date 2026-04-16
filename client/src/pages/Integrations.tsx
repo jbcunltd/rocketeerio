@@ -211,7 +211,7 @@ function IntegrationsContent() {
     <div>
       <div className="mb-6">
         <h1 className="text-2xl font-bold">Integrations</h1>
-        <p className="text-muted-foreground">Connect Rocketeer to Zapier, Google Sheets, and other tools via webhooks.</p>
+        <p className="text-muted-foreground">Connect Rocketeerio to Zapier, Google Sheets, and other tools via webhooks.</p>
       </div>
 
       {/* Zapier Guide */}
@@ -229,7 +229,7 @@ function IntegrationsContent() {
               </Button>
             </div>
             <p className="text-sm text-orange-800 mb-3">
-              <strong>What this does:</strong> Automatically send your new leads from Rocketeer to over 5,000+ other apps like Gmail, Slack, Mailchimp, or your CRM.
+              <strong>What this does:</strong> Automatically send your new leads from Rocketeerio to over 5,000+ other apps like Gmail, Slack, Mailchimp, or your CRM.
             </p>
             
             {showZapierGuide && (
@@ -240,8 +240,8 @@ function IntegrationsContent() {
                   <li><strong>Set up the Trigger:</strong> Search for and select <strong>"Webhooks by Zapier"</strong> as your trigger app.</li>
                   <li><strong>Choose Event:</strong> Select <strong>"Catch Hook"</strong> from the event dropdown and click Continue.</li>
                   <li><strong>Copy the URL:</strong> Zapier will give you a unique "Webhook URL". Copy this link.</li>
-                  <li><strong>Add to Rocketeer:</strong> Scroll down to the "Webhook Endpoints" section on this page, click "Add Endpoint", and paste the URL you copied. Select the events you want to send (like "New Lead Created").</li>
-                  <li><strong>Test the Trigger:</strong> Go back to Zapier and click "Test trigger". (Make sure you have at least one lead in Rocketeer first!)</li>
+                  <li><strong>Add to Rocketeerio:</strong> Scroll down to the "Webhook Endpoints" section on this page, click "Add Endpoint", and paste the URL you copied. Select the events you want to send (like "New Lead Created").</li>
+                  <li><strong>Test the Trigger:</strong> Go back to Zapier and click "Test trigger". (Make sure you have at least one lead in Rocketeerio first!)</li>
                   <li><strong>Set up the Action:</strong> Now choose where you want the data to go (e.g., Google Sheets, Slack) and map the fields.</li>
                 </ol>
                 <div className="flex items-start gap-2 bg-orange-100/50 p-3 rounded-md mt-2">
@@ -337,7 +337,7 @@ function IntegrationsContent() {
 
         {showWebhookGuide && (
           <div className="mb-6 space-y-4 text-sm text-gray-700 bg-purple-50/50 p-3 sm:p-4 rounded-lg border border-purple-100 overflow-hidden">
-            <p><strong>What this does:</strong> Webhooks are like instant notifications for other apps. When something happens in Rocketeer (like a new lead), we instantly send a message (a "webhook") to another app's URL to let them know.</p>
+            <p><strong>What this does:</strong> Webhooks are like instant notifications for other apps. When something happens in Rocketeerio (like a new lead), we instantly send a message (a "webhook") to another app's URL to let them know.</p>
             
             <h4 className="font-semibold text-gray-900">How to set up a Webhook:</h4>
             <ol className="list-decimal list-inside space-y-2 ml-1">
@@ -351,7 +351,7 @@ function IntegrationsContent() {
             
             <div className="flex items-start gap-2 bg-white p-3 rounded-md mt-2 border border-gray-200">
               <Info className="w-4 h-4 text-gray-500 mt-0.5 shrink-0" />
-              <p className="text-xs text-gray-600"><strong>Note on Signing Secrets:</strong> This is an optional security feature for developers to verify that the data really came from Rocketeer. If you're using Zapier or Make.com, you can usually leave this blank.</p>
+              <p className="text-xs text-gray-600"><strong>Note on Signing Secrets:</strong> This is an optional security feature for developers to verify that the data really came from Rocketeerio. If you're using Zapier or Make.com, you can usually leave this blank.</p>
             </div>
           </div>
         )}
@@ -441,7 +441,7 @@ function IntegrationsContent() {
 }`}
         </pre>
         <p className="text-xs text-muted-foreground mt-3">
-          If a signing secret is configured, requests include an <code className="bg-gray-100 px-1 rounded">X-Rocketeer-Signature</code> header with an HMAC-SHA256 signature.
+          If a signing secret is configured, requests include an <code className="bg-gray-100 px-1 rounded">X-Rocketeerio-Signature</code> header with an HMAC-SHA256 signature.
         </p>
       </div>
     </div>
