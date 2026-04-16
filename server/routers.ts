@@ -54,6 +54,10 @@ export const appRouter = router({
       return db.getUserPages(ctx.user.id);
     }),
 
+    checkCanAdd: protectedProcedure.query(async ({ ctx }) => {
+      return checkPageLimit(ctx.user.id, ctx.user.plan);
+    }),
+
     create: protectedProcedure
       .input(z.object({
         pageId: z.string(),

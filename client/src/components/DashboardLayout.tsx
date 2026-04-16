@@ -23,7 +23,8 @@ import {
 
 import { AiModeToggle, AiModeBadge } from "@/components/AiModeToggle";
 import type { AiMode } from "@/components/AiModeToggle";
-import { trpc } from "@/lib/trpc";
+import { PageSwitcher } from "@/components/PageSwitcher";
+import { useActivePage } from "@/contexts/ActivePageContext";
 import { useIsMobile } from "@/hooks/useMobile";
 import {
   LayoutDashboard, MessageCircle, Users, Settings,
@@ -127,10 +128,9 @@ function DashboardLayoutContent({
   const activeMenuItem = menuItems.find(item => location.startsWith(item.path));
   const isMobile = useIsMobile();
 
-  // Fetch pages to show AI mode indicator
-  const { data: pages } = trpc.pages.list.useQuery();
-  const primaryPage = pages?.find((p: any) => p.isActive) || pages?.[0];
-  const primaryMode: AiMode = (primaryPage?.aiMode as AiMode) || "testing";
+  // Use active page from context for AI mode indicator
+  const { activePage } = useActivePage();
+  const primaryMode: AiMode = (activePage?.aiMode as AiMode) || "testing";
 
   useEffect(() => {
     if (isCollapsed) setIsResizing(false);
@@ -162,8 +162,9 @@ function DashboardLayoutContent({
     <>
       <div className="relative" ref={sidebarRef}>
         <Sidebar collapsible="icon" className="border-r-0" disableTransition={isResizing}>
-          <SidebarHeader className="h-16 justify-center">
-            <div className="flex items-center gap-3 px-2 transition-all w-full">
+          <SidebarHeader className="justify-center">
+            {/* Logo + collapse toggle */}
+            <div className="flex items-center gap-3 px-2 transition-all w-full h-10">
               <button
                 onClick={toggleSidebar}
                 className="h-8 w-8 flex items-center justify-center hover:bg-accent rounded-lg transition-colors focus:outline-none shrink-0"
@@ -186,20 +187,25 @@ function DashboardLayoutContent({
                 </div>
               )}
             </div>
+
+            {/* Page Switcher Dropdown */}
+            <div className="mt-1">
+              <PageSwitcher collapsed={isCollapsed} />
+            </div>
           </SidebarHeader>
 
           <SidebarContent className="gap-0">
             {/* AI Mode Indicator in Sidebar */}
-            {primaryPage && !isCollapsed && (
+            {activePage && !isCollapsed && (
               <div className="px-3 py-2">
                 <AiModeToggle
-                  pageId={primaryPage.id}
+                  pageId={activePage.id}
                   currentMode={primaryMode}
                   compact
                 />
               </div>
             )}
-            {primaryPage && isCollapsed && (
+            {activePage && isCollapsed && (
               <div className="flex justify-center py-2">
                 <AiModeBadge mode={primaryMode} />
               </div>
@@ -270,7 +276,7 @@ function DashboardLayoutContent({
                 {activeMenuItem?.label ?? "Rocketeer"}
               </span>
             </div>
-            {primaryPage && (
+            {activePage && (
               <AiModeBadge mode={primaryMode} />
             )}
           </div>

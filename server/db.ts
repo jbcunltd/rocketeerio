@@ -1030,3 +1030,27 @@ export async function getMonthlyConversationCount(userId: number): Promise<numbe
   return result?.count ?? 0;
 }
 
+
+// ─── Follow-Up Worker Aliases ──────────────────────────────────────
+
+/** Alias for getConversationById used by follow-up worker (accepts number) */
+export async function getConversation(conversationId: number | string) {
+  const id = typeof conversationId === "string" ? parseInt(conversationId, 10) : conversationId;
+  if (isNaN(id)) return null;
+  const database = await getDb();
+  if (!database) return null;
+  const result = await database.select().from(conversations).where(eq(conversations.id, id)).limit(1);
+  return result[0] ?? null;
+}
+
+/** Get lead by conversation ID — used by follow-up worker */
+export async function getLeadByConversationId(conversationId: number | string) {
+  const id = typeof conversationId === "string" ? parseInt(conversationId, 10) : conversationId;
+  if (isNaN(id)) return null;
+  const database = await getDb();
+  if (!database) return null;
+  const conv = await database.select().from(conversations).where(eq(conversations.id, id)).limit(1);
+  if (!conv[0]?.leadId) return null;
+  const lead = await database.select().from(leads).where(eq(leads.id, conv[0].leadId)).limit(1);
+  return lead[0] ?? null;
+}

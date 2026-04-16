@@ -1,5 +1,6 @@
 import DashboardLayout from "@/components/DashboardLayout";
 import { trpc } from "@/lib/trpc";
+import { useActivePage } from "@/contexts/ActivePageContext";
 import { MessageCircle, Loader2, Search, Flame, Thermometer, Snowflake, AlertTriangle } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useState, useMemo } from "react";
@@ -28,10 +29,18 @@ function ScoreBadge({ classification, score }: { classification: string; score: 
 }
 
 function ConversationsContent() {
-  const { data: conversations, isLoading } = trpc.conversations.list.useQuery();
+  const { data: allConversations, isLoading } = trpc.conversations.list.useQuery();
+  const { activePageId } = useActivePage();
   const [, setLocation] = useLocation();
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<string>("all");
+
+  // Filter by active page first
+  const conversations = useMemo(() => {
+    if (!allConversations) return undefined;
+    if (!activePageId) return allConversations;
+    return allConversations.filter((c: any) => c.page?.id === activePageId);
+  }, [allConversations, activePageId]);
 
   const filtered = useMemo(() => {
     if (!conversations) return [];

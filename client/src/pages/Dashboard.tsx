@@ -4,6 +4,7 @@ import { AiModeToggle, AiModeBadge } from "@/components/AiModeToggle";
 import type { AiMode } from "@/components/AiModeToggle";
 import { Button } from "@/components/ui/button";
 import { trpc } from "@/lib/trpc";
+import { useActivePage } from "@/contexts/ActivePageContext";
 import {
   MessageCircle, Users, Flame, TrendingUp,
   Loader2, ArrowRight, Rocket, Zap, Facebook
@@ -32,17 +33,21 @@ function StatCard({ icon: Icon, label, value, change, color }: {
 function DashboardContent() {
   const { user } = useAuth();
   const [, setLocation] = useLocation();
+  const { activePageId, activePage, pages: ctxPages } = useActivePage();
   const { data: stats, isLoading: statsLoading } = trpc.dashboard.stats.useQuery();
   const { data: activity, isLoading: activityLoading } = trpc.dashboard.activity.useQuery({ days: 7 });
   const { data: pages } = trpc.pages.list.useQuery();
-  const { data: leads } = trpc.leads.list.useQuery();
+  const { data: allLeads } = trpc.leads.list.useQuery();
   const seedMutation = trpc.seed.generate.useMutation();
   const utils = trpc.useUtils();
 
+  // Filter leads by active page
+  const leads = allLeads?.filter((l: any) => !activePageId || l.pageId === activePageId);
+
   const hasData = (stats?.totalConversations ?? 0) > 0;
 
-  // Get the primary page (first active page)
-  const primaryPage = pages?.find((p: any) => p.isActive) || pages?.[0];
+  // Use active page from context
+  const primaryPage = activePage || pages?.find((p: any) => p.isActive) || pages?.[0];
 
   const handleSeedDemo = async () => {
     try {

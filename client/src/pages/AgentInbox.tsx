@@ -2,18 +2,27 @@ import DashboardLayout from "@/components/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { trpc } from "@/lib/trpc";
+import { useActivePage } from "@/contexts/ActivePageContext";
 import {
   Loader2, Headphones, AlertTriangle, Send, Bot, User,
   ArrowLeft, CheckCircle, Flame, Thermometer, Snowflake,
   MessageCircle, Clock, Phone, Mail
 } from "lucide-react";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { toast } from "sonner";
 
 function AgentInboxContent() {
-  const { data: queue, isLoading } = trpc.conversations.handoffQueue.useQuery(undefined, { refetchInterval: 10000 });
+  const { data: allQueue, isLoading } = trpc.conversations.handoffQueue.useQuery(undefined, { refetchInterval: 10000 });
   const { data: handoffCount } = trpc.conversations.handoffCount.useQuery(undefined, { refetchInterval: 10000 });
+  const { activePageId } = useActivePage();
   const [selectedConvId, setSelectedConvId] = useState<number | null>(null);
+
+  // Filter handoff queue by active page
+  const queue = useMemo(() => {
+    if (!allQueue) return undefined;
+    if (!activePageId) return allQueue;
+    return allQueue.filter((item: any) => item.page?.id === activePageId);
+  }, [allQueue, activePageId]);
 
   if (isLoading) {
     return <div className="flex items-center justify-center py-20"><Loader2 className="w-8 h-8 animate-spin text-purple-600" /></div>;
