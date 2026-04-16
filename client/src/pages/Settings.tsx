@@ -189,7 +189,9 @@ function ConnectedAccountsTab() {
   const handleDisconnect = async () => {
     try {
       await disconnectFb.mutateAsync();
-      utils.pages.list.invalidate();
+      await utils.pages.list.invalidate();
+      // Force a refetch to immediately update the UI
+      await utils.pages.list.refetch();
       toast.success("Facebook disconnected. Your page data has been preserved.");
       setShowDisconnectConfirm(false);
     } catch {
