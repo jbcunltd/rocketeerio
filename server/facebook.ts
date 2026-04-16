@@ -431,38 +431,20 @@ export function registerFacebookRoutes(app: Express) {
       const longLivedToken = longLivedData.access_token || userAccessToken;
 
       // Get user's pages
-      const pagesUrl = `${FB_GRAPH}/me/accounts?access_token=${longLivedToken}&fields=id,name,category,access_token,picture,fan_count`;
-      const pagesRes = await fetch(pagesUrl);
-      if (!pagesRes.ok) {
-        console.error("[Facebook OAuth] Failed to get pages");
-        return res.redirect("/settings?tab=pages&error=pages_fetch_failed");
+      // Don't fetch pages here — the page picker will do that.
+      // Just verify the token is valid by fetching the user's ID.
+      const meUrl = `${FB_GRAPH}/me?access_token=${longLivedToken}`;
+      const meRes = await fetch(meUrl);
+      if (!meRes.ok) {
+        console.error("[Facebook OAuth] Failed to verify token");
+        return res.redirect("/settings?tab=pages&error=token_verification_failed");
       }
 
-      const pagesData = await pagesRes.json();
-      const pages = pagesData.data || [];
-
-      if (pages.length === 0) {
-        return res.redirect("/settings?tab=pages&error=no_pages");
-      }
-
-      // Update tokens for already-connected pages (so they stay working)
-      for (const page of pages) {
-        const existing = await db.getPageByFacebookId(page.id);
-        if (existing && existing.userId === userId) {
-          await db.updatePage(existing.id, {
-            pageAccessToken: page.access_token,
-            pageName: page.name,
-            category: page.category,
-            avatarUrl: page.picture?.data?.url,
-            followerCount: page.fan_count || 0,
-          });
-        }
-      }
-
-      // Store the long-lived token temporarily so the page picker can use it
+      // DO NOT auto-import pages. Only store the user-level access token.
+      // The page picker will fetch available pages and let the user choose which to connect.
       storeTempToken(userId, longLivedToken);
 
-      // Redirect to the page picker instead of auto-importing
+      // Redirect to the page picker
       res.redirect(`/connect/pages`);
     } catch (error) {
       console.error("[Facebook OAuth] Callback error:", error);
@@ -602,9 +584,13 @@ export function registerFacebookRoutes(app: Express) {
       const pagesData = await pagesRes.json();
       const fbPages = pagesData.data || [];
 
-      // Check which pages are already connected
+      // Check which pages are already connected (have valid pageAccessToken)
       const existingPages = await db.getUserPages(session.userId);
-      const connectedPageIds = new Set(existingPages.map(p => p.pageId));
+      const connectedPageIds = new Set(
+        existingPages
+          .filter(p => p.pageAccessToken) // Only pages with valid tokens
+          .map(p => p.pageId)
+      );
 
       const result = fbPages.map((p: any) => ({
         fbPageId: p.id,
