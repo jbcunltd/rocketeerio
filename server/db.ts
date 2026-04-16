@@ -1,4 +1,4 @@
-import { eq, desc, and, sql, gte, lte, count, avg } from "drizzle-orm";
+import { eq, desc, and, sql, gte, lte, count, avg, isNotNull } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 import {
@@ -93,7 +93,10 @@ export async function updateUserProfile(userId: number, data: { name?: string; e
 export async function getUserPages(userId: number) {
   const db = await getDb();
   if (!db) return [];
-  return db.select().from(facebookPages).where(eq(facebookPages.userId, userId)).orderBy(desc(facebookPages.createdAt));
+  // Only return pages with valid (non-null) pageAccessToken
+  return db.select().from(facebookPages).where(
+    and(eq(facebookPages.userId, userId), isNotNull(facebookPages.pageAccessToken))
+  ).orderBy(desc(facebookPages.createdAt));
 }
 
 export async function createPage(data: InsertFacebookPage) {
