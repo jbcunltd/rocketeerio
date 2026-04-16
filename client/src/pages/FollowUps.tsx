@@ -5,9 +5,10 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { trpc } from "@/lib/trpc";
-import { Loader2, Clock, Zap, MessageCircle, Save, Settings2, ArrowRight, MessageSquare, Mail, Smartphone, AlertCircle } from "lucide-react";
+import { useActivePage } from "@/contexts/ActivePageContext";
+import { Loader2, Clock, Zap, MessageCircle, Save, Settings2, ArrowRight, MessageSquare, Mail, Smartphone, AlertCircle, Facebook } from "lucide-react";
 import { useLocation } from "wouter";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { toast } from "sonner";
 
 const DELAY_PRESETS = [
@@ -29,7 +30,15 @@ function formatDelay(minutes: number): string {
 }
 
 function FollowUpsContent() {
-  const { data: conversations, isLoading: convsLoading } = trpc.conversations.list.useQuery();
+  const { data: allConversations, isLoading: convsLoading } = trpc.conversations.list.useQuery();
+  const { activePageId, activePage } = useActivePage();
+
+  // Filter conversations by active page
+  const conversations = useMemo(() => {
+    if (!allConversations) return undefined;
+    if (!activePageId) return allConversations;
+    return allConversations.filter((c: any) => c.page?.id === activePageId);
+  }, [allConversations, activePageId]);
   const { data: settings, isLoading: settingsLoading } = trpc.followUps.getSettings.useQuery();
   const updateSettings = trpc.followUps.updateSettings.useMutation();
   const utils = trpc.useUtils();
@@ -127,6 +136,18 @@ function FollowUpsContent() {
 
   return (
     <div>
+      {/* Page context banner */}
+      {activePage && (
+        <div className="flex items-center gap-2 mb-4 px-4 py-2.5 bg-blue-50 border border-blue-200 rounded-lg">
+          {activePage.avatarUrl ? (
+            <img src={activePage.avatarUrl} alt={activePage.pageName} className="w-5 h-5 rounded" />
+          ) : (
+            <Facebook className="w-4 h-4 text-[#1877F2]" />
+          )}
+          <p className="text-sm text-blue-800">Showing follow-ups for <strong>{activePage.pageName}</strong></p>
+        </div>
+      )}
+
       <div className="mb-6">
         <div className="mb-4">
           <h1 className="text-xl sm:text-2xl font-bold">Follow-Up Sequences</h1>

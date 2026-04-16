@@ -1,8 +1,9 @@
 import DashboardLayout from "@/components/DashboardLayout";
 import { trpc } from "@/lib/trpc";
+import { useActivePage } from "@/contexts/ActivePageContext";
 import {
   Loader2, MessageCircle, Users, Flame, TrendingUp,
-  BarChart3, PieChart as PieChartIcon, Activity, Target, Bot, UserCheck
+  BarChart3, PieChart as PieChartIcon, Activity, Target, Bot, UserCheck, Facebook
 } from "lucide-react";
 import { useState } from "react";
 import {
@@ -49,6 +50,7 @@ function StatCard({ icon: Icon, label, value, subtitle, color }: {
 }
 
 function AnalyticsContent() {
+  const { activePage } = useActivePage();
   const [timeRange, setTimeRange] = useState(30);
   const { data: overview, isLoading: overviewLoading } = trpc.analytics.overview.useQuery();
   const { data: convsOverTime, isLoading: convsLoading } = trpc.analytics.conversationsOverTime.useQuery({ days: timeRange });
@@ -98,6 +100,18 @@ function AnalyticsContent() {
 
   return (
     <div>
+      {/* Page context banner */}
+      {activePage && (
+        <div className="flex items-center gap-2 mb-4 px-4 py-2.5 bg-blue-50 border border-blue-200 rounded-lg">
+          {activePage.avatarUrl ? (
+            <img src={activePage.avatarUrl} alt={activePage.pageName} className="w-5 h-5 rounded" />
+          ) : (
+            <Facebook className="w-4 h-4 text-[#1877F2]" />
+          )}
+          <p className="text-sm text-blue-800">Showing analytics for <strong>{activePage.pageName}</strong></p>
+        </div>
+      )}
+
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
         <div className="min-w-0">
           <h1 className="text-xl sm:text-2xl font-bold">Analytics</h1>

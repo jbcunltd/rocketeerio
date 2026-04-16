@@ -2,7 +2,7 @@ import DashboardLayout from "@/components/DashboardLayout";
 import { trpc } from "@/lib/trpc";
 import { useActivePage } from "@/contexts/ActivePageContext";
 import { Input } from "@/components/ui/input";
-import { Loader2, Search, Flame, Thermometer, Snowflake, Users, Mail, Phone } from "lucide-react";
+import { Loader2, Search, Flame, Thermometer, Snowflake, Users, Mail, Phone, Facebook } from "lucide-react";
 import { useState, useMemo } from "react";
 import { useLocation } from "wouter";
 
@@ -15,7 +15,7 @@ function ScoreBadge({ classification, score }: { classification: string; score: 
 function LeadsContent() {
   const { data: allLeads, isLoading } = trpc.leads.list.useQuery();
   const { data: conversations } = trpc.conversations.list.useQuery();
-  const { activePageId } = useActivePage();
+  const { activePageId, activePage } = useActivePage();
   const [, setLocation] = useLocation();
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<string>("all");
@@ -59,6 +59,18 @@ function LeadsContent() {
 
   return (
     <div>
+      {/* Page context banner */}
+      {activePage && (
+        <div className="flex items-center gap-2 mb-4 px-4 py-2.5 bg-blue-50 border border-blue-200 rounded-lg">
+          {activePage.avatarUrl ? (
+            <img src={activePage.avatarUrl} alt={activePage.pageName} className="w-5 h-5 rounded" />
+          ) : (
+            <Facebook className="w-4 h-4 text-[#1877F2]" />
+          )}
+          <p className="text-sm text-blue-800">Showing leads for <strong>{activePage.pageName}</strong></p>
+        </div>
+      )}
+
       <div className="mb-6">
         <h1 className="text-xl sm:text-2xl font-bold">Leads</h1>
         <p className="text-sm text-muted-foreground">All qualified leads from your conversations.</p>

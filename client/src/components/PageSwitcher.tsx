@@ -47,7 +47,7 @@ export function PageSwitcher({ collapsed }: { collapsed?: boolean }) {
     if (canAddData && !canAddData.allowed) {
       setShowUpgrade(true);
     } else {
-      // Start Facebook OAuth flow
+      // Start Facebook OAuth flow to connect account / add pages
       window.location.href = "/api/auth/facebook";
     }
   };
@@ -187,7 +187,7 @@ function DropdownContent({
     <>
       <div className="px-3 py-1.5">
         <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
-          Connected Pages
+          Your Pages
         </p>
       </div>
       <div className="max-h-[240px] overflow-y-auto">
@@ -234,7 +234,7 @@ function DropdownContent({
           <div className="w-7 h-7 rounded-full bg-blue-500/10 flex items-center justify-center shrink-0">
             <Plus className="w-3.5 h-3.5" />
           </div>
-          <span className="text-sm font-medium">Add New Page</span>
+          <span className="text-sm font-medium">+ Add Page</span>
         </button>
       </div>
     </>

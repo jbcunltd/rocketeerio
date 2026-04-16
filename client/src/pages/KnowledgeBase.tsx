@@ -5,7 +5,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { trpc } from "@/lib/trpc";
-import { BookOpen, Plus, Loader2, Trash2, Edit2, Tag, Globe, FileText, Upload, Search, RefreshCw, X, File, Image } from "lucide-react";
+import { useActivePage } from "@/contexts/ActivePageContext";
+import { BookOpen, Plus, Loader2, Trash2, Edit2, Tag, Globe, FileText, Upload, Search, RefreshCw, X, File, Image, Facebook } from "lucide-react";
 import { useState, useRef } from "react";
 import { toast } from "sonner";
 
@@ -226,6 +227,7 @@ function FileImportSection({ onComplete }: { onComplete: () => void }) {
 }
 
 function KnowledgeBaseContent() {
+  const { activePage } = useActivePage();
   const { data: entries, isLoading } = trpc.knowledgeBase.list.useQuery();
   const createEntry = trpc.knowledgeBase.create.useMutation();
   const updateEntry = trpc.knowledgeBase.update.useMutation();
@@ -299,6 +301,18 @@ function KnowledgeBaseContent() {
 
   return (
     <div>
+      {/* Page context banner */}
+      {activePage && (
+        <div className="flex items-center gap-2 mb-4 px-4 py-2.5 bg-blue-50 border border-blue-200 rounded-lg">
+          {activePage.avatarUrl ? (
+            <img src={activePage.avatarUrl} alt={activePage.pageName} className="w-5 h-5 rounded" />
+          ) : (
+            <Facebook className="w-4 h-4 text-[#1877F2]" />
+          )}
+          <p className="text-sm text-blue-800">Knowledge base for <strong>{activePage.pageName}</strong></p>
+        </div>
+      )}
+
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
         <div className="min-w-0">
           <h1 className="text-xl sm:text-2xl font-bold">Knowledge Base</h1>

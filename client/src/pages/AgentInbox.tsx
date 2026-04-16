@@ -6,7 +6,7 @@ import { useActivePage } from "@/contexts/ActivePageContext";
 import {
   Loader2, Headphones, AlertTriangle, Send, Bot, User,
   ArrowLeft, CheckCircle, Flame, Thermometer, Snowflake,
-  MessageCircle, Clock, Phone, Mail
+  MessageCircle, Clock, Phone, Mail, Facebook
 } from "lucide-react";
 import { useState, useRef, useEffect, useMemo } from "react";
 import { toast } from "sonner";
@@ -14,7 +14,7 @@ import { toast } from "sonner";
 function AgentInboxContent() {
   const { data: allQueue, isLoading } = trpc.conversations.handoffQueue.useQuery(undefined, { refetchInterval: 10000 });
   const { data: handoffCount } = trpc.conversations.handoffCount.useQuery(undefined, { refetchInterval: 10000 });
-  const { activePageId } = useActivePage();
+  const { activePageId, activePage } = useActivePage();
   const [selectedConvId, setSelectedConvId] = useState<number | null>(null);
 
   // Filter handoff queue by active page
@@ -30,6 +30,18 @@ function AgentInboxContent() {
 
   return (
     <div>
+      {/* Page context banner */}
+      {activePage && (
+        <div className="flex items-center gap-2 mb-4 px-4 py-2.5 bg-blue-50 border border-blue-200 rounded-lg">
+          {activePage.avatarUrl ? (
+            <img src={activePage.avatarUrl} alt={activePage.pageName} className="w-5 h-5 rounded" />
+          ) : (
+            <Facebook className="w-4 h-4 text-[#1877F2]" />
+          )}
+          <p className="text-sm text-blue-800">Showing agent inbox for <strong>{activePage.pageName}</strong></p>
+        </div>
+      )}
+
       <div className="flex items-center justify-between mb-6">
         <div>
           <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
