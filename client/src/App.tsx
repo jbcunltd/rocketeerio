@@ -19,6 +19,7 @@ import Analytics from "./pages/Analytics";
 import Integrations from "./pages/Integrations";
 import AgentInbox from "./pages/AgentInbox";
 import Onboarding from "./pages/Onboarding";
+import ConnectPages from "./pages/ConnectPages";
 import { Privacy } from "./pages/Privacy";
 import { Terms } from "./pages/Terms";
 
@@ -33,6 +34,7 @@ function Router() {
       <Route path="/leads" component={Leads} />
       <Route path="/knowledge-base" component={KnowledgeBase} />
       <Route path="/follow-ups" component={FollowUps} />
+      <Route path="/connect/pages" component={ConnectPages} />
       <Route path="/settings" component={Settings} />
       <Route path="/billing" component={Billing} />
       <Route path="/analytics" component={Analytics} />

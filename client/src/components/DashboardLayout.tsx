@@ -45,6 +45,7 @@ const pageNavItems = [
   { icon: BookOpen, label: "Knowledge Base", path: "/knowledge-base" },
   { icon: Zap, label: "Follow-Ups", path: "/follow-ups" },
   { icon: BarChart3, label: "Analytics", path: "/analytics" },
+  { icon: Settings, label: "Page Settings", path: "/settings" },
 ];
 
 const SIDEBAR_WIDTH_KEY = "sidebar-width";
@@ -125,7 +126,6 @@ function DashboardLayoutContent({
   const [isResizing, setIsResizing] = useState(false);
   const sidebarRef = useRef<HTMLDivElement>(null);
   const activeMenuItem = pageNavItems.find(item => location.startsWith(item.path))
-    || (location.startsWith("/settings") ? { label: "Page Settings" } : null)
     || (location.startsWith("/billing") ? { label: "Billing & Plans" } : null)
     || (location.startsWith("/integrations") ? { label: "Integrations" } : null);
   const isMobile = useIsMobile();
@@ -266,18 +266,6 @@ function DashboardLayoutContent({
                   <span>Notifications</span>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                {activePage && (
-                  <>
-                    <div className="px-2 py-1.5">
-                      <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Page Settings</p>
-                    </div>
-                    <DropdownMenuItem onClick={() => setLocation("/settings?tab=channels")} className="cursor-pointer">
-                      <Settings className="mr-2 h-4 w-4" />
-                      <span>{activePage.pageName} Settings</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                  </>
-                )}
                 <DropdownMenuItem onClick={logout} className="cursor-pointer text-destructive focus:text-destructive">
                   <LogOut className="mr-2 h-4 w-4" />
                   <span>Sign out</span>

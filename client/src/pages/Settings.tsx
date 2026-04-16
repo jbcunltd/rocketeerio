@@ -15,7 +15,7 @@ import {
   User, Bell, CreditCard, Facebook, Loader2, Save, Trash2, CheckCircle,
   AlertCircle, ExternalLink, Bot, Instagram, Headphones, MessageSquare,
   Smartphone, Mail, Radio, BellRing, CheckCircle2, Hash, Zap, Globe,
-  Settings2, Lock, MessageCircle, Clock
+  Settings2, Lock, MessageCircle, Clock, RefreshCw, Crown, ArrowUpCircle
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -150,6 +150,9 @@ function NotificationsTab() {
 function ConnectedAccountsTab() {
   const { data: pages, isLoading } = trpc.pages.list.useQuery();
   const [connecting, setConnecting] = useState(false);
+  const [showDisconnectDialog, setShowDisconnectDialog] = useState(false);
+  const disconnectFb = trpc.pages.disconnectFacebook.useMutation();
+  const utils = trpc.useUtils();
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -178,6 +181,22 @@ function ConnectedAccountsTab() {
     window.location.href = "/api/auth/facebook";
   };
 
+  const handleReconnect = () => {
+    setConnecting(true);
+    window.location.href = "/api/auth/facebook";
+  };
+
+  const handleDisconnect = async () => {
+    try {
+      await disconnectFb.mutateAsync();
+      utils.pages.list.invalidate();
+      toast.success("Facebook disconnected. Your page data has been preserved.");
+      setShowDisconnectDialog(false);
+    } catch {
+      toast.error("Failed to disconnect Facebook");
+    }
+  };
+
   if (isLoading) return <div className="flex items-center justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-messenger" /></div>;
 
   const hasFacebookConnected = pages && pages.length > 0;
@@ -186,7 +205,7 @@ function ConnectedAccountsTab() {
     <div className="space-y-6">
       <div>
         <h3 className="text-lg font-bold mb-1">Connected Accounts</h3>
-        <p className="text-sm text-muted-foreground">Manage your connected Facebook and Instagram accounts. Pages are added via the page switcher in the sidebar.</p>
+        <p className="text-sm text-muted-foreground">Manage your connected Facebook and Instagram accounts.</p>
       </div>
 
       {/* Facebook Account */}
@@ -207,9 +226,21 @@ function ConnectedAccountsTab() {
           </div>
           <div className="flex items-center gap-2">
             {hasFacebookConnected ? (
-              <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded inline-flex items-center gap-1">
-                <CheckCircle className="w-3 h-3" /> Connected
-              </span>
+              <>
+                <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded inline-flex items-center gap-1">
+                  <CheckCircle className="w-3 h-3" /> Connected
+                </span>
+                <Button onClick={handleReconnect} disabled={connecting} variant="outline" size="sm" className="gap-1.5">
+                  {connecting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RefreshCw className="w-3.5 h-3.5" />}
+                  Reconnect
+                </Button>
+                <button
+                  onClick={() => setShowDisconnectDialog(true)}
+                  className="text-xs text-muted-foreground hover:text-destructive transition-colors px-2 py-1"
+                >
+                  Disconnect
+                </button>
+              </>
             ) : (
               <Button onClick={handleConnect} disabled={connecting} size="sm" className="bg-[#1877F2] hover:bg-[#166FE5] text-white">
                 {connecting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Facebook className="w-4 h-4 mr-2" />}
@@ -221,12 +252,41 @@ function ConnectedAccountsTab() {
         {hasFacebookConnected && (
           <div className="border-t px-4 py-3 bg-gray-50/50">
             <p className="text-xs text-muted-foreground">
-              To add more pages, use the <strong>+ Add Page</strong> button in the page switcher (top-left sidebar).
+              Click <strong>Reconnect</strong> to re-authorize and pick up new pages.
               To connect Instagram for a specific page, go to that page's <strong>Channels</strong> settings.
             </p>
           </div>
         )}
       </div>
+
+      {/* Disconnect Confirmation Dialog */}
+      {showDisconnectDialog && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="fixed inset-0 bg-black/50" onClick={() => setShowDisconnectDialog(false)} />
+          <div className="relative bg-white rounded-xl border shadow-lg p-6 max-w-md w-full mx-4 z-10">
+            <h3 className="text-lg font-bold mb-2">Disconnect Facebook?</h3>
+            <p className="text-sm text-muted-foreground mb-1">
+              This will remove your Facebook access tokens. Your page data, conversations, and leads will be preserved.
+            </p>
+            <p className="text-sm text-muted-foreground mb-6">
+              You can reconnect anytime to restore full functionality.
+            </p>
+            <div className="flex justify-end gap-3">
+              <Button variant="outline" onClick={() => setShowDisconnectDialog(false)}>
+                Cancel
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={handleDisconnect}
+                disabled={disconnectFb.isPending}
+              >
+                {disconnectFb.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+                Disconnect
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Setup Guide */}
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
@@ -235,9 +295,10 @@ function ConnectedAccountsTab() {
         </h4>
         <ul className="text-sm text-blue-800 space-y-1.5">
           <li>1. Connect your Facebook account above (grants access to your Pages)</li>
-          <li>2. Use the <strong>page switcher</strong> in the sidebar to add individual pages as workspaces</li>
+          <li>2. Select which pages to connect from the page picker</li>
           <li>3. Each page gets its own AI personality, knowledge base, leads, and conversations</li>
           <li>4. Connect Instagram per-page under each page's <strong>Channels</strong> settings</li>
+          <li>5. Click <strong>Reconnect</strong> anytime to add new pages or refresh permissions</li>
         </ul>
       </div>
     </div>
@@ -246,12 +307,16 @@ function ConnectedAccountsTab() {
 
 function BillingTab() {
   const { user } = useAuth();
+  const PLAN_ORDER = ["free", "growth", "pro", "scale", "custom"] as const;
   const plans = [
-    { key: "starter", name: "Starter", price: "$49/mo", desc: "1 Page, 500 conversations" },
-    { key: "growth", name: "Growth", price: "$149/mo", desc: "5 Pages, unlimited conversations" },
-    { key: "scale", name: "Scale", price: "$299/mo", desc: "Unlimited pages & conversations" },
+    { key: "free", name: "Free", price: "$0", period: "/mo", pages: "1 page", conversations: "100 conversations/mo", highlight: false },
+    { key: "growth", name: "Growth", price: "$29", period: "/mo", pages: "3 pages", conversations: "1,000 conversations/mo", highlight: false },
+    { key: "pro", name: "Pro", price: "$79", period: "/mo", pages: "10 pages", conversations: "2,500 conversations/mo", highlight: true },
+    { key: "scale", name: "Scale", price: "$149", period: "/mo", pages: "25 pages", conversations: "10,000 conversations/mo", highlight: false },
+    { key: "custom", name: "Custom", price: "Contact us", period: "", pages: "Unlimited pages", conversations: "Unlimited conversations", highlight: false },
   ];
-  const currentPlan = (user as any)?.plan || "starter";
+  const currentPlan = (user as any)?.plan || "free";
+  const currentIdx = PLAN_ORDER.indexOf(currentPlan as any);
 
   return (
     <div className="space-y-6">
@@ -259,21 +324,95 @@ function BillingTab() {
         <h3 className="text-lg font-bold mb-1">Billing & Plan</h3>
         <p className="text-sm text-muted-foreground">Manage your subscription. This applies to your entire account.</p>
       </div>
-      <div className="grid gap-4 sm:grid-cols-3">
-        {plans.map(plan => (
-          <div key={plan.key} className={`p-4 rounded-lg border-2 transition-colors ${currentPlan === plan.key ? "border-messenger bg-messenger-light/30" : "border-border bg-white"}`}>
-            <p className="font-bold">{plan.name}</p>
-            <p className="text-2xl font-extrabold text-foreground mt-1">{plan.price}</p>
-            <p className="text-xs text-muted-foreground mt-1">{plan.desc}</p>
-            {currentPlan === plan.key ? (
-              <div className="mt-3 text-xs font-bold text-messenger">Current Plan</div>
-            ) : (
-              <Button variant="outline" size="sm" className="mt-3 w-full" onClick={() => window.location.href = "/billing"}>
-                {currentPlan === "scale" ? "Downgrade" : "Upgrade"}
-              </Button>
-            )}
-          </div>
-        ))}
+
+      {/* Current plan summary */}
+      <div className="flex items-center gap-3 p-4 bg-messenger/5 border border-messenger/20 rounded-xl">
+        <Crown className="w-5 h-5 text-messenger shrink-0" />
+        <div>
+          <p className="text-sm font-semibold text-foreground">
+            You're on the <span className="text-messenger">{plans.find(p => p.key === currentPlan)?.name || "Free"}</span> plan
+          </p>
+          <p className="text-xs text-muted-foreground">
+            {currentPlan === "custom" ? "Custom enterprise plan" : `${plans.find(p => p.key === currentPlan)?.pages}, ${plans.find(p => p.key === currentPlan)?.conversations}`}
+          </p>
+        </div>
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {plans.map(plan => {
+          const isCurrent = currentPlan === plan.key;
+          const planIdx = PLAN_ORDER.indexOf(plan.key as any);
+          const isBelow = planIdx < currentIdx;
+          const isAbove = planIdx > currentIdx;
+
+          return (
+            <div
+              key={plan.key}
+              className={`relative p-5 rounded-xl border-2 transition-all ${
+                isCurrent
+                  ? "border-messenger bg-messenger/5 shadow-md shadow-messenger/10"
+                  : isBelow
+                    ? "border-border bg-gray-50/50 opacity-70"
+                    : "border-border bg-white hover:border-messenger/30"
+              }`}
+            >
+              {/* Current plan badge */}
+              {isCurrent && (
+                <div className="absolute -top-3 left-4 bg-messenger text-white text-[11px] font-bold px-3 py-0.5 rounded-full">
+                  Current Plan
+                </div>
+              )}
+
+              <p className="font-bold text-foreground mt-1">{plan.name}</p>
+              <div className="flex items-baseline gap-0.5 mt-2">
+                <span className="text-2xl font-extrabold text-foreground">{plan.price}</span>
+                {plan.period && <span className="text-sm text-muted-foreground">{plan.period}</span>}
+              </div>
+              <div className="mt-3 space-y-1">
+                <p className="text-xs text-muted-foreground flex items-center gap-1.5">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-green-500 shrink-0" /> {plan.pages}
+                </p>
+                <p className="text-xs text-muted-foreground flex items-center gap-1.5">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-green-500 shrink-0" /> {plan.conversations}
+                </p>
+              </div>
+
+              {isCurrent ? (
+                <div className="mt-4 text-center">
+                  <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-messenger">
+                    <CheckCircle className="w-3.5 h-3.5" /> Active
+                  </span>
+                </div>
+              ) : plan.key === "custom" ? (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="mt-4 w-full"
+                  onClick={() => window.open("mailto:support@rocketeerio.com?subject=Custom Plan Inquiry", "_blank")}
+                >
+                  Contact Us
+                </Button>
+              ) : isBelow ? (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="mt-4 w-full text-muted-foreground"
+                  onClick={() => window.location.href = "/billing"}
+                >
+                  Downgrade
+                </Button>
+              ) : (
+                <Button
+                  size="sm"
+                  className="mt-4 w-full bg-messenger hover:bg-messenger-dark gap-1.5"
+                  onClick={() => window.location.href = "/billing"}
+                >
+                  <ArrowUpCircle className="w-3.5 h-3.5" /> Upgrade
+                </Button>
+              )}
+            </div>
+          );
+        })}
       </div>
     </div>
   );

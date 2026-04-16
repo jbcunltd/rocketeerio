@@ -1,4 +1,4 @@
-import { eq, desc, and, sql, gte, lte, count, avg } from "drizzle-orm";
+import { eq, desc, and, sql, gte, lte, count, avg, isNotNull } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 import {
@@ -126,6 +126,25 @@ export async function getAllActivePages() {
   const db = await getDb();
   if (!db) return [];
   return db.select().from(facebookPages).where(eq(facebookPages.isActive, true));
+}
+
+// ─── Facebook Account-Level Helpers ──────────────────────────────────
+
+/** Clear all page access tokens for a user (disconnect without deleting data) */
+export async function clearUserPageTokens(userId: number) {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(facebookPages).set({ pageAccessToken: null, updatedAt: new Date() }).where(eq(facebookPages.userId, userId));
+}
+
+/** Check if a user has any connected Facebook pages (with tokens) */
+export async function hasConnectedFacebookPages(userId: number): Promise<boolean> {
+  const db = await getDb();
+  if (!db) return false;
+  const result = await db.select({ id: facebookPages.id }).from(facebookPages)
+    .where(and(eq(facebookPages.userId, userId), isNotNull(facebookPages.pageAccessToken)))
+    .limit(1);
+  return result.length > 0;
 }
 
 // ─── Leads ───────────────────────────────────────────────────────────
