@@ -11,6 +11,27 @@ import { checkLeadLimit, checkConversationLimit, getPlanLimits } from "./plan-li
 
 const FB_GRAPH = "https://graph.facebook.com/v19.0";
 
+// In-memory temporary token store (keyed by userId, expires after 15 minutes)
+const tempTokenStore = new Map<number, { token: string; expiresAt: number }>();
+
+function storeTempToken(userId: number, token: string) {
+  tempTokenStore.set(userId, { token, expiresAt: Date.now() + 15 * 60 * 1000 });
+}
+
+function getTempToken(userId: number): string | null {
+  const entry = tempTokenStore.get(userId);
+  if (!entry) return null;
+  if (Date.now() > entry.expiresAt) {
+    tempTokenStore.delete(userId);
+    return null;
+  }
+  return entry.token;
+}
+
+function clearTempToken(userId: number) {
+  tempTokenStore.delete(userId);
+}
+
 // ─── Messenger Send API ──────────────────────────────────────────────
 
 async function sendMessengerMessage(pageAccessToken: string, recipientPsid: string, text: string) {
@@ -424,16 +445,10 @@ export function registerFacebookRoutes(app: Express) {
         return res.redirect("/settings?tab=pages&error=no_pages");
       }
 
-      // Store pages with plan enforcement
-      const userRecord = await db.getUserById(userId);
-      const currentUserPlan = userRecord?.plan || "free";
-      let connectedCount = 0;
-      let limitReached = false;
-
+      // Update tokens for already-connected pages (so they stay working)
       for (const page of pages) {
         const existing = await db.getPageByFacebookId(page.id);
-        if (existing) {
-          // Update token for already-connected pages
+        if (existing && existing.userId === userId) {
           await db.updatePage(existing.id, {
             pageAccessToken: page.access_token,
             pageName: page.name,
@@ -441,46 +456,14 @@ export function registerFacebookRoutes(app: Express) {
             avatarUrl: page.picture?.data?.url,
             followerCount: page.fan_count || 0,
           });
-          connectedCount++;
-        } else {
-          // Check plan limit before connecting new page
-          const currentPages = await db.getUserPages(userId);
-          const planLimits = getPlanLimits(currentUserPlan);
-          if (currentPages.length >= planLimits.maxFacebookPages) {
-            console.warn(`[Facebook OAuth] Page limit reached for user ${userId} (${currentPages.length}/${planLimits.maxFacebookPages}). Skipping page ${page.name}.`);
-            limitReached = true;
-            continue;
-          }
-
-          await db.createPage({
-            userId,
-            pageId: page.id,
-            pageName: page.name,
-            pageAccessToken: page.access_token,
-            category: page.category,
-            avatarUrl: page.picture?.data?.url,
-            followerCount: page.fan_count || 0,
-            isActive: true,
-          });
-          connectedCount++;
-        }
-
-        // Subscribe to webhooks for this page
-        try {
-          const subscribeUrl = `${FB_GRAPH}/${page.id}/subscribed_apps?subscribed_fields=messages,messaging_postbacks,messaging_optins&access_token=${page.access_token}`;
-          const subRes = await fetch(subscribeUrl, { method: "POST" });
-          if (subRes.ok) {
-            console.log(`[Facebook] Subscribed page ${page.name} (${page.id}) to webhooks`);
-          } else {
-            console.error(`[Facebook] Failed to subscribe page ${page.id}:`, await subRes.text());
-          }
-        } catch (err) {
-          console.error(`[Facebook] Webhook subscription error for ${page.id}:`, err);
         }
       }
 
-      const redirectParam = limitReached ? "connected_partial" : "connected";
-      res.redirect(`/settings?tab=pages&success=${redirectParam}`);
+      // Store the long-lived token temporarily so the page picker can use it
+      storeTempToken(userId, longLivedToken);
+
+      // Redirect to the page picker instead of auto-importing
+      res.redirect(`/connect/pages`);
     } catch (error) {
       console.error("[Facebook OAuth] Callback error:", error);
       res.redirect("/settings?tab=pages&error=callback_failed");
@@ -590,6 +573,168 @@ export function registerFacebookRoutes(app: Express) {
     } catch (error) {
       console.error("[Facebook] Auth URL error:", error);
       return res.status(500).json({ error: "Failed to generate auth URL" });
+    }
+  });
+
+  // ─── API: Get Available Facebook Pages (for page picker) ──────────
+  app.get("/api/facebook/available-pages", async (req: Request, res: Response) => {
+    try {
+      const cookies = req.headers.cookie || "";
+      const sessionCookie = cookies.split(";").map(c => c.trim()).find(c => c.startsWith(`${COOKIE_NAME}=`));
+      const token = sessionCookie?.split("=")[1];
+      const session = await sdk.verifySession(token);
+      if (!session) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+
+      const userToken = getTempToken(session.userId);
+      if (!userToken) {
+        return res.status(400).json({ error: "no_token", message: "No Facebook token found. Please reconnect Facebook." });
+      }
+
+      const pagesUrl = `${FB_GRAPH}/me/accounts?access_token=${userToken}&fields=id,name,category,access_token,picture,fan_count`;
+      const pagesRes = await fetch(pagesUrl);
+      if (!pagesRes.ok) {
+        console.error("[Facebook] Failed to fetch available pages");
+        return res.status(500).json({ error: "Failed to fetch pages from Facebook" });
+      }
+
+      const pagesData = await pagesRes.json();
+      const fbPages = pagesData.data || [];
+
+      // Check which pages are already connected
+      const existingPages = await db.getUserPages(session.userId);
+      const connectedPageIds = new Set(existingPages.map(p => p.pageId));
+
+      const result = fbPages.map((p: any) => ({
+        fbPageId: p.id,
+        name: p.name,
+        category: p.category || "",
+        avatarUrl: p.picture?.data?.url || "",
+        fanCount: p.fan_count || 0,
+        isConnected: connectedPageIds.has(p.id),
+        accessToken: p.access_token,
+      }));
+
+      return res.json({ pages: result });
+    } catch (error) {
+      console.error("[Facebook] Available pages error:", error);
+      return res.status(500).json({ error: "Failed to get available pages" });
+    }
+  });
+
+  // ─── API: Subscribe (connect) a single Facebook Page ──────────────
+  app.post("/api/facebook/subscribe-page", async (req: Request, res: Response) => {
+    try {
+      const cookies = req.headers.cookie || "";
+      const sessionCookie = cookies.split(";").map(c => c.trim()).find(c => c.startsWith(`${COOKIE_NAME}=`));
+      const token = sessionCookie?.split("=")[1];
+      const session = await sdk.verifySession(token);
+      if (!session) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+
+      const { fbPageId, name, category, avatarUrl, fanCount, accessToken } = req.body;
+      if (!fbPageId || !accessToken) {
+        return res.status(400).json({ error: "Missing required fields" });
+      }
+
+      // Check plan limit
+      const userRecord = await db.getUserById(session.userId);
+      const userPlan = userRecord?.plan || "free";
+      const currentPages = await db.getUserPages(session.userId);
+      const planLimits = getPlanLimits(userPlan);
+      if (currentPages.length >= planLimits.maxFacebookPages) {
+        return res.status(403).json({ error: "plan_limit", message: `Your ${userPlan} plan allows ${planLimits.maxFacebookPages} page(s). Upgrade to connect more.` });
+      }
+
+      // Check if page already exists
+      const existing = await db.getPageByFacebookId(fbPageId);
+      if (existing) {
+        // Update token
+        await db.updatePage(existing.id, {
+          pageAccessToken: accessToken,
+          pageName: name,
+          category,
+          avatarUrl,
+          followerCount: fanCount || 0,
+        });
+      } else {
+        // Create new page
+        await db.createPage({
+          userId: session.userId,
+          pageId: fbPageId,
+          pageName: name,
+          pageAccessToken: accessToken,
+          category,
+          avatarUrl,
+          followerCount: fanCount || 0,
+          isActive: true,
+        });
+      }
+
+      // Subscribe to webhooks
+      try {
+        const subscribeUrl = `${FB_GRAPH}/${fbPageId}/subscribed_apps?subscribed_fields=messages,messaging_postbacks,messaging_optins&access_token=${accessToken}`;
+        const subRes = await fetch(subscribeUrl, { method: "POST" });
+        if (subRes.ok) {
+          console.log(`[Facebook] Subscribed page ${name} (${fbPageId}) to webhooks`);
+        } else {
+          console.error(`[Facebook] Failed to subscribe page ${fbPageId}:`, await subRes.text());
+        }
+      } catch (err) {
+        console.error(`[Facebook] Webhook subscription error for ${fbPageId}:`, err);
+      }
+
+      return res.json({ success: true });
+    } catch (error) {
+      console.error("[Facebook] Subscribe page error:", error);
+      return res.status(500).json({ error: "Failed to connect page" });
+    }
+  });
+
+  // ─── API: Refresh pages (re-fetch from Facebook) ──────────────────
+  app.post("/api/facebook/refresh-pages", async (req: Request, res: Response) => {
+    try {
+      const cookies = req.headers.cookie || "";
+      const sessionCookie = cookies.split(";").map(c => c.trim()).find(c => c.startsWith(`${COOKIE_NAME}=`));
+      const token = sessionCookie?.split("=")[1];
+      const session = await sdk.verifySession(token);
+      if (!session) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+
+      const userToken = getTempToken(session.userId);
+      if (!userToken) {
+        return res.status(400).json({ error: "no_token", message: "Token expired. Please reconnect Facebook." });
+      }
+
+      const pagesUrl = `${FB_GRAPH}/me/accounts?access_token=${userToken}&fields=id,name,category,access_token,picture,fan_count`;
+      const pagesRes = await fetch(pagesUrl);
+      if (!pagesRes.ok) {
+        return res.status(500).json({ error: "Failed to refresh pages from Facebook" });
+      }
+
+      const pagesData = await pagesRes.json();
+      const fbPages = pagesData.data || [];
+
+      const existingPages = await db.getUserPages(session.userId);
+      const connectedPageIds = new Set(existingPages.map(p => p.pageId));
+
+      const result = fbPages.map((p: any) => ({
+        fbPageId: p.id,
+        name: p.name,
+        category: p.category || "",
+        avatarUrl: p.picture?.data?.url || "",
+        fanCount: p.fan_count || 0,
+        isConnected: connectedPageIds.has(p.id),
+        accessToken: p.access_token,
+      }));
+
+      return res.json({ pages: result });
+    } catch (error) {
+      console.error("[Facebook] Refresh pages error:", error);
+      return res.status(500).json({ error: "Failed to refresh pages" });
     }
   });
 }

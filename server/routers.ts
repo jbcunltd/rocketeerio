@@ -97,6 +97,12 @@ export const appRouter = router({
         await db.deletePage(input.id);
         return { success: true };
       }),
+
+    disconnectFacebook: protectedProcedure
+      .mutation(async ({ ctx }) => {
+        await db.clearUserPageTokens(ctx.user.id);
+        return { success: true };
+      }),
   }),
 
   // ─── Instagram Accounts ────────────────────────────────────────────

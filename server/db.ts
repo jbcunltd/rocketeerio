@@ -1067,3 +1067,13 @@ export async function getLeadByConversationId(conversationId: number | string) {
   const lead = await database.select().from(leads).where(eq(leads.id, conv[0].leadId)).limit(1);
   return lead[0] ?? null;
 }
+
+
+// ─── Facebook Disconnect: Clear all page tokens for a user ──────────
+export async function clearUserPageTokens(userId: number) {
+  const database = await getDb();
+  if (!database) return;
+  await database.update(facebookPages)
+    .set({ pageAccessToken: null, updatedAt: new Date() })
+    .where(eq(facebookPages.userId, userId));
+}
