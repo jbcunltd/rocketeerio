@@ -1,5 +1,5 @@
 import { trpc } from "@/lib/trpc";
-import { Pause, FlaskConical, Rocket, ChevronDown } from "lucide-react";
+import { Pause, FlaskConical, Zap, ChevronDown } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { toast } from "sonner";
 
@@ -38,7 +38,7 @@ const MODE_CONFIG: Record<AiMode, {
   live: {
     label: "Live",
     description: "AI responds to everyone",
-    icon: Rocket,
+    icon: Zap,
     dotColor: "bg-green-500",
     bgColor: "bg-green-50",
     borderColor: "border-green-200",

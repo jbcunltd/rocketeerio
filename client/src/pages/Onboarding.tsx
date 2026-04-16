@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { trpc } from "@/lib/trpc";
-import { Rocket, Facebook, BookOpen, Bell, CheckCircle2, ArrowRight, Loader2 } from "lucide-react";
+import { Facebook, BookOpen, Bell, CheckCircle2, ArrowRight, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { useLocation } from "wouter";
 import { toast } from "sonner";
@@ -97,9 +97,7 @@ export default function Onboarding() {
       <div className="border-b bg-white">
         <div className="container flex items-center h-16">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-messenger rounded-lg flex items-center justify-center">
-              <Rocket className="w-5 h-5 text-white" />
-            </div>
+            <img src="/favicon.svg" alt="Rocketeerio" className="w-8 h-8" />
             <span className="text-xl font-bold">Rocketeerio</span>
           </div>
         </div>

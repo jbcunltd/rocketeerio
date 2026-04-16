@@ -7,7 +7,7 @@ import { trpc } from "@/lib/trpc";
 import { useActivePage } from "@/contexts/ActivePageContext";
 import {
   MessageCircle, Users, Flame, Bot,
-  Loader2, ArrowRight, Rocket, Zap, Facebook,
+  Loader2, ArrowRight, Zap, Facebook,
   Thermometer, Snowflake, AlertTriangle, Clock
 } from "lucide-react";
 import { useLocation } from "wouter";
@@ -183,8 +183,8 @@ function DashboardContent() {
       {!hasData ? (
         /* Empty State */
         <div className="bg-white rounded-xl p-8 sm:p-12 border border-gray-200 text-center">
-          <div className="w-14 h-14 bg-messenger-light rounded-2xl flex items-center justify-center mx-auto mb-4">
-            <Rocket className="w-7 h-7 text-messenger" />
+          <div className="w-14 h-14 flex items-center justify-center mx-auto mb-4">
+            <img src="/favicon.svg" alt="Rocketeerio" className="w-14 h-14" />
           </div>
           <h2 className="text-lg font-bold mb-2">Get Started with Rocketeerio</h2>
           <p className="text-sm text-muted-foreground max-w-md mx-auto mb-5">

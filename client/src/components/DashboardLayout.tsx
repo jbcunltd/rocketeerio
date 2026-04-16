@@ -85,8 +85,8 @@ export default function DashboardLayout({
     return (
       <div className="flex items-center justify-center min-h-screen bg-background">
         <div className="flex flex-col items-center gap-8 p-8 max-w-md w-full">
-          <div className="w-16 h-16 bg-messenger rounded-2xl flex items-center justify-center shadow-lg shadow-messenger/20">
-            <Rocket className="w-9 h-9 text-white" />
+          <div className="w-16 h-16 flex items-center justify-center">
+            <img src="/favicon.svg" alt="Rocketeerio" className="w-16 h-16" />
           </div>
           <div className="flex flex-col items-center gap-3">
             <h1 className="text-2xl font-bold tracking-tight text-center">
@@ -183,9 +183,7 @@ function DashboardLayoutContent({
                 aria-label="Toggle navigation"
               >
                 {isCollapsed ? (
-                  <div className="w-7 h-7 bg-messenger rounded-lg flex items-center justify-center">
-                    <Rocket className="w-4 h-4 text-white" />
-                  </div>
+                  <img src="/favicon.svg" alt="Rocketeerio" className="w-7 h-7" />
                 ) : (
                   <PanelLeft className="h-4 w-4 text-muted-foreground" />
                 )}

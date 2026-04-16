@@ -5,7 +5,7 @@ import { trpc } from "@/lib/trpc";
 import { fbEvent } from "@/lib/facebook-pixel";
 import { gtagEvent } from "@/lib/gtag";
 import {
-  CheckCircle2, ArrowRight, Rocket, Star, TrendingUp,
+  CheckCircle2, ArrowRight, Star, TrendingUp,
   Zap, MessageSquare, BellRing, DollarSign, Clock, Users,
   ChevronRight, ShieldCheck
 } from "lucide-react";
@@ -76,9 +76,7 @@ function AuthForm() {
     <div className="w-full max-w-sm mx-auto">
       <div className="bg-white rounded-2xl p-6 shadow-xl border border-border/30">
         <div className="flex items-center justify-center gap-2 mb-6">
-          <div className="w-10 h-10 bg-messenger rounded-xl flex items-center justify-center">
-            <Rocket className="w-6 h-6 text-white" />
-          </div>
+          <img src="/favicon.svg" alt="Rocketeerio" className="w-10 h-10" />
         </div>
 
         <div className="flex mb-6 bg-muted rounded-lg p-1">
@@ -183,7 +181,7 @@ function AuthForm() {
 const pricingPlans: Array<any> = [
   {
     name: "Free",
-    icon: Rocket,
+    icon: Star,
     iconBg: "bg-gray-100 dark:bg-gray-800",
     iconColor: "text-gray-600 dark:text-gray-400",
     monthlyPrice: 0,
@@ -278,9 +276,7 @@ export default function Landing() {
       <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-lg border-b border-border/50">
         <div className="container flex items-center justify-between h-14 sm:h-16 px-3 sm:px-4">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-messenger rounded-lg flex items-center justify-center">
-              <Rocket className="w-5 h-5 text-white" />
-            </div>
+            <img src="/favicon.svg" alt="Rocketeerio" className="w-8 h-8" />
             <span className="text-lg sm:text-xl font-bold text-foreground">Rocketeerio</span>
           </div>
           <div className="hidden md:flex items-center gap-8">
@@ -820,9 +816,7 @@ export default function Landing() {
         <div className="container">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-2">
-              <div className="w-7 h-7 bg-messenger rounded-lg flex items-center justify-center">
-                <Rocket className="w-4 h-4 text-white" />
-              </div>
+              <img src="/favicon.svg" alt="Rocketeerio" className="w-7 h-7" />
               <span className="text-lg font-bold text-white">Rocketeerio</span>
             </div>
             <p className="text-sm text-white/50">

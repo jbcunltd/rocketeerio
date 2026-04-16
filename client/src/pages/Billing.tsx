@@ -2,7 +2,8 @@ import DashboardLayout from "@/components/DashboardLayout";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
 import {
-  CreditCard, Check, Rocket, TrendingUp, Crown, Zap,
+  CreditCard, Check, TrendingUp, Crown, Zap,
+  Star,
   AlertCircle, Loader2, ExternalLink, XCircle, Clock,
   Receipt
 } from "lucide-react";
@@ -83,8 +84,8 @@ function BillingContent() {
   const currentSub = subscriptionQuery.data;
   const payments = paymentHistoryQuery.data ?? [];
 
-  const planIcons: Record<string, typeof Rocket> = {
-    free: Rocket,
+  const planIcons: Record<string, typeof Star> = {
+    free: Star,
     growth: TrendingUp,
     pro: Crown,
     scale: Zap,
@@ -254,7 +255,7 @@ function BillingContent() {
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 sm:gap-6">
           {plans.map((plan) => {
-            const Icon = planIcons[plan.slug] ?? Rocket;
+            const Icon = planIcons[plan.slug] ?? Star;
             const isCurrentPlan = currentSub?.plan?.slug === plan.slug && currentSub?.status === "active";
             const isLoading = selectedPlan === plan.slug && createCheckout.isPending;
             const features = (plan.features as string[]) ?? [];

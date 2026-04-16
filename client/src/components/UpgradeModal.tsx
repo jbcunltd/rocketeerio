@@ -1,7 +1,7 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
-import { Rocket, ArrowRight, Zap } from "lucide-react";
+import { ArrowRight, Zap } from "lucide-react";
 
 interface UpgradeModalProps {
   open: boolean;
@@ -48,8 +48,8 @@ export function UpgradeModal({
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <div className="flex items-center gap-2 mb-2">
-            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center">
-              <Rocket className="w-5 h-5 text-white" />
+            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center overflow-hidden">
+              <img src="/favicon.svg" alt="Rocketeerio" className="w-10 h-10" />
             </div>
             <DialogTitle className="text-lg">
               {title || defaultTitle}
