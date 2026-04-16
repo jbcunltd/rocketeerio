@@ -25,7 +25,7 @@ fs.writeFileSync(
   path.join(funcDir, '.vc-config.json'),
   JSON.stringify(
     {
-      runtime: 'nodejs18.x',
+      runtime: 'nodejs22.x',
       handler: 'index.mjs',
       launcherType: 'Nodejs',
     },
