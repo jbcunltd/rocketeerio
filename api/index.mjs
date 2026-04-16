@@ -2128,7 +2128,7 @@ function registerFacebookRoutes(app2) {
       res.redirect("/settings?tab=pages&error=callback_failed");
     }
   });
-  app2.get("/api/webhook/messenger", (req, res) => {
+  app2.get("/api/webhook/facebook", (req, res) => {
     const mode = req.query["hub.mode"];
     const token = req.query["hub.verify_token"];
     const challenge = req.query["hub.challenge"];
@@ -2140,8 +2140,8 @@ function registerFacebookRoutes(app2) {
     console.error("[Webhook] Verification failed");
     return res.sendStatus(403);
   });
-  app2.post("/api/webhook/messenger", async (req, res) => {
-    console.log("[Webhook] POST /api/webhook/messenger received");
+  app2.post("/api/webhook/facebook", async (req, res) => {
+    console.log("[Webhook] POST /api/webhook/facebook received");
     try {
       const body = req.body;
       if (body.object !== "page") {

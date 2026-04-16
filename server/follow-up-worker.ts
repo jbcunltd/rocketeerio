@@ -33,4 +33,115 @@ async function sendFollowUpMessage(
   platform: string,
   delayMinutes: number
 ): Promise<boolean> {
-  try {\n    const within24h = await isWithin24HourWindow(conversationId);\n    const shouldUseMessenger = within24h && (platform === \"messenger\" || platform === \"instagram\");\n\n    if (shouldUseMessenger) {\n      // Send via Messenger/Instagram\n      const result = await sendMessengerMessage(conversationId, messageContent, platform);\n      if (!result.success) {\n        throw new Error(`Failed to send Messenger message: ${result.error}`);\n      }\n      console.log(`[FollowUp Worker] Sent Messenger follow-up for conversation ${conversationId}`);\n      return true;\n    } else {\n      // Send via Email (fallback for after 24h window)\n      const lead = await getLeadByConversationId(conversationId);\n      if (!lead || !lead.email) {\n        console.warn(`[FollowUp Worker] No email found for lead in conversation ${conversationId}`);\n        return false;\n      }\n\n      const result = await sendEmail(lead.email, \"Follow-up from Rocketeerio\", messageContent);\n      if (!result.success) {\n        throw new Error(`Failed to send email: ${result.error}`);\n      }\n      console.log(`[FollowUp Worker] Sent Email follow-up for conversation ${conversationId}`);\n      return true;\n    }\n  } catch (err) {\n    console.error(`[FollowUp Worker] Error sending follow-up message:`, err);\n    return false;\n  }\n}\n\n/**\n * Background worker that processes pending follow-up messages.\n * Runs on an interval and sends follow-ups whose scheduled time has passed.\n * Respects Facebook's 24-hour messaging window rule.\n */\nexport async function processFollowUps(): Promise<void> {\n  try {\n    const pending = await getPendingFollowUps();\n    if (pending.length === 0) {\n      console.log(\"[FollowUp Worker] No pending follow-ups to process\");\n      return;\n    }\n\n    console.log(`[FollowUp Worker] Processing ${pending.length} pending follow-ups`);\n\n    for (const followUp of pending) {\n      try {\n        if (!followUp.messageContent) {\n          console.warn(`[FollowUp Worker] Follow-up ${followUp.id} has no message content, skipping`);\n          await updateFollowUp(followUp.id, { status: \"failed\" });\n          continue;\n        }\n\n        // Send the follow-up message via appropriate channel\n        const sent = await sendFollowUpMessage(\n          followUp.conversationId,\n          followUp.messageContent,\n          followUp.platform || \"messenger\",\n          followUp.delayMinutes\n        );\n\n        if (sent) {\n          // Create message record in conversation\n          await createMessage({\n            conversationId: followUp.conversationId,\n            sender: \"ai\",\n            content: followUp.messageContent,\n            messageType: \"text\",\n          });\n\n          // Update conversation with latest message\n          await updateConversation(followUp.conversationId, {\n            lastMessagePreview: followUp.messageContent.substring(0, 200),\n            lastMessageAt: new Date(),\n          });\n\n          // Mark follow-up as sent\n          await updateFollowUp(followUp.id, {\n            status: \"sent\",\n            sentAt: Date.now(),\n          });\n\n          console.log(`[FollowUp Worker] Successfully processed follow-up ${followUp.id}`);\n        } else {\n          // Mark as failed if message sending failed\n          await updateFollowUp(followUp.id, { status: \"failed\" });\n          console.error(`[FollowUp Worker] Failed to send follow-up ${followUp.id}`);\n        }\n      } catch (err) {\n        console.error(`[FollowUp Worker] Error processing follow-up ${followUp.id}:`, err);\n        await updateFollowUp(followUp.id, { status: \"failed\" });\n      }\n    }\n\n    console.log(\"[FollowUp Worker] Completed processing follow-ups\");\n  } catch (err) {\n    console.error(\"[FollowUp Worker] Fatal error:\", err);\n  }\n}\n\n/**\n * Health check endpoint for the worker\n */\nexport async function healthCheck(): Promise<{ status: string; timestamp: string }> {\n  return {\n    status: \"ok\",\n    timestamp: new Date().toISOString(),\n  };\n}\n
+  try {
+    const within24h = await isWithin24HourWindow(conversationId);
+    const shouldUseMessenger = within24h && (platform === "messenger" || platform === "instagram");
+
+    if (shouldUseMessenger) {
+      // Send via Messenger/Instagram
+      const result = await sendMessengerMessage(conversationId, messageContent, platform);
+      if (!result.success) {
+        throw new Error(`Failed to send Messenger message: ${result.error}`);
+      }
+      console.log(`[FollowUp Worker] Sent Messenger follow-up for conversation ${conversationId}`);
+      return true;
+    } else {
+      // Send via Email (fallback for after 24h window)
+      const lead = await getLeadByConversationId(conversationId);
+      if (!lead || !lead.email) {
+        console.warn(`[FollowUp Worker] No email found for lead in conversation ${conversationId}`);
+        return false;
+      }
+
+      const result = await sendEmail(lead.email, "Follow-up from Rocketeerio", messageContent);
+      if (!result.success) {
+        throw new Error(`Failed to send email: ${result.error}`);
+      }
+      console.log(`[FollowUp Worker] Sent Email follow-up for conversation ${conversationId}`);
+      return true;
+    }
+  } catch (err) {
+    console.error(`[FollowUp Worker] Error sending follow-up message:`, err);
+    return false;
+  }
+}
+
+/**
+ * Background worker that processes pending follow-up messages.
+ * Runs on an interval and sends follow-ups whose scheduled time has passed.
+ * Respects Facebook's 24-hour messaging window rule.
+ */
+export async function processFollowUps(): Promise<void> {
+  try {
+    const pending = await getPendingFollowUps();
+    if (pending.length === 0) {
+      console.log("[FollowUp Worker] No pending follow-ups to process");
+      return;
+    }
+
+    console.log(`[FollowUp Worker] Processing ${pending.length} pending follow-ups`);
+
+    for (const followUp of pending) {
+      try {
+        if (!followUp.messageContent) {
+          console.warn(`[FollowUp Worker] Follow-up ${followUp.id} has no message content, skipping`);
+          await updateFollowUp(followUp.id, { status: "failed" });
+          continue;
+        }
+
+        // Send the follow-up message via appropriate channel
+        const sent = await sendFollowUpMessage(
+          followUp.conversationId,
+          followUp.messageContent,
+          followUp.platform || "messenger",
+          followUp.delayMinutes
+        );
+
+        if (sent) {
+          // Create message record in conversation
+          await createMessage({
+            conversationId: followUp.conversationId,
+            sender: "ai",
+            content: followUp.messageContent,
+            messageType: "text",
+          });
+
+          // Update conversation with latest message
+          await updateConversation(followUp.conversationId, {
+            lastMessagePreview: followUp.messageContent.substring(0, 200),
+            lastMessageAt: new Date(),
+          });
+
+          // Mark follow-up as sent
+          await updateFollowUp(followUp.id, {
+            status: "sent",
+            sentAt: Date.now(),
+          });
+
+          console.log(`[FollowUp Worker] Successfully processed follow-up ${followUp.id}`);
+        } else {
+          // Mark as failed if message sending failed
+          await updateFollowUp(followUp.id, { status: "failed" });
+          console.error(`[FollowUp Worker] Failed to send follow-up ${followUp.id}`);
+        }
+      } catch (err) {
+        console.error(`[FollowUp Worker] Error processing follow-up ${followUp.id}:`, err);
+        await updateFollowUp(followUp.id, { status: "failed" });
+      }
+    }
+
+    console.log("[FollowUp Worker] Completed processing follow-ups");
+  } catch (err) {
+    console.error("[FollowUp Worker] Fatal error:", err);
+  }
+}
+
+/**
+ * Health check endpoint for the worker
+ */
+export async function healthCheck(): Promise<{ status: string; timestamp: string }> {
+  return {
+    status: "ok",
+    timestamp: new Date().toISOString(),
+  };
+}
