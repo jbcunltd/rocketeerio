@@ -635,6 +635,7 @@ export function registerFacebookRoutes(app: Express) {
       }
 
       // Check if page already exists
+      let pageId: number | null = null;
       const existing = await db.getPageByFacebookId(fbPageId);
       if (existing) {
         // Update token
@@ -645,9 +646,10 @@ export function registerFacebookRoutes(app: Express) {
           avatarUrl,
           followerCount: fanCount || 0,
         });
+        pageId = existing.id;
       } else {
         // Create new page
-        await db.createPage({
+        pageId = await db.createPage({
           userId: session.userId,
           pageId: fbPageId,
           pageName: name,
@@ -672,7 +674,7 @@ export function registerFacebookRoutes(app: Express) {
         console.error(`[Facebook] Webhook subscription error for ${fbPageId}:`, err);
       }
 
-      return res.json({ success: true, pageId: fbPageId });
+      return res.json({ success: true, pageId });
     } catch (error) {
       console.error("[Facebook] Subscribe page error:", error);
       return res.status(500).json({ error: "Failed to connect page" });
