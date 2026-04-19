@@ -22,6 +22,7 @@ import Onboarding from "./pages/Onboarding";
 import { Privacy } from "./pages/Privacy";
 import { Terms } from "./pages/Terms";
 import ConnectPages from "./pages/ConnectPages";
+import FacebookLeadsNotConverting from "./pages/FacebookLeadsNotConverting";
 
 function Router() {
   return (
@@ -40,6 +41,7 @@ function Router() {
       <Route path="/analytics" component={Analytics} />
       <Route path="/integrations" component={Integrations} />
       <Route path="/agent-inbox" component={AgentInbox} />
+      <Route path="/facebook-leads-not-converting" component={FacebookLeadsNotConverting} />
       <Route path="/privacy" component={Privacy} />
       <Route path="/terms" component={Terms} />
       <Route path="/404" component={NotFound} />

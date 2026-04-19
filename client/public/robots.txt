@@ -3,6 +3,7 @@
 
 User-agent: *
 Allow: /
+Allow: /facebook-leads-not-converting
 Allow: /privacy
 Allow: /terms
 

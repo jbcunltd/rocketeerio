@@ -7,10 +7,10 @@ import { gtagEvent } from "@/lib/gtag";
 import {
   CheckCircle2, ArrowRight, Star, TrendingUp,
   Zap, MessageSquare, BellRing, DollarSign, Clock, Users,
-  ChevronRight, ShieldCheck
+  ChevronRight, ShieldCheck, Target, AlertTriangle
 } from "lucide-react";
 import { useEffect, useState, FormEvent } from "react";
-import { useLocation } from "wouter";
+import { Link, useLocation } from "wouter";
 
 /* ------------------------------------------------------------------ */
 /*  Auth Form                                                          */
@@ -268,7 +268,18 @@ export default function Landing() {
     <div className="min-h-screen bg-background">
       <SEO
         path="/"
-        description="Stop losing leads you already paid for. Rocketeerio replies instantly to your Facebook and Instagram messages and alerts you when it's time to close."
+        description="Rocketeerio is the Facebook lead conversion system that replies to every message in seconds, qualifies the lead, and tells you exactly when to step in and close. Stop losing leads you already paid for."
+        schema={{
+          "@context": "https://schema.org",
+          "@type": "WebSite",
+          name: "Rocketeerio",
+          url: "https://rocketeerio.com",
+          potentialAction: {
+            "@type": "SearchAction",
+            target: "https://rocketeerio.com/?q={search_term_string}",
+            "query-input": "required name=search_term_string",
+          },
+        }}
       />
       {/* ============================================================ */}
       {/*  NAVIGATION                                                   */}
@@ -281,6 +292,7 @@ export default function Landing() {
           </div>
           <div className="hidden md:flex items-center gap-8">
             <a href="#how-it-works" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">How It Works</a>
+            <Link href="/facebook-leads-not-converting" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">Why Leads Don't Convert</Link>
             <a href="#pricing" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">Pricing</a>
           </div>
           <div className="flex items-center gap-2 sm:gap-3">
@@ -302,14 +314,21 @@ export default function Landing() {
       {/* ============================================================ */}
       <section className="relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-messenger/5 via-transparent to-messenger-light/20" />
-        <div className="container relative py-12 sm:py-24 md:py-36 px-4 sm:px-6">
+        <div className="container relative py-12 sm:py-24 md:py-32 px-4 sm:px-6">
           <div className="max-w-3xl mx-auto text-center">
+            <div className="inline-flex items-center gap-2 rounded-full border border-messenger/20 bg-messenger/5 px-3 py-1 mb-6">
+              <span className="w-2 h-2 rounded-full bg-messenger animate-pulse" />
+              <span className="text-xs sm:text-sm font-semibold text-messenger">The Facebook Lead Conversion System</span>
+            </div>
             <h1 className="text-3xl sm:text-4xl md:text-6xl font-extrabold tracking-tight text-foreground leading-[1.1] mb-6">
-              You're paying for leads…{" "}
-              <span className="text-messenger">and losing them.</span>
+              Turn your Facebook leads into{" "}
+              <span className="text-messenger">paying customers.</span>
             </h1>
-            <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-10 leading-relaxed">
-              Most businesses reply too late. By the time you respond, the customer is already talking to someone else. Rocketeerio replies instantly — and alerts you when it's time to close.
+            <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-4 leading-relaxed">
+              You're spending money on Facebook ads. Leads are messaging your page. But by the time you reply, they've already gone with someone else.
+            </p>
+            <p className="text-lg md:text-xl text-foreground font-semibold max-w-2xl mx-auto mb-10 leading-relaxed">
+              Rocketeerio replies in seconds, qualifies every lead, and tells you the exact moment to step in and close.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <div>
@@ -318,7 +337,7 @@ export default function Landing() {
                   className="bg-messenger hover:bg-messenger-dark text-lg px-8 h-14 shadow-lg shadow-messenger/25 w-full"
                   onClick={scrollToAuth}
                 >
-                  Start Closing More Leads <ArrowRight className="ml-2 w-5 h-5" />
+                  Start Converting Leads <ArrowRight className="ml-2 w-5 h-5" />
                 </Button>
                 <p className="text-xs text-muted-foreground mt-3 text-center">No credit card required • Setup in minutes</p>
               </div>
@@ -330,6 +349,20 @@ export default function Landing() {
               >
                 See How It Works
               </Button>
+            </div>
+            <div className="mt-10 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-muted-foreground">
+              <div className="flex items-center gap-1.5">
+                <CheckCircle2 className="w-4 h-4 text-green-500" />
+                <span>Replies in under 60 seconds</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <CheckCircle2 className="w-4 h-4 text-green-500" />
+                <span>Works 24/7 across Messenger & Instagram</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <CheckCircle2 className="w-4 h-4 text-green-500" />
+                <span>Hot-lead alerts to your phone</span>
+              </div>
             </div>
           </div>
         </div>
@@ -386,11 +419,15 @@ export default function Landing() {
       <section className="py-20 md:py-28 border-t border-border/50">
         <div className="container">
           <div className="max-w-3xl mx-auto text-center">
+            <div className="inline-flex items-center gap-2 rounded-full bg-red-50 border border-red-100 px-3 py-1 mb-6">
+              <AlertTriangle className="w-4 h-4 text-red-600" />
+              <span className="text-xs sm:text-sm font-semibold text-red-700">The real cost of slow replies</span>
+            </div>
             <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-6">
-              Every missed message is a lost sale.
+              You're not losing leads because of bad ads. You're losing them because nobody replied in time.
             </h2>
             <p className="text-lg md:text-xl text-muted-foreground leading-relaxed max-w-2xl mx-auto">
-              You run ads. People message your page. But not all of them get a reply — or they get one too late. And when that happens… the sale goes to someone else.
+              Every Facebook lead that messages your page is comparing you to two or three other businesses at the same time. Whoever replies first usually wins the sale — and right now, that probably isn't you.
             </p>
           </div>
 
@@ -399,17 +436,17 @@ export default function Landing() {
               {
                 icon: Clock,
                 stat: "78%",
-                text: "of leads buy from the first business to respond",
+                text: "of leads buy from the first business that responds to them",
               },
               {
                 icon: MessageSquare,
                 stat: "5 min",
-                text: "is the average response time that wins the deal",
+                text: "is the response window before lead-to-sale conversion drops by 80%",
               },
               {
                 icon: DollarSign,
                 stat: "$0",
-                text: "is what a missed message earns you",
+                text: "is the return on every Facebook lead you didn't reply to",
               },
             ].map((item) => (
               <div key={item.stat} className="text-center">
@@ -421,26 +458,36 @@ export default function Landing() {
               </div>
             ))}
           </div>
+
+          <div className="mt-12 text-center">
+            <Link
+              href="/facebook-leads-not-converting"
+              className="inline-flex items-center gap-2 text-messenger hover:text-messenger-dark font-semibold text-sm sm:text-base"
+            >
+              Read: Why your Facebook leads aren't converting
+              <ChevronRight className="w-4 h-4" />
+            </Link>
+          </div>
         </div>
       </section>
 
       {/* ============================================================ */}
-      {/*  LOGIC / PROOF SECTION (NEW)                                  */}
+      {/*  LOGIC / PROOF SECTION                                        */}
       {/* ============================================================ */}
       <section className="py-20 md:py-28 bg-white border-t border-border/50">
         <div className="container">
           <div className="max-w-3xl mx-auto text-center">
             <div className="w-16 h-16 bg-messenger/10 rounded-2xl flex items-center justify-center mx-auto mb-8">
-              <Zap className="w-8 h-8 text-messenger" />
+              <Target className="w-8 h-8 text-messenger" />
             </div>
             <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-6">
-              Speed wins deals. Every time.
+              Rocketeerio is not a chatbot. It's a conversion system.
             </h2>
             <p className="text-lg md:text-xl text-muted-foreground leading-relaxed max-w-2xl mx-auto mb-6">
-              Customers don't wait. They message multiple businesses — and the first one to respond usually gets the deal. If you're not replying instantly, you're already behind.
+              Most tools dump generic chatbot replies into your inbox and hope something sticks. Rocketeerio is built around a single goal: take the Facebook leads you already paid for and walk them straight to a sale.
             </p>
             <p className="text-base font-semibold text-messenger">
-              The first business to reply usually wins the sale.
+              Reply instantly. Qualify automatically. Close more deals.
             </p>
           </div>
         </div>
@@ -453,10 +500,10 @@ export default function Landing() {
         <div className="container">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
-              Rocketeerio handles your leads instantly.
+              How Rocketeerio converts every Facebook lead.
             </h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Three steps. Zero missed leads.
+              Three steps. Zero missed leads. Zero leads left to go cold.
             </p>
           </div>
 
@@ -497,14 +544,14 @@ export default function Landing() {
           {/* Mid-page CTA */}
           <div className="text-center mt-16">
             <div>
-              <Button
-                size="lg"
-                className="bg-messenger hover:bg-messenger-dark text-lg px-8 h-14 shadow-lg shadow-messenger/25"
-                onClick={scrollToAuth}
-              >
-                Start Closing More Leads <ArrowRight className="ml-2 w-5 h-5" />
-              </Button>
-              <p className="text-xs text-muted-foreground mt-3">No credit card required • Setup in minutes</p>
+                <Button
+                  size="lg"
+                  className="bg-messenger hover:bg-messenger-dark text-lg px-8 h-14 shadow-lg shadow-messenger/25"
+                  onClick={scrollToAuth}
+                >
+                  Start Converting Leads <ArrowRight className="ml-2 w-5 h-5" />
+                </Button>
+                <p className="text-xs text-muted-foreground mt-3">No credit card required • Setup in minutes</p>
             </div>
           </div>
         </div>
@@ -621,22 +668,82 @@ export default function Landing() {
       </section>
 
       {/* ============================================================ */}
-      {/*  REINFORCEMENT SECTION (NEW)                                  */}
+      {/*  INDUSTRY EXAMPLES SECTION                                    */}
       {/* ============================================================ */}
       <section className="py-20 md:py-28 border-t border-border/50">
+        <div className="container">
+          <div className="max-w-3xl mx-auto text-center mb-12">
+            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
+              Built for businesses that live and die by Facebook leads.
+            </h2>
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+              If you run paid Facebook or Instagram ads and your customers message before they buy, Rocketeerio is built for you.
+            </p>
+          </div>
+
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
+            {[
+              {
+                title: "Contractors & home services",
+                body: "Roofers, plumbers, HVAC, remodelers — leads ask for quotes at all hours. Reply in seconds, capture the job before the next contractor does.",
+              },
+              {
+                title: "Real estate & property",
+                body: "Buyers and renters DM about listings. The first agent to respond usually books the showing. Rocketeerio keeps you first, every time.",
+              },
+              {
+                title: "Auto dealers & detailers",
+                body: "Shoppers message about availability, pricing, and trade-ins. Slow replies kill the deal. Rocketeerio answers, qualifies, and hands them to your sales team ready to buy.",
+              },
+              {
+                title: "Med spas, dentists & clinics",
+                body: "Prospects ask about pricing and availability before they ever book. Convert curiosity into appointments without making them wait.",
+              },
+              {
+                title: "Fitness, coaching & courses",
+                body: "Hot leads come in from ads, then go cold in your DMs. Qualify intent automatically and only step in when they're ready to enroll.",
+              },
+              {
+                title: "Local services & retail",
+                body: "From cleaners to event venues to boutiques — if your customers DM before they spend, you need a system, not a chatbot.",
+              },
+            ].map((item) => (
+              <div key={item.title} className="bg-white rounded-2xl p-6 border border-border/50 hover:shadow-md transition-shadow">
+                <h3 className="text-base font-bold text-foreground mb-2">{item.title}</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">{item.body}</p>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-12 text-center">
+            <Link
+              href="/facebook-leads-not-converting"
+              className="inline-flex items-center gap-2 text-messenger hover:text-messenger-dark font-semibold text-sm sm:text-base"
+            >
+              See the 7 reasons your Facebook leads aren't converting
+              <ChevronRight className="w-4 h-4" />
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* ============================================================ */}
+      {/*  REINFORCEMENT SECTION                                        */}
+      {/* ============================================================ */}
+      <section className="py-20 md:py-28 bg-white border-t border-border/50">
         <div className="container">
           <div className="max-w-3xl mx-auto text-center">
             <div className="w-16 h-16 bg-messenger/10 rounded-2xl flex items-center justify-center mx-auto mb-8">
               <TrendingUp className="w-8 h-8 text-messenger" />
             </div>
             <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-6">
-              You don't need more leads. You need better follow-up.
+              You don't need more leads. You need to convert the ones you already paid for.
             </h2>
             <p className="text-lg md:text-xl text-muted-foreground leading-relaxed max-w-2xl mx-auto mb-6">
-              Most businesses think they need to spend more on ads. But the truth is… you're already getting leads — you're just not converting them.
+              Most businesses think the answer is more ad spend. The real fix is converting the leads sitting in your inbox right now — the ones you stopped replying to because you couldn't keep up.
             </p>
             <p className="text-base font-semibold text-messenger">
-              Stop chasing leads. Let them come ready.
+              Stop chasing leads. Let them arrive ready to buy.
             </p>
           </div>
         </div>
@@ -791,10 +898,10 @@ export default function Landing() {
       <section className="py-12 sm:py-20 md:py-28 bg-messenger">
         <div className="container text-center px-4 sm:px-6">
           <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-4">
-            Stop losing customers. Start closing more deals today.
+            Turn the leads you already paid for into paying customers.
           </h2>
           <p className="text-lg text-white/80 max-w-2xl mx-auto mb-8">
-            Every minute you wait, another lead goes cold.
+            Every minute you wait, another Facebook lead goes cold and another competitor closes the sale.
           </p>
           <div>
             <Button
@@ -802,7 +909,7 @@ export default function Landing() {
               className="bg-white text-messenger hover:bg-white/90 text-lg px-8 h-14 shadow-lg font-bold"
               onClick={scrollToAuth}
             >
-              Start Closing More Leads <ArrowRight className="ml-2 w-5 h-5" />
+              Start Converting Leads <ArrowRight className="ml-2 w-5 h-5" />
             </Button>
             <p className="text-xs text-white/70 mt-3">No credit card required • Setup in minutes</p>
           </div>
@@ -814,13 +921,47 @@ export default function Landing() {
       {/* ============================================================ */}
       <footer className="bg-foreground py-12">
         <div className="container">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-            <div className="flex items-center gap-2">
-              <img src="/favicon.svg" alt="Rocketeerio" className="w-7 h-7" />
-              <span className="text-lg font-bold text-white">Rocketeerio</span>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-8 mb-8">
+            <div>
+              <div className="flex items-center gap-2 mb-3">
+                <img src="/favicon.svg" alt="Rocketeerio" className="w-7 h-7" />
+                <span className="text-lg font-bold text-white">Rocketeerio</span>
+              </div>
+              <p className="text-sm text-white/60 leading-relaxed">
+                The Facebook lead conversion system that turns DMs into paying customers.
+              </p>
             </div>
+            <div>
+              <h4 className="text-sm font-semibold text-white mb-3">Product</h4>
+              <ul className="space-y-2 text-sm text-white/60">
+                <li><a href="#how-it-works" className="hover:text-white transition-colors">How It Works</a></li>
+                <li><a href="#pricing" className="hover:text-white transition-colors">Pricing</a></li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="text-sm font-semibold text-white mb-3">Resources</h4>
+              <ul className="space-y-2 text-sm text-white/60">
+                <li>
+                  <Link href="/facebook-leads-not-converting" className="hover:text-white transition-colors">
+                    Why Facebook leads aren't converting
+                  </Link>
+                </li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="text-sm font-semibold text-white mb-3">Company</h4>
+              <ul className="space-y-2 text-sm text-white/60">
+                <li><Link href="/privacy" className="hover:text-white transition-colors">Privacy</Link></li>
+                <li><Link href="/terms" className="hover:text-white transition-colors">Terms</Link></li>
+              </ul>
+            </div>
+          </div>
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4 pt-8 border-t border-white/10">
             <p className="text-sm text-white/50">
               &copy; {new Date().getFullYear()} Rocketeerio. All rights reserved.
+            </p>
+            <p className="text-sm text-white/50">
+              Built for businesses that run Facebook & Instagram ads.
             </p>
           </div>
         </div>
