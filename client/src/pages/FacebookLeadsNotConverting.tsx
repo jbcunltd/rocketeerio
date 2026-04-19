@@ -34,12 +34,12 @@ const REASONS: Array<{
   {
     number: "01",
     title: "You're replying too slowly",
-    body: "The single biggest reason Facebook leads don't convert is response time. Studies of inbound lead behaviour consistently show conversion rates drop sharply after the first 5 minutes — and fall off a cliff after the first hour. If you're replying in 30 minutes, two hours, or the next morning, the lead has already messaged your competitors and chosen one of them.",
+    body: "The single biggest reason Facebook leads don’t convert is response time. Conversion rates drop sharply after the first 5 minutes and fall off a cliff after the first hour. If you’re replying in 30 minutes, two hours, or the next morning, the lead has already messaged your competitors and chosen one of them. Every delayed reply is a lost opportunity.",
   },
   {
     number: "02",
     title: "Your replies are generic and impersonal",
-    body: "Copy-pasted responses like \"Hi, thanks for reaching out, someone will get back to you shortly\" tell the lead they're a number in a queue. Leads who feel ignored disengage immediately. The first reply has to acknowledge what they actually asked, sound human, and move the conversation forward — or the conversation ends right there.",
+    body: "\"Hi, thanks for reaching out, someone will get back to you shortly\" tells the lead they’re a number in a queue. They feel ignored and disengage immediately. The first reply has to acknowledge what they actually asked, sound human, and move the conversation forward — or it ends right there. Every ignored message is money left on the table.",
   },
   {
     number: "03",
@@ -49,12 +49,12 @@ const REASONS: Array<{
   {
     number: "04",
     title: "Nobody is watching the inbox after hours",
-    body: "Facebook ads run 24/7. Customer attention does not. A lead that messages you at 9pm or on a Sunday will be gone by Monday morning. If your inbox is only watched during business hours, you're throwing away every lead that comes in outside that window — and that's typically 40–60% of them.",
+    body: "Facebook ads run 24/7. Customer attention does not. A lead that messages you at 9pm or on a Sunday will be gone by Monday morning. If your inbox is only watched during business hours, you’re throwing away 40–60% of the leads you paid for. That’s revenue you’ll never see.",
   },
   {
     number: "05",
     title: "You have no follow-up system",
-    body: "Most leads don't buy on the first message. They ask a question, get distracted, and never come back — unless something pulls them back in. Without an automatic follow-up sequence, the leads that didn't close on day one are simply lost. A simple, well-timed follow-up message recovers a meaningful portion of those leads.",
+    body: "Most leads don’t buy on the first message. They ask a question, get distracted, and never come back — unless something pulls them back in. Without an automatic follow-up, every lead that didn’t close on day one is gone for good. Money left on the table, every single day.",
   },
   {
     number: "06",
@@ -251,7 +251,7 @@ export default function FacebookLeadsNotConverting() {
               className="bg-messenger hover:bg-messenger-dark text-xs sm:text-sm px-3 sm:px-4"
               onClick={goToHome}
             >
-              Start Converting Leads
+              Connect Your Facebook Page
             </Button>
           </div>
         </div>
@@ -288,11 +288,14 @@ export default function FacebookLeadsNotConverting() {
               <span className="text-xs sm:text-sm font-semibold text-red-700">The real reason your ad spend isn't paying off</span>
             </div>
             <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight text-foreground leading-[1.1] mb-6">
-              Why your Facebook leads{" "}
-              <span className="text-messenger">aren't converting.</span>
+              You're getting Facebook messages…{" "}
+              <span className="text-messenger">but barely any turn into sales.</span>
             </h1>
-            <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-10 leading-relaxed">
-              You're spending money on Facebook ads. Leads are coming in. But the sales aren't following. Here are the seven reasons that's happening — and exactly how to fix every one of them.
+            <p className="text-lg md:text-xl text-foreground font-semibold max-w-2xl mx-auto mb-4 leading-relaxed">
+              Every delayed reply is a lost opportunity. Every ignored message is money left on the table.
+            </p>
+            <p className="text-base md:text-lg text-muted-foreground max-w-2xl mx-auto mb-10 leading-relaxed">
+              Here are the seven reasons it keeps happening — and exactly how to fix every one of them.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <Button
@@ -300,7 +303,7 @@ export default function FacebookLeadsNotConverting() {
                 className="bg-messenger hover:bg-messenger-dark text-lg px-8 h-14 shadow-lg shadow-messenger/25"
                 onClick={goToHome}
               >
-                Fix This With Rocketeerio <ArrowRight className="ml-2 w-5 h-5" />
+                Start Turning Facebook Leads Into Customers <ArrowRight className="ml-2 w-5 h-5" />
               </Button>
               <a
                 href="#reasons"
@@ -324,13 +327,13 @@ export default function FacebookLeadsNotConverting() {
             </h2>
             <div className="space-y-5 text-base md:text-lg text-muted-foreground leading-relaxed">
               <p>
-                If you're running Facebook or Instagram ads, you already know that the leads are out there. People are clicking. People are messaging. The number in your Ads Manager looks right. So why isn't the revenue showing up?
+                You're paying for the clicks. The DMs are landing. The number in your Ads Manager looks right. So why isn't the revenue showing up?
               </p>
               <p>
-                In almost every case, the answer is the same: <strong className="text-foreground">the leads are fine — the way they're being handled is what's broken.</strong> Slow replies, generic responses, no qualification, no after-hours coverage, no follow-up. By the time you get back to the lead, they've already become a customer of someone who replied first.
+                In almost every case, the answer is the same: <strong className="text-foreground">the leads are fine — the way they're being handled is what's broken.</strong> Slow replies, generic responses, no qualification, no after-hours coverage, no follow-up. By the time you get back to the lead, they’ve already become a customer of someone who replied first.
               </p>
-              <p>
-                Below are the seven specific reasons Facebook leads stop converting, real examples from the industries it hurts most, and the system we built to fix it.
+              <p className="text-foreground font-semibold">
+                Every minute you wait is a customer choosing your competitor.
               </p>
             </div>
           </div>
@@ -381,7 +384,7 @@ export default function FacebookLeadsNotConverting() {
               className="bg-messenger hover:bg-messenger-dark text-lg px-8 h-14 shadow-lg shadow-messenger/25"
               onClick={goToHome}
             >
-              See How Rocketeerio Fixes All 7 <ArrowRight className="ml-2 w-5 h-5" />
+              Connect Your Facebook Page <ArrowRight className="ml-2 w-5 h-5" />
             </Button>
             <p className="text-xs text-muted-foreground mt-3">No credit card required • Setup in minutes</p>
           </div>
@@ -485,34 +488,29 @@ export default function FacebookLeadsNotConverting() {
               <span className="text-xs sm:text-sm font-semibold text-messenger">The fix</span>
             </div>
             <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
-              Rocketeerio is the Facebook lead conversion system that fixes all of this.
+              Stop losing them. Start closing them.
             </h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Not a chatbot. Not another AI inbox. A purpose-built system for turning Facebook and Instagram leads into paying customers — 24/7, automatically, in seconds.
+              Rocketeerio is the Facebook lead conversion system that does three things — fast, simple, and on autopilot.
             </p>
           </div>
 
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-5xl mx-auto">
+          <div className="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto">
             {[
               {
                 icon: Zap,
-                title: "Replies in seconds",
-                body: "Every lead gets an instant, personal, on-brand reply — day, night, weekends, holidays.",
+                title: "Instant replies so you never miss a lead",
+                body: "Every message gets answered in seconds — day, night, weekends. Nothing slips through.",
               },
               {
                 icon: MessageSquare,
-                title: "Qualifies automatically",
-                body: "Asks the right questions to separate buyers from browsers before a human ever steps in.",
+                title: "We filter the serious buyers",
+                body: "The tire-kickers stay in the chat. The real buyers get surfaced.",
               },
               {
                 icon: BellRing,
-                title: "Hot-lead alerts",
-                body: "When a lead is qualified and ready to close, you get pinged — with the full conversation in hand.",
-              },
-              {
-                icon: TrendingUp,
-                title: "Built-in follow-up",
-                body: "Leads that don't close on day one get pulled back in automatically, recovering revenue you'd otherwise lose.",
+                title: "You get notified when it's time to close",
+                body: "You only step in when there’s a sale on the table — with the full conversation in hand.",
               },
             ].map((b) => (
               <div key={b.title} className="bg-background rounded-2xl p-6 border border-border/50">
@@ -583,17 +581,17 @@ export default function FacebookLeadsNotConverting() {
       <section className="py-12 sm:py-20 md:py-28 bg-messenger">
         <div className="container text-center px-4 sm:px-6">
           <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-4">
-            Stop losing the leads you already paid for.
+            Every ignored message is money left on the table.
           </h2>
           <p className="text-lg text-white/80 max-w-2xl mx-auto mb-8">
-            Rocketeerio replies in seconds, qualifies every lead, and tells you exactly when to close.
+            Connect your Facebook page and start turning the leads you already paid for into paying customers.
           </p>
           <Button
             size="lg"
             className="bg-white text-messenger hover:bg-white/90 text-lg px-8 h-14 shadow-lg font-bold"
             onClick={goToHome}
           >
-            Start Converting Leads <ArrowRight className="ml-2 w-5 h-5" />
+            Start Turning Facebook Leads Into Paying Customers <ArrowRight className="ml-2 w-5 h-5" />
           </Button>
           <p className="text-xs text-white/70 mt-3">No credit card required • Setup in minutes</p>
         </div>

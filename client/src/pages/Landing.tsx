@@ -300,7 +300,7 @@ export default function Landing() {
               Log In
             </Button>
             <Button size="sm" className="bg-messenger hover:bg-messenger-dark text-xs sm:text-sm px-2 sm:px-4 hidden sm:inline-flex" onClick={scrollToAuth}>
-              Start Closing More Leads
+              Connect Your Facebook Page
             </Button>
             <Button size="sm" className="bg-messenger hover:bg-messenger-dark text-xs px-3 sm:hidden" onClick={scrollToAuth}>
               Start Free
@@ -320,15 +320,15 @@ export default function Landing() {
               <span className="w-2 h-2 rounded-full bg-messenger animate-pulse" />
               <span className="text-xs sm:text-sm font-semibold text-messenger">The Facebook Lead Conversion System</span>
             </div>
-            <h1 className="text-3xl sm:text-4xl md:text-6xl font-extrabold tracking-tight text-foreground leading-[1.1] mb-6">
-              Turn your Facebook leads into{" "}
-              <span className="text-messenger">paying customers.</span>
+            <h1 className="text-4xl sm:text-5xl md:text-7xl font-extrabold tracking-tight text-foreground leading-[1.05] mb-6">
+              Stop losing{" "}
+              <span className="text-messenger">Facebook leads.</span>
             </h1>
-            <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-4 leading-relaxed">
-              You're spending money on Facebook ads. Leads are messaging your page. But by the time you reply, they've already gone with someone else.
+            <p className="text-lg md:text-2xl text-foreground font-semibold max-w-2xl mx-auto mb-6 leading-relaxed">
+              We reply instantly and tell you which ones are ready to buy.
             </p>
-            <p className="text-lg md:text-xl text-foreground font-semibold max-w-2xl mx-auto mb-10 leading-relaxed">
-              Rocketeerio replies in seconds, qualifies every lead, and tells you the exact moment to step in and close.
+            <p className="text-base md:text-lg text-red-600 font-semibold max-w-2xl mx-auto mb-10 leading-relaxed">
+              Most businesses lose 30–50% of their Facebook leads just by replying too late.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <div>
@@ -353,7 +353,7 @@ export default function Landing() {
             <div className="mt-10 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-muted-foreground">
               <div className="flex items-center gap-1.5">
                 <CheckCircle2 className="w-4 h-4 text-green-500" />
-                <span>Replies in under 60 seconds</span>
+                <span>Reply instantly (even when you're offline)</span>
               </div>
               <div className="flex items-center gap-1.5">
                 <CheckCircle2 className="w-4 h-4 text-green-500" />
@@ -481,10 +481,10 @@ export default function Landing() {
               <Target className="w-8 h-8 text-messenger" />
             </div>
             <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-6">
-              Rocketeerio is not a chatbot. It's a conversion system.
+              This isn't another chatbot. It's a system that tells you which leads are worth your time.
             </h2>
             <p className="text-lg md:text-xl text-muted-foreground leading-relaxed max-w-2xl mx-auto mb-6">
-              Most tools dump generic chatbot replies into your inbox and hope something sticks. Rocketeerio is built around a single goal: take the Facebook leads you already paid for and walk them straight to a sale.
+              Chatbots reply for the sake of replying. Rocketeerio replies to close. We answer instantly, ask the right questions, and only put a lead on your desk when they're ready to buy.
             </p>
             <p className="text-base font-semibold text-messenger">
               Reply instantly. Qualify automatically. Close more deals.
@@ -684,28 +684,16 @@ export default function Landing() {
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
             {[
               {
-                title: "Contractors & home services",
-                body: "Roofers, plumbers, HVAC, remodelers — leads ask for quotes at all hours. Reply in seconds, capture the job before the next contractor does.",
+                title: "Contractors",
+                body: "Quote requests come in at 9pm. Whoever replies first books the job. Rocketeerio replies in seconds — even when you're on the roof or asleep.",
               },
               {
-                title: "Real estate & property",
-                body: "Buyers and renters DM about listings. The first agent to respond usually books the showing. Rocketeerio keeps you first, every time.",
+                title: "Real estate",
+                body: "Buyers DM about listings on weekends. Reply Monday and the showing is already booked with another agent. Rocketeerio keeps you first, every time.",
               },
               {
-                title: "Auto dealers & detailers",
-                body: "Shoppers message about availability, pricing, and trade-ins. Slow replies kill the deal. Rocketeerio answers, qualifies, and hands them to your sales team ready to buy.",
-              },
-              {
-                title: "Med spas, dentists & clinics",
-                body: "Prospects ask about pricing and availability before they ever book. Convert curiosity into appointments without making them wait.",
-              },
-              {
-                title: "Fitness, coaching & courses",
-                body: "Hot leads come in from ads, then go cold in your DMs. Qualify intent automatically and only step in when they're ready to enroll.",
-              },
-              {
-                title: "Local services & retail",
-                body: "From cleaners to event venues to boutiques — if your customers DM before they spend, you need a system, not a chatbot.",
+                title: "Car dealers",
+                body: "“Is it still available?” If you take six hours to answer, they’ve already test-driven a different car at another lot. Rocketeerio answers in 30 seconds.",
               },
             ].map((item) => (
               <div key={item.title} className="bg-white rounded-2xl p-6 border border-border/50 hover:shadow-md transition-shadow">
