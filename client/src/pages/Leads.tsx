@@ -189,7 +189,7 @@ function LeadsContent() {
                     <span className="text-sm font-bold text-messenger">{(lead.name || "?").charAt(0).toUpperCase()}</span>
                   </div>
                   <div className="min-w-0 flex-1">
-                    <div className="flex items-center justify-between gap-2">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
                       <span className="font-semibold text-sm truncate">{lead.name || "Unknown"}</span>
                       <ScoreBadge classification={lead.classification} score={lead.score} />
                     </div>

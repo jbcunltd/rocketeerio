@@ -42,18 +42,16 @@ function AgentInboxContent() {
         </div>
       )}
 
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
-            <h1 className="text-xl sm:text-2xl font-bold">Agent Inbox</h1>
-            {(handoffCount ?? 0) > 0 && (
-              <span className="bg-red-500 text-white text-xs font-bold px-2.5 py-1 rounded-full animate-pulse">
-                {handoffCount} pending
-              </span>
-            )}
-          </div>
-          <p className="text-sm text-muted-foreground">Conversations that need human attention. AI has been paused on these.</p>
+      <div className="mb-6">
+        <div className="flex items-center gap-2 sm:gap-3 flex-wrap mb-1">
+          <h1 className="text-xl sm:text-2xl font-bold">Agent Inbox</h1>
+          {(handoffCount ?? 0) > 0 && (
+            <span className="bg-red-500 text-white text-xs font-bold px-2.5 py-1 rounded-full animate-pulse">
+              {handoffCount} pending
+            </span>
+          )}
         </div>
+        <p className="text-sm text-muted-foreground">Conversations that need human attention. AI has been paused on these.</p>
       </div>
 
       {!queue?.length ? (

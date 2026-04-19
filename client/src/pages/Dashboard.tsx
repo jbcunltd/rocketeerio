@@ -267,7 +267,7 @@ function DashboardContent() {
                   const lead = row.lead;
                   const handoff = conv?.needsHandoff;
                   return (
-                    <li key={conv.id} className="px-4 py-3 flex items-center justify-between gap-3 hover:bg-red-50/40 cursor-pointer"
+                    <li key={conv.id} className="px-4 py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-red-50/40 cursor-pointer"
                         onClick={() => setLocation(`/conversations/${conv.id}`)}>
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2">

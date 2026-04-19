@@ -495,23 +495,23 @@ function ChannelsTab() {
 
       {/* Messenger Channel */}
       <div className="bg-white rounded-xl border overflow-hidden">
-        <div className="flex items-center justify-between p-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-[#1877F2]/10 rounded-lg flex items-center justify-center">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-10 h-10 bg-[#1877F2]/10 rounded-lg flex items-center justify-center shrink-0">
               <MessageCircle className="w-5 h-5 text-[#1877F2]" />
             </div>
-            <div>
+            <div className="min-w-0">
               <p className="font-medium">Messenger</p>
-              <p className="text-xs text-muted-foreground">Facebook Messenger for {activePage.pageName}</p>
+              <p className="text-xs text-muted-foreground truncate">Facebook Messenger for {activePage.pageName}</p>
             </div>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 shrink-0">
             <AiModeToggle
               pageId={activePage.id}
               currentMode={(activePage.aiMode as AiMode) || "testing"}
               compact
             />
-            <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded inline-flex items-center gap-1">
+            <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded inline-flex items-center gap-1 whitespace-nowrap">
               <CheckCircle className="w-3 h-3" /> Connected
             </span>
           </div>
@@ -525,33 +525,33 @@ function ChannelsTab() {
 
       {/* Instagram Channel */}
       <div className="bg-white rounded-xl border overflow-hidden">
-        <div className="flex items-center justify-between p-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-purple-500/10 to-pink-500/10 rounded-lg flex items-center justify-center">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-10 h-10 bg-gradient-to-br from-purple-500/10 to-pink-500/10 rounded-lg flex items-center justify-center shrink-0">
               <Instagram className="w-5 h-5 text-purple-600" />
             </div>
-            <div>
+            <div className="min-w-0">
               <p className="font-medium">Instagram</p>
               {linkedIg ? (
-                <p className="text-xs text-muted-foreground">@{linkedIg.igUsername}</p>
+                <p className="text-xs text-muted-foreground truncate">@{linkedIg.igUsername}</p>
               ) : (
-                <p className="text-xs text-muted-foreground">Connect the Instagram account linked to this page</p>
+                <p className="text-xs text-muted-foreground">Connect Instagram account</p>
               )}
             </div>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 shrink-0 w-full sm:w-auto">
             {linkedIg ? (
               <>
                 <select
                   value={linkedIg.aiMode}
                   onChange={(e) => handleIgModeChange(e.target.value as any)}
-                  className="text-xs border rounded-md px-2 py-1.5 bg-white"
+                  className="text-xs border rounded-md px-2 py-1.5 bg-white flex-1 sm:flex-none"
                 >
                   <option value="paused">Paused</option>
                   <option value="testing">Testing</option>
                   <option value="live">Live</option>
                 </select>
-                <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded inline-flex items-center gap-1">
+                <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded inline-flex items-center gap-1 whitespace-nowrap">
                   <CheckCircle className="w-3 h-3" /> Connected
                 </span>
               </>
@@ -560,7 +560,7 @@ function ChannelsTab() {
                 onClick={handleConnectInstagram}
                 disabled={connectingIg}
                 size="sm"
-                className="bg-gradient-to-r from-purple-600 to-pink-500 hover:from-purple-700 hover:to-pink-600 text-white"
+                className="bg-gradient-to-r from-purple-600 to-pink-500 hover:from-purple-700 hover:to-pink-600 text-white w-full sm:w-auto"
               >
                 {connectingIg ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Instagram className="w-4 h-4 mr-2" />}
                 Connect Instagram

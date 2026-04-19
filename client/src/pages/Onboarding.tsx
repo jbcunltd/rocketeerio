@@ -169,7 +169,7 @@ export default function Onboarding() {
               <div className="space-y-4">
                 {kbEntries.map((entry, idx) => (
                   <div key={idx} className="border rounded-lg p-4 space-y-3">
-                    <div className="flex items-center justify-between">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
                       <Label className="text-sm font-semibold">Entry {idx + 1}</Label>
                       <select
                         value={entry.category}
@@ -178,7 +178,7 @@ export default function Onboarding() {
                           updated[idx] = { ...updated[idx], category: e.target.value as any };
                           setKbEntries(updated);
                         }}
-                        className="text-xs border rounded px-2 py-1"
+                        className="text-xs border rounded px-2 py-1 flex-shrink-0"
                       >
                         <option value="product">Product</option>
                         <option value="pricing">Pricing</option>
