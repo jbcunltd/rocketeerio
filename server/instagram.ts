@@ -3,9 +3,12 @@ import { ENV } from "./_core/env";
 import { sdk } from "./_core/sdk";
 import { COOKIE_NAME } from "../shared/const";
 import * as db from "./db";
-import { generateAIResponse, scoreLead, detectHandoff } from "./ai-engine";
+import { generateAIResponse, scoreLead, detectHandoff, detectHighIntentFast } from "./ai-engine";
 import { notifyOwner } from "./_core/notification";
 import { dispatchWebhookEvent } from "./webhook-dispatcher";
+
+// Phrase the AI is instructed to use when handing off. Used to detect post-reply handoff.
+const IG_HANDOFF_PHRASE_RE = /(specialist|teammate|colleague|sales team|account manager).{0,40}(message you|reach out|get in touch|contact you|follow up|take it from here)/i;
 
 const FB_GRAPH = "https://graph.facebook.com/v19.0";
 
@@ -149,6 +152,12 @@ async function processIncomingInstagramMessage(
     return;
   }
 
+  // 4b. Fast high-intent detection (Rocketeerio v1)
+  const fastIntent = detectHighIntentFast(messageText);
+  if (fastIntent.highIntent) {
+    console.log(`[IG Webhook] HIGH INTENT detected (${fastIntent.signal}: "${fastIntent.matched}") in conversation ${conv.id}`);
+  }
+
   // 5. Get conversation history
   const history = await db.getMessagesByConversation(conv.id);
   const historyForAI = history.map(m => ({ sender: m.sender, content: m.content }));
@@ -217,6 +226,30 @@ async function processIncomingInstagramMessage(
   try {
     if (conv.isAiActive && !conv.needsHandoff) {
       const allMsgs = [...historyForAI, { sender: "ai", content: aiResponse }];
+
+      // Fast path: trigger handoff immediately on high intent or AI self-handoff
+      const aiSelfHandoff = IG_HANDOFF_PHRASE_RE.test(aiResponse);
+      if (fastIntent.highIntent || aiSelfHandoff) {
+        const reason = fastIntent.highIntent
+          ? `[Hot Lead] ${fastIntent.signal}: "${fastIntent.matched}"`
+          : `[Hot Lead] AI flagged handoff in reply`;
+        console.log(`[IG Webhook] Auto-handoff (fast): ${reason}`);
+        await db.requestHandoff(conv.id, reason);
+        await notifyOwner({
+          title: `🔥 Hot Lead from Instagram: ${lead.name || "Unknown Lead"}`,
+          content: `${reason}\n\nLast message: "${messageText.substring(0, 200)}"`,
+        });
+        await dispatchWebhookEvent(igAccount.userId, "conversation.handoff", {
+          leadId: lead.id,
+          leadName: lead.name,
+          conversationId: conv.id,
+          reason: "hot_lead",
+          reasonDetail: reason,
+          platform: "instagram",
+        });
+        return;
+      }
+
       const handoffResult = await detectHandoff(allMsgs);
       if (handoffResult.shouldHandoff) {
         console.log(`[IG Webhook] Auto-handoff detected: ${handoffResult.reason}`);

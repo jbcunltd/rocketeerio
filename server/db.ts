@@ -1,4 +1,4 @@
-import { eq, desc, and, sql, gte, lte, count, avg, isNotNull } from "drizzle-orm";
+import { eq, desc, and, or, sql, gte, lte, count, avg, isNotNull } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 import {
@@ -183,6 +183,35 @@ export async function getConversationByLeadId(leadId: number) {
 }
 
 // ─── Conversations ───────────────────────────────────────────────────
+
+/**
+ * Recent hot-lead alerts for the dashboard feed (Rocketeerio v1).
+ * Returns conversations that are currently flagged for handoff OR
+ * tied to a hot-classified lead, newest first.
+ */
+export async function getRecentHotLeads(userId: number, limit: number = 10) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select({
+    conversation: conversations,
+    lead: leads,
+    page: facebookPages,
+  })
+    .from(conversations)
+    .leftJoin(leads, eq(conversations.leadId, leads.id))
+    .leftJoin(facebookPages, eq(conversations.pageId, facebookPages.id))
+    .where(
+      and(
+        eq(conversations.userId, userId),
+        or(
+          eq(conversations.needsHandoff, true),
+          eq(leads.classification, "hot"),
+        ),
+      ),
+    )
+    .orderBy(desc(conversations.lastMessageAt))
+    .limit(limit);
+}
 
 export async function getConversationsByUser(userId: number) {
   const db = await getDb();

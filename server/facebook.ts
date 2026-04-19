@@ -3,11 +3,14 @@ import { ENV } from "./_core/env";
 import { sdk } from "./_core/sdk";
 import { COOKIE_NAME } from "../shared/const";
 import * as db from "./db";
-import { generateAIResponse, scoreLead, detectHandoff } from "./ai-engine";
+import { generateAIResponse, scoreLead, detectHandoff, detectHighIntentFast } from "./ai-engine";
 import { notifyOwner } from "./_core/notification";
 import { dispatchWebhookEvent } from "./webhook-dispatcher";
 import { dispatchLeadAlert } from "./hot-lead-alerts";
 import { checkLeadLimit, checkConversationLimit, getPlanLimits } from "./plan-limits";
+
+// Phrase the AI is instructed to use when handing off. Used to detect post-reply handoff.
+const HANDOFF_PHRASE_RE = /(specialist|teammate|colleague|sales team|account manager).{0,40}(message you|reach out|get in touch|contact you|follow up|take it from here)/i;
 
 const FB_GRAPH = "https://graph.facebook.com/v19.0";
 
@@ -200,6 +203,12 @@ async function processIncomingMessage(
     return;
   }
 
+  // 4b. Fast high-intent detection (Rocketeerio v1) — fire before LLM reply
+  const fastIntent = detectHighIntentFast(messageText);
+  if (fastIntent.highIntent) {
+    console.log(`[Webhook] HIGH INTENT detected (${fastIntent.signal}: "${fastIntent.matched}") in conversation ${conv.id}`);
+  }
+
   // 5. Get conversation history
   const history = await db.getMessagesByConversation(conv.id);
   const historyForAI = history.map(m => ({ sender: m.sender, content: m.content }));
@@ -318,6 +327,38 @@ async function processIncomingMessage(
   try {
     if (conv.isAiActive && !conv.needsHandoff) {
       const allMsgs = [...historyForAI, { sender: "ai", content: aiResponse }];
+
+      // 13a. Rocketeerio v1: trigger handoff immediately if fast intent fired,
+      //      or if the AI's own reply contains the handoff phrase.
+      const aiSelfHandoff = HANDOFF_PHRASE_RE.test(aiResponse);
+      if (fastIntent.highIntent || aiSelfHandoff) {
+        const reason = fastIntent.highIntent
+          ? `[Hot Lead] ${fastIntent.signal}: "${fastIntent.matched}"`
+          : `[Hot Lead] AI flagged handoff in reply`;
+        console.log(`[Webhook] Auto-handoff (fast): ${reason}`);
+        await db.requestHandoff(conv.id, reason);
+        await dispatchLeadAlert({
+          userId: pageEntry.userId,
+          userPlan,
+          leadId: lead.id,
+          leadName: lead.name || "Unknown",
+          leadScore: lead.score || 0,
+          classification: "hot",
+          lastMessage: `[HOT LEAD] ${reason} — "${messageText.substring(0, 140)}"`,
+          pageName: convDetail?.page?.pageName || "Unknown Page",
+          conversationId: conv.id,
+        });
+        await dispatchWebhookEvent(pageEntry.userId, "conversation.handoff", {
+          leadId: lead.id,
+          leadName: lead.name,
+          conversationId: conv.id,
+          reason: "hot_lead",
+          reasonDetail: reason,
+          platform: "messenger",
+        });
+        return; // Skip the slower LLM-based detector
+      }
+
       const handoffResult = await detectHandoff(allMsgs);
       if (handoffResult.shouldHandoff) {
         console.log(`[Webhook] Auto-handoff detected: ${handoffResult.reason} — ${handoffResult.reasonDetail}`);

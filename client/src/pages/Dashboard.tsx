@@ -86,6 +86,9 @@ function DashboardContent() {
   const { activePageId, activePage } = useActivePage();
   const { data: stats, isLoading: statsLoading } = trpc.dashboard.stats.useQuery();
   const { data: activity, isLoading: activityLoading } = trpc.dashboard.activity.useQuery({ days: 7 });
+  const { data: hotLeads } = trpc.dashboard.hotLeads.useQuery({ limit: 5 }, {
+    refetchInterval: 30_000, // poll every 30s for near-realtime alert feed
+  });
   const { data: pages } = trpc.pages.list.useQuery();
   const { data: allLeads } = trpc.leads.list.useQuery();
   const { data: allConversations } = trpc.conversations.list.useQuery();
@@ -246,6 +249,53 @@ function DashboardContent() {
               </div>
             )}
           </div>
+
+          {/* Hot Lead Alerts (Rocketeerio v1) */}
+          {hotLeads && hotLeads.length > 0 && (
+            <div className="bg-white rounded-xl border border-red-200 overflow-hidden mb-5">
+              <div className="flex items-center justify-between px-4 py-3 border-b border-red-100 bg-red-50/60">
+                <div className="flex items-center gap-2">
+                  <Flame className="w-4 h-4 text-red-500" />
+                  <h3 className="text-sm font-bold text-red-700">Hot Lead Alerts</h3>
+                  <span className="text-[10px] font-semibold uppercase tracking-wide text-red-600 bg-red-100 px-1.5 py-0.5 rounded-full">Action needed</span>
+                </div>
+                <span className="text-[11px] text-red-600">{hotLeads.length} active</span>
+              </div>
+              <ul className="divide-y divide-gray-100">
+                {hotLeads.map((row: any) => {
+                  const conv = row.conversation;
+                  const lead = row.lead;
+                  const handoff = conv?.needsHandoff;
+                  return (
+                    <li key={conv.id} className="px-4 py-3 flex items-center justify-between gap-3 hover:bg-red-50/40 cursor-pointer"
+                        onClick={() => setLocation(`/conversations/${conv.id}`)}>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-semibold text-foreground truncate">{lead?.name || "Unknown lead"}</span>
+                          <ScoreBadge classification={lead?.classification || "hot"} />
+                          {handoff && (
+                            <span className="inline-flex items-center gap-1 text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700">
+                              <AlertTriangle className="w-2.5 h-2.5" /> AI paused
+                            </span>
+                          )}
+                        </div>
+                        <div className="text-xs text-muted-foreground truncate mt-0.5">
+                          {conv?.handoffReason || conv?.lastMessagePreview || "New activity"}
+                        </div>
+                        <div className="flex items-center gap-1 text-[11px] text-muted-foreground mt-1">
+                          <Clock className="w-3 h-3" />
+                          {conv?.lastMessageAt ? timeAgo(conv.lastMessageAt) : ""}
+                        </div>
+                      </div>
+                      <Button size="sm" variant="outline" className="shrink-0 border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700" onClick={(e) => { e.stopPropagation(); setLocation(`/conversations/${conv.id}`); }}>
+                        Take over <ArrowRight className="w-3 h-3 ml-1" />
+                      </Button>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          )}
 
           {/* Recent Conversations */}
           <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">

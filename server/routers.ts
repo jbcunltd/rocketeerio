@@ -630,6 +630,12 @@ export const appRouter = router({
       .query(async ({ ctx, input }) => {
         return db.getLeadActivityByDay(ctx.user.id, input?.days ?? 7);
       }),
+
+    hotLeads: protectedProcedure
+      .input(z.object({ limit: z.number().min(1).max(50).default(10) }).optional())
+      .query(async ({ ctx, input }) => {
+        return db.getRecentHotLeads(ctx.user.id, input?.limit ?? 10);
+      }),
   }),
 
   // ─── Analytics ─────────────────────────────────────────────────
