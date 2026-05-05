@@ -17,10 +17,26 @@ export function Logo({ className = "" }: { className?: string }) {
           height="18"
           aria-hidden="true"
         >
+          {/* Chat bubble background */}
           <path
-            d="M12 2 L18 9 L15 12 L19 18 L13 16 L12 22 L11 16 L5 18 L9 12 L6 9 Z"
+            d="M3 8C3 5.239 5.239 3 8 3H16C18.761 3 21 5.239 21 8V14C21 16.761 18.761 19 16 19H8.5L4.5 22V19H8C5.239 19 3 16.761 3 14V8Z"
             fill="white"
           />
+          {/* Brain/AI icon - left hemisphere */}
+          <circle cx="8.5" cy="9" r="1.2" fill="#0084FF" />
+          {/* Brain/AI icon - right hemisphere */}
+          <circle cx="15.5" cy="9" r="1.2" fill="#0084FF" />
+          {/* Neural connection lines */}
+          <path
+            d="M8.5 10.2C9.5 11 11 11.5 12 11.5C13 11.5 14.5 11 15.5 10.2"
+            stroke="#0084FF"
+            strokeWidth="1"
+            strokeLinecap="round"
+            fill="none"
+          />
+          {/* Synapse dots */}
+          <circle cx="10" cy="10.8" r="0.6" fill="#0084FF" />
+          <circle cx="14" cy="10.8" r="0.6" fill="#0084FF" />
         </svg>
       </span>
       <span className="text-[1.05rem] font-bold tracking-tight text-ink-900">
