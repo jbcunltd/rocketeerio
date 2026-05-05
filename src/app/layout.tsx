@@ -7,11 +7,23 @@ import { FloatingCTA } from "@/components/floating-cta";
 import { ExitIntentPopup } from "@/components/exit-intent-popup";
 import { ConditionalChrome } from "@/components/conditional-chrome";
 import { RevealOnScroll } from "@/components/reveal-on-scroll";
+import { ChatWidget } from "@/components/chat-widget";
 
 const inter = Inter({
   variable: "--font-inter",
   subsets: ["latin"],
   display: "swap",
+  preload: true,
+  fallback: [
+    "ui-sans-serif",
+    "system-ui",
+    "-apple-system",
+    "Segoe UI",
+    "Roboto",
+    "Helvetica",
+    "Arial",
+    "sans-serif",
+  ],
 });
 
 const SITE_URL = "https://rocketeerio.com";
@@ -105,12 +117,35 @@ export default function RootLayout({
     ],
   };
 
+  const websiteSchema = {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    name: "Rocketeerio",
+    url: SITE_URL,
+    potentialAction: {
+      "@type": "SearchAction",
+      target: `${SITE_URL}/blog?q={search_term_string}`,
+      "query-input": "required name=search_term_string",
+    },
+  };
+
   return (
     <html lang="en" className={`${inter.variable} h-full antialiased`}>
       <head>
+        {/* Performance: preconnect + DNS prefetch hints for external origins */}
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
+        <link rel="dns-prefetch" href="https://fonts.gstatic.com" />
+        <link rel="dns-prefetch" href="https://www.facebook.com" />
+        <link rel="dns-prefetch" href="https://m.me" />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(orgSchema) }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteSchema) }}
         />
       </head>
       <body className="min-h-full flex flex-col bg-white text-ink-900 font-sans">
@@ -123,6 +158,7 @@ export default function RootLayout({
           <SiteFooter />
           <FloatingCTA />
           <ExitIntentPopup />
+          <ChatWidget />
         </ConditionalChrome>
       </body>
     </html>

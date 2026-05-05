@@ -72,6 +72,10 @@ export default async function ConnectedPagesPage() {
                   <img
                     src={page.pictureUrl}
                     alt=""
+                    width={56}
+                    height={56}
+                    loading="lazy"
+                    decoding="async"
                     className="h-14 w-14 rounded-full object-cover"
                   />
                 ) : (

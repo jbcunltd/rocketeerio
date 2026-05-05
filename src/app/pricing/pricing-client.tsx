@@ -132,7 +132,7 @@ export function PricingClient() {
                   </span>
                   <span className="text-ink-500 text-sm">/mo</span>
                 </div>
-                <p className="mt-1 text-xs text-ink-400">
+                <p className="mt-1 text-xs text-ink-600">
                   {annual
                     ? `Billed annually — $${price * 12}/yr`
                     : "Billed monthly"}
@@ -142,15 +142,15 @@ export function PricingClient() {
                   href="/signup"
                   className={`mt-6 inline-flex w-full items-center justify-center gap-2 rounded-xl px-5 py-3 text-sm font-semibold transition-colors ${
                     plan.highlighted
-                      ? "bg-brand-500 text-white shadow-lg shadow-brand-500/30 hover:bg-brand-600"
-                      : "border border-ink-200 bg-white text-ink-900 hover:bg-ink-50"
+                      ? "bg-brand-600 text-white shadow-lg shadow-brand-500/30 hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-brand-500/40"
+                      : "border border-ink-300 bg-white text-ink-900 hover:bg-ink-50 hover:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/40"
                   }`}
                 >
                   {plan.cta}
                   <ArrowRight className="h-4 w-4" />
                 </Link>
-                <p className="mt-2 text-center text-[11px] text-ink-400">
-                  No credit card required · 14-day money back
+                <p className="mt-2 text-center text-[11px] text-ink-600">
+                  No credit card · Cancel anytime · 30-day money back
                 </p>
 
                 <ul className="mt-7 space-y-3">

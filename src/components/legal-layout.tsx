@@ -1,20 +1,27 @@
 import { ReactNode } from "react";
+import { Breadcrumbs } from "./breadcrumbs";
 
 export function LegalLayout({
   title,
   effective,
   lastUpdated,
   children,
+  breadcrumbName,
 }: {
   title: string;
   effective: string;
   lastUpdated?: string;
   children: ReactNode;
+  breadcrumbName?: string;
 }) {
+  const crumbName = breadcrumbName ?? title;
   return (
     <article className="relative">
       <div aria-hidden className="absolute inset-x-0 top-0 h-72 bg-radial-fade" />
-      <div className="relative mx-auto max-w-3xl px-4 sm:px-6 lg:px-8 pt-14 pb-20">
+      <div className="relative mx-auto max-w-3xl px-4 sm:px-6 lg:px-8 pt-8">
+        <Breadcrumbs items={[{ name: "Legal" }, { name: crumbName }]} />
+      </div>
+      <div className="relative mx-auto max-w-3xl px-4 sm:px-6 lg:px-8 pt-6 pb-20">
         <span className="inline-flex items-center gap-2 rounded-full border border-brand-100 bg-brand-50 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-brand-700">
           Legal
         </span>

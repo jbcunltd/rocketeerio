@@ -3,6 +3,7 @@ import Link from "next/link";
 import { ArrowRight, Compass, Flag, Heart, Rocket, Users } from "lucide-react";
 import { SectionHeading } from "@/components/section-heading";
 import { TrustSignals } from "@/components/trust-signals";
+import { Breadcrumbs } from "@/components/breadcrumbs";
 
 export const metadata: Metadata = {
   title: "About Rocketeerio — The story behind the lead conversion system",
@@ -45,7 +46,10 @@ export default function AboutPage() {
       <section className="relative overflow-hidden border-b border-ink-100">
         <div aria-hidden className="absolute inset-0 bg-grid opacity-50" />
         <div aria-hidden className="absolute inset-x-0 top-0 h-[420px] bg-radial-fade" />
-        <div className="relative mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 pt-16 pb-12 text-center">
+        <div className="relative mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 pt-8">
+          <Breadcrumbs items={[{ name: "About" }]} />
+        </div>
+        <div className="relative mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 pt-6 pb-12 text-center">
           <span className="inline-flex items-center gap-2 rounded-full border border-brand-100 bg-brand-50 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-brand-700">
             About Rocketeerio
           </span>
@@ -55,10 +59,12 @@ export default function AboutPage() {
               we were the ones losing the leads.
             </span>
           </h1>
-          <p className="mt-5 text-lg text-ink-600">
+          <p className="mt-5 text-lg text-ink-700">
             Every business owner spends thousands on Facebook ads only to watch
             half the leads go cold in their inbox. We refused to keep doing
-            that — so we built the fix.
+            that — so we built the fix. Today,{" "}
+            <Link href="/testimonials" className="font-semibold text-brand-700 hover:text-brand-800 underline-offset-2 hover:underline">500+ businesses</Link>{" "}
+            run on Rocketeerio.
           </p>
         </div>
       </section>
@@ -223,14 +229,14 @@ export default function AboutPage() {
           <div className="mt-7 flex flex-col sm:flex-row items-center justify-center gap-3">
             <Link
               href="/signup"
-              className="inline-flex items-center gap-2 rounded-xl bg-brand-500 px-6 py-3.5 text-base font-semibold text-white shadow-lg shadow-brand-500/30 hover:bg-brand-600"
+              className="inline-flex items-center gap-2 rounded-xl bg-brand-600 px-6 py-3.5 text-base font-semibold text-white shadow-lg shadow-brand-500/30 hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-brand-500/40"
             >
               Start Free Trial
               <ArrowRight className="h-4 w-4" />
             </Link>
             <Link
               href="/pricing"
-              className="inline-flex items-center gap-2 rounded-xl border border-ink-200 bg-white px-6 py-3.5 text-base font-semibold text-ink-800 hover:bg-ink-50"
+              className="inline-flex items-center gap-2 rounded-xl border border-ink-300 bg-white px-6 py-3.5 text-base font-semibold text-ink-900 hover:bg-ink-50 hover:border-brand-500"
             >
               See pricing
             </Link>
@@ -238,6 +244,16 @@ export default function AboutPage() {
           <div className="mt-5">
             <TrustSignals />
           </div>
+          <p className="mt-6 text-sm text-ink-600">
+            Want to see what customers actually say?{" "}
+            <Link
+              href="/testimonials"
+              className="font-semibold text-brand-700 hover:text-brand-800 underline-offset-2 hover:underline"
+            >
+              Read 6 verified case studies
+            </Link>
+            .
+          </p>
         </div>
       </section>
     </>

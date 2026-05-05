@@ -2,7 +2,6 @@ import Link from "next/link";
 import {
   ArrowRight,
   Bell,
-  CheckCircle2,
   Filter,
   Hammer,
   Home as HomeIcon,
@@ -17,10 +16,11 @@ import {
   Zap,
 } from "lucide-react";
 import { ChatPreview } from "@/components/chat-preview";
-import { TrustSignals } from "@/components/trust-signals";
 import { SectionHeading, Eyebrow } from "@/components/section-heading";
 import { FAQAccordion, type FAQItem } from "@/components/faq-accordion";
 import { EmailCaptureForm } from "@/components/email-capture-form";
+import { SocialProofStats } from "@/components/social-proof-stats";
+import { TrustBadges } from "@/components/trust-badges";
 
 const FAQ: FAQItem[] = [
   {
@@ -182,36 +182,39 @@ export default function HomePage() {
                 you already paid for.
               </h1>
 
-              <p className="mt-6 max-w-xl text-lg leading-relaxed text-ink-600">
-                Rocketeerio auto-replies to every Facebook lead in under 60
-                seconds, qualifies them with AI, and pings you the moment one is
-                ready to close. No more cold leads. No more lost revenue.
+              <p className="mt-6 max-w-xl text-lg leading-relaxed text-ink-700">
+                Rocketeerio auto-replies to every Facebook lead in{" "}
+                <strong className="text-ink-900">under 60 seconds</strong>,
+                qualifies them with AI, and pings you the moment one is ready
+                to close. Join{" "}
+                <strong className="text-ink-900">500+ businesses</strong>{" "}
+                getting 3× faster lead response and 40% lower cost per close.
               </p>
 
               <div className="mt-8 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
                 <Link
                   href="/signup"
-                  className="group inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-xl bg-brand-500 px-6 py-3.5 text-base font-semibold text-white shadow-lg shadow-brand-500/30 hover:bg-brand-600 hover:shadow-xl hover:shadow-brand-500/40 transition-all"
+                  className="group inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-xl bg-brand-600 px-6 py-3.5 text-base font-semibold text-white shadow-lg shadow-brand-500/30 hover:bg-brand-700 hover:shadow-xl hover:shadow-brand-500/40 focus:outline-none focus:ring-2 focus:ring-brand-500/40 transition-all"
                 >
                   Start Free Trial
                   <ArrowRight className="h-4.5 w-4.5 transition-transform group-hover:translate-x-0.5" />
                 </Link>
                 <Link
                   href="#how-it-works"
-                  className="inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-xl border border-ink-200 bg-white px-6 py-3.5 text-base font-semibold text-ink-800 hover:bg-ink-50 transition-colors"
+                  className="inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-xl border border-ink-300 bg-white px-6 py-3.5 text-base font-semibold text-ink-900 hover:bg-ink-50 hover:border-brand-500 transition-colors"
                 >
-                  <PlayCircle className="h-5 w-5 text-brand-500" />
+                  <PlayCircle className="h-5 w-5 text-brand-600" aria-hidden />
                   See it in action
                 </Link>
               </div>
 
               <div className="mt-6">
-                <TrustSignals className="justify-start" />
+                <TrustBadges variant="light" />
               </div>
 
               <div className="mt-10 grid grid-cols-3 gap-6 max-w-lg">
                 <Stat value="<60s" label="Avg first reply" />
-                <Stat value="3.4×" label="More conversions" />
+                <Stat value="3×" label="Faster lead response" />
                 <Stat value="40%" label="Lower cost per close" />
               </div>
             </div>
@@ -224,13 +227,13 @@ export default function HomePage() {
       </section>
 
       {/* LOGO BAR */}
-      <section className="border-y border-ink-100 bg-ink-50/40 py-8">
+      <section className="border-y border-ink-100 bg-ink-50/40 py-8" aria-label="Trusted by">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <p className="text-center text-xs font-semibold uppercase tracking-[0.2em] text-ink-400">
-            As seen on · Trusted by businesses that run Meta ads
+          <p className="text-center text-xs font-semibold uppercase tracking-[0.2em] text-ink-700">
+            As featured in · Trusted by 500+ businesses running Meta ads
           </p>
           <div className="mt-6 overflow-hidden">
-            <div className="flex animate-marquee gap-12 whitespace-nowrap text-ink-300">
+            <div className="flex animate-marquee gap-12 whitespace-nowrap text-ink-500">
               {[0, 1].map((n) => (
                 <div key={n} className="flex items-center gap-12">
                   {[
@@ -324,6 +327,9 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* SOCIAL PROOF STATS */}
+      <SocialProofStats />
+
       {/* HOW IT WORKS */}
       <section
         id="how-it-works"
@@ -382,7 +388,7 @@ export default function HomePage() {
               Start Free Trial
               <ArrowRight className="h-4 w-4" />
             </Link>
-            <p className="text-sm text-white/60">
+            <p className="text-sm text-white/85">
               Setup in under 10 minutes · No credit card required
             </p>
           </div>
@@ -533,19 +539,8 @@ export default function HomePage() {
                   </Link>
                 </div>
 
-                <div className="mt-6 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-white/60">
-                  <span className="inline-flex items-center gap-1.5">
-                    <CheckCircle2 className="h-4 w-4 text-mint" />
-                    No credit card required
-                  </span>
-                  <span className="inline-flex items-center gap-1.5">
-                    <CheckCircle2 className="h-4 w-4 text-mint" />
-                    14-day money-back guarantee
-                  </span>
-                  <span className="inline-flex items-center gap-1.5">
-                    <CheckCircle2 className="h-4 w-4 text-mint" />
-                    Cancel anytime
-                  </span>
+                <div className="mt-6">
+                  <TrustBadges variant="dark" />
                 </div>
               </div>
 

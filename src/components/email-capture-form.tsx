@@ -113,7 +113,7 @@ export function EmailCaptureForm({
         <button
           type="submit"
           disabled={status === "loading"}
-          className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-brand-500 px-5 py-3 text-sm font-semibold text-white shadow-sm shadow-brand-500/30 hover:bg-brand-600 disabled:opacity-60"
+          className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-brand-600 px-5 py-3 text-sm font-semibold text-white shadow-sm shadow-brand-500/30 hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-brand-500/40 disabled:opacity-60"
         >
           {status === "loading" ? (
             <Loader2 className="h-4 w-4 animate-spin" />
@@ -128,7 +128,7 @@ export function EmailCaptureForm({
       {status === "error" && errorMsg && (
         <p className="mt-2 text-xs text-rose">{errorMsg}</p>
       )}
-      <p className="mt-3 text-[11px] text-ink-400">
+      <p className="mt-3 text-[11px] text-ink-600">
         We&apos;ll email it instantly. No spam — unsubscribe anytime.
       </p>
     </form>

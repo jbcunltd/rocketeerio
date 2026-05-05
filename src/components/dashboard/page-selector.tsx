@@ -81,6 +81,10 @@ export function PageSelector({ pages }: { pages: AvailablePage[] }) {
                   <img
                     src={page.pictureUrl}
                     alt=""
+                    width={40}
+                    height={40}
+                    loading="lazy"
+                    decoding="async"
                     className="h-10 w-10 rounded-full object-cover"
                   />
                 ) : (

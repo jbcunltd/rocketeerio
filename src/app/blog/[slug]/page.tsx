@@ -177,16 +177,22 @@ export default async function BlogArticle({ params }: { params: Params }) {
             <div className="mt-5 flex flex-col sm:flex-row gap-3">
               <Link
                 href="/signup"
-                className="inline-flex items-center justify-center gap-2 rounded-xl bg-brand-500 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-brand-500/25 hover:bg-brand-600"
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-brand-600 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-brand-500/25 hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-brand-500/40"
               >
                 Start Free Trial
                 <ArrowRight className="h-4 w-4" />
               </Link>
               <Link
                 href="/pricing"
-                className="inline-flex items-center justify-center gap-2 rounded-xl border border-ink-200 bg-white px-5 py-3 text-sm font-semibold text-ink-800 hover:bg-ink-50"
+                className="inline-flex items-center justify-center gap-2 rounded-xl border border-ink-300 bg-white px-5 py-3 text-sm font-semibold text-ink-900 hover:bg-ink-50 hover:border-brand-500"
               >
                 See pricing
+              </Link>
+              <Link
+                href="/testimonials"
+                className="inline-flex items-center justify-center gap-2 rounded-xl border border-transparent px-5 py-3 text-sm font-semibold text-brand-700 hover:text-brand-800 hover:underline underline-offset-2"
+              >
+                Read customer results
               </Link>
             </div>
             <div className="mt-4">

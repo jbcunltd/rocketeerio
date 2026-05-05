@@ -56,7 +56,7 @@ export function SiteHeader() {
           </Link>
           <Link
             href="/signup"
-            className="inline-flex items-center justify-center rounded-lg bg-brand-500 px-4 py-2.5 text-sm font-semibold text-white shadow-sm shadow-brand-500/30 hover:bg-brand-600 transition-all hover:shadow-md hover:shadow-brand-500/40"
+            className="inline-flex items-center justify-center rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm shadow-brand-500/30 hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-brand-500/40 transition-all hover:shadow-md hover:shadow-brand-500/40"
           >
             Start Free Trial
           </Link>
@@ -97,7 +97,7 @@ export function SiteHeader() {
               <Link
                 href="/signup"
                 onClick={() => setOpen(false)}
-                className="rounded-lg bg-brand-500 px-4 py-2.5 text-center text-sm font-semibold text-white"
+                className="rounded-lg bg-brand-600 px-4 py-2.5 text-center text-sm font-semibold text-white hover:bg-brand-700"
               >
                 Start Free Trial
               </Link>

@@ -18,14 +18,14 @@ export function FloatingCTA() {
 
   return (
     <div
-      className={`fixed bottom-4 right-4 z-50 transition-all duration-300 ${
+      className={`fixed bottom-4 left-4 z-40 transition-all duration-300 sm:bottom-6 sm:left-6 ${
         show ? "translate-y-0 opacity-100" : "pointer-events-none translate-y-3 opacity-0"
       }`}
       aria-hidden={!show}
     >
       <Link
         href="/signup"
-        className="group inline-flex items-center gap-2 rounded-full bg-brand-500 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-brand-500/35 hover:bg-brand-600"
+        className="group inline-flex items-center gap-2 rounded-full bg-brand-600 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-brand-500/35 hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-brand-500/40"
       >
         Start Free Trial
         <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />

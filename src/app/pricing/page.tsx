@@ -1,9 +1,12 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { PricingClient } from "./pricing-client";
 import { TrustSignals } from "@/components/trust-signals";
 import { FAQAccordion, type FAQItem } from "@/components/faq-accordion";
 import { SectionHeading } from "@/components/section-heading";
-import { CheckCircle2, ShieldCheck, RefreshCw } from "lucide-react";
+import { Breadcrumbs } from "@/components/breadcrumbs";
+import { SecuritySection } from "@/components/trust-badges";
+import { ArrowRight, CheckCircle2, ShieldCheck, RefreshCw } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "Pricing — Simple plans built to scale with you",
@@ -52,18 +55,49 @@ export default function PricingPage() {
     })),
   };
 
+  const offerSchema = {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    name: "Rocketeerio",
+    description:
+      "AI-powered Facebook lead conversion system. Auto-reply, qualify, and close more leads.",
+    brand: { "@type": "Brand", name: "Rocketeerio" },
+    offers: {
+      "@type": "AggregateOffer",
+      priceCurrency: "USD",
+      lowPrice: "39",
+      highPrice: "249",
+      offerCount: 3,
+      url: "https://rocketeerio.com/pricing",
+    },
+    aggregateRating: {
+      "@type": "AggregateRating",
+      ratingValue: "4.9",
+      reviewCount: "127",
+      bestRating: "5",
+      worstRating: "1",
+    },
+  };
+
   return (
     <>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
       />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(offerSchema) }}
+      />
 
       {/* HERO */}
       <section className="relative overflow-hidden border-b border-ink-100">
         <div aria-hidden className="absolute inset-0 bg-grid opacity-50" />
         <div aria-hidden className="absolute inset-x-0 top-0 h-[420px] bg-radial-fade" />
-        <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pt-16 pb-10 text-center">
+        <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pt-8">
+          <Breadcrumbs items={[{ name: "Pricing" }]} />
+        </div>
+        <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pt-6 pb-10 text-center">
           <span className="inline-flex items-center gap-2 rounded-full border border-brand-100 bg-brand-50 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-brand-700">
             Pricing
           </span>
@@ -71,9 +105,11 @@ export default function PricingPage() {
             Simple pricing.{" "}
             <span className="text-brand-500">Built to grow with you.</span>
           </h1>
-          <p className="mt-5 mx-auto max-w-2xl text-lg text-ink-600">
+          <p className="mt-5 mx-auto max-w-2xl text-lg text-ink-700">
             Start free. Close more deals. Scale when you&apos;re ready. Every
-            plan includes instant replies, AI qualification, and hot-lead alerts.
+            plan includes instant replies, AI qualification, and hot-lead alerts.{" "}
+            <span className="font-semibold text-ink-900">Join 500+ businesses</span>{" "}
+            already running on Rocketeerio.
           </p>
           <div className="mt-7">
             <TrustSignals />
@@ -89,7 +125,7 @@ export default function PricingPage() {
           <div className="grid gap-6 sm:grid-cols-3">
             <GuaranteeCard
               Icon={RefreshCw}
-              title="14-day money back"
+              title="30-day money back"
               body="If we don't deliver more replies and more closes, get every cent back. No forms, no friction."
             />
             <GuaranteeCard
@@ -99,7 +135,7 @@ export default function PricingPage() {
             />
             <GuaranteeCard
               Icon={CheckCircle2}
-              title="Cancel anytime"
+              title="Cancel anytime, instantly"
               body="Month-to-month, no contracts. Pause or cancel with a single click in your dashboard."
             />
           </div>
@@ -144,8 +180,90 @@ export default function PricingPage() {
         </div>
       </section>
 
+      {/* SECURITY / TRUST */}
+      <SecuritySection />
+
+      {/* RELATED READING */}
+      <section className="py-16 sm:py-20">
+        <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
+          <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-ink-900">
+            Want to know if Rocketeerio is right for you?
+          </h2>
+          <p className="mt-3 text-ink-700">
+            Read these short guides before you pick a plan — they cover the
+            specific Facebook lead problems Rocketeerio is built to fix.
+          </p>
+          <ul className="mt-6 grid gap-3 sm:grid-cols-2">
+            <li>
+              <Link
+                href="/blog/responding-to-leads-under-60-seconds"
+                className="group flex items-start gap-3 rounded-xl border border-ink-100 bg-white p-4 hover:border-brand-300 hover:shadow-sm transition"
+              >
+                <span className="mt-1 grid h-7 w-7 flex-none place-items-center rounded-md bg-brand-50 text-brand-700 text-xs font-bold">1</span>
+                <div>
+                  <p className="font-semibold text-ink-900 group-hover:text-brand-700">
+                    The magic of responding in under 60 seconds
+                  </p>
+                  <p className="text-sm text-ink-600">Why sub-60 second response time triples conversion.</p>
+                </div>
+              </Link>
+            </li>
+            <li>
+              <Link
+                href="/blog/why-facebook-leads-arent-converting"
+                className="group flex items-start gap-3 rounded-xl border border-ink-100 bg-white p-4 hover:border-brand-300 hover:shadow-sm transition"
+              >
+                <span className="mt-1 grid h-7 w-7 flex-none place-items-center rounded-md bg-brand-50 text-brand-700 text-xs font-bold">2</span>
+                <div>
+                  <p className="font-semibold text-ink-900 group-hover:text-brand-700">
+                    Why your Facebook leads aren&apos;t converting
+                  </p>
+                  <p className="text-sm text-ink-600">7 fixes that turn cold leads into customers.</p>
+                </div>
+              </Link>
+            </li>
+            <li>
+              <Link
+                href="/blog/qualify-facebook-leads-without-lifting-a-finger"
+                className="group flex items-start gap-3 rounded-xl border border-ink-100 bg-white p-4 hover:border-brand-300 hover:shadow-sm transition"
+              >
+                <span className="mt-1 grid h-7 w-7 flex-none place-items-center rounded-md bg-brand-50 text-brand-700 text-xs font-bold">3</span>
+                <div>
+                  <p className="font-semibold text-ink-900 group-hover:text-brand-700">
+                    Qualify leads without lifting a finger
+                  </p>
+                  <p className="text-sm text-ink-600">The qualification flow our Pro customers use.</p>
+                </div>
+              </Link>
+            </li>
+            <li>
+              <Link
+                href="/blog/ultimate-guide-facebook-lead-automation-2025"
+                className="group flex items-start gap-3 rounded-xl border border-ink-100 bg-white p-4 hover:border-brand-300 hover:shadow-sm transition"
+              >
+                <span className="mt-1 grid h-7 w-7 flex-none place-items-center rounded-md bg-brand-50 text-brand-700 text-xs font-bold">4</span>
+                <div>
+                  <p className="font-semibold text-ink-900 group-hover:text-brand-700">
+                    Ultimate guide to Facebook lead automation
+                  </p>
+                  <p className="text-sm text-ink-600">The complete 2025 playbook — free.</p>
+                </div>
+              </Link>
+            </li>
+          </ul>
+          <div className="mt-8">
+            <Link
+              href="/testimonials"
+              className="inline-flex items-center gap-1.5 text-sm font-semibold text-brand-700 hover:text-brand-800"
+            >
+              See real customer results <ArrowRight className="h-4 w-4" />
+            </Link>
+          </div>
+        </div>
+      </section>
+
       {/* FAQ */}
-      <section className="py-20 sm:py-28">
+      <section className="py-20 sm:py-28 bg-ink-50/40 border-t border-ink-100">
         <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
           <SectionHeading
             eyebrow="Pricing FAQ"

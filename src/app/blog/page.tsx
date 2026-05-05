@@ -4,6 +4,7 @@ import { ArrowRight, BookOpen, Calendar, Clock } from "lucide-react";
 import { BLOG_POSTS } from "@/lib/site";
 import { TrustSignals } from "@/components/trust-signals";
 import { EmailCaptureForm } from "@/components/email-capture-form";
+import { Breadcrumbs } from "@/components/breadcrumbs";
 
 export const metadata: Metadata = {
   title: "Blog — Facebook lead conversion playbooks, guides & case studies",
@@ -28,7 +29,10 @@ export default function BlogIndex() {
       <section className="relative overflow-hidden border-b border-ink-100">
         <div aria-hidden className="absolute inset-0 bg-grid opacity-50" />
         <div aria-hidden className="absolute inset-x-0 top-0 h-[420px] bg-radial-fade" />
-        <div className="relative mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 pt-16 pb-10 text-center">
+        <div className="relative mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 pt-8">
+          <Breadcrumbs items={[{ name: "Blog" }]} />
+        </div>
+        <div className="relative mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 pt-6 pb-10 text-center">
           <span className="inline-flex items-center gap-2 rounded-full border border-brand-100 bg-brand-50 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-brand-700">
             <BookOpen className="h-3.5 w-3.5" />
             The Rocketeerio Blog
@@ -155,13 +159,19 @@ export default function BlogIndex() {
             Setup takes ten minutes. Most accounts get their first hot lead the
             same day.
           </p>
-          <div className="mt-6">
+          <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3">
             <Link
               href="/signup"
-              className="inline-flex items-center gap-2 rounded-xl bg-brand-500 px-6 py-3.5 text-base font-semibold text-white shadow-lg shadow-brand-500/30 hover:bg-brand-600"
+              className="inline-flex items-center gap-2 rounded-xl bg-brand-600 px-6 py-3.5 text-base font-semibold text-white shadow-lg shadow-brand-500/30 hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-brand-500/40"
             >
               Start Free Trial
               <ArrowRight className="h-4 w-4" />
+            </Link>
+            <Link
+              href="/pricing"
+              className="inline-flex items-center gap-2 rounded-xl border border-ink-300 bg-white px-6 py-3.5 text-base font-semibold text-ink-900 hover:bg-ink-50 hover:border-brand-500"
+            >
+              Compare plans
             </Link>
           </div>
           <div className="mt-5">
