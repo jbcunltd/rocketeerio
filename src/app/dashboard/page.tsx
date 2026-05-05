@@ -14,9 +14,24 @@ const PLACEHOLDER_METRICS = [
     value: "—",
     sub: "Connect a Page to start",
   },
-  { icon: Users, label: "Qualified leads", value: "—", sub: "Coming soon" },
-  { icon: Zap, label: "Avg. response time", value: "—", sub: "Coming soon" },
-  { icon: Sparkles, label: "Booked calls", value: "—", sub: "Coming soon" },
+  {
+    icon: Users,
+    label: "Qualified leads",
+    value: "—",
+    sub: "Tracked after first qualification",
+  },
+  {
+    icon: Zap,
+    label: "Avg. response time",
+    value: "—",
+    sub: "Measured live once a Page is connected",
+  },
+  {
+    icon: Sparkles,
+    label: "Booked calls",
+    value: "—",
+    sub: "Updates as bookings land",
+  },
 ];
 
 export default async function DashboardPage() {
@@ -48,7 +63,7 @@ export default async function DashboardPage() {
         </div>
         <Link
           href="/dashboard/settings"
-          className="inline-flex items-center gap-2 rounded-lg bg-brand-500 px-4 py-2.5 text-sm font-semibold text-white shadow-sm shadow-brand-500/30 hover:bg-brand-600"
+          className="inline-flex items-center gap-2 rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm shadow-brand-500/30 hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-brand-500/40"
         >
           Connect a Facebook Page
           <ArrowRight className="h-4 w-4" />
@@ -64,7 +79,7 @@ export default async function DashboardPage() {
           </p>
           <Link
             href="/dashboard/settings"
-            className="mt-4 inline-flex items-center gap-2 rounded-lg bg-brand-500 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-600"
+            className="mt-4 inline-flex items-center gap-2 rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-brand-500/40"
           >
             Connect Facebook Page
             <ArrowRight className="h-4 w-4" />

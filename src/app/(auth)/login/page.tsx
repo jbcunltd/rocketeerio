@@ -15,7 +15,8 @@ const ERROR_MESSAGES: Record<string, string> = {
   missing_code: "Facebook didn't return a code. Please try again.",
   token_exchange: "We couldn't complete the Facebook sign-in. Please retry.",
   graph_failed: "We couldn't reach Facebook. Please try again in a moment.",
-  facebook_unavailable: "Facebook sign-in is not configured yet.",
+  facebook_unavailable:
+    "We hit a snag reaching Facebook. Please try again in a moment.",
 };
 
 export default async function LoginPage({

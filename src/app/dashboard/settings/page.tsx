@@ -21,7 +21,8 @@ const ERROR_MESSAGES: Record<string, string> = {
   missing_code: "Facebook didn't return a code. Please try again.",
   token_exchange: "We couldn't complete the Facebook authorization.",
   graph_failed: "We couldn't reach Facebook. Please try again in a moment.",
-  facebook_unavailable: "Facebook integration is not configured yet.",
+  facebook_unavailable:
+    "We hit a snag connecting to Facebook. Please try again in a moment.",
 };
 
 export default async function SettingsPage({
@@ -117,7 +118,7 @@ export default async function SettingsPage({
           {!tokenRow ? (
             <a
               href="/api/facebook/pages"
-              className="inline-flex items-center justify-center gap-2 rounded-lg bg-brand-500 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-600"
+              className="inline-flex items-center justify-center gap-2 rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-brand-500/40"
             >
               Connect Facebook
             </a>

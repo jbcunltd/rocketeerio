@@ -383,7 +383,7 @@ export default function HomePage() {
           <div className="mt-12 flex flex-col sm:flex-row items-center justify-center gap-3">
             <Link
               href="/signup"
-              className="inline-flex items-center gap-2 rounded-xl bg-brand-500 px-6 py-3.5 text-base font-semibold text-white shadow-lg shadow-brand-900/40 hover:bg-brand-400"
+              className="inline-flex items-center gap-2 rounded-xl bg-brand-600 px-6 py-3.5 text-base font-semibold text-white shadow-lg shadow-brand-900/40 hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-white/40"
             >
               Start Free Trial
               <ArrowRight className="h-4 w-4" />
@@ -526,7 +526,7 @@ export default function HomePage() {
                 <div className="mt-8 flex flex-col sm:flex-row gap-3">
                   <Link
                     href="/signup"
-                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-brand-500 px-6 py-3.5 text-base font-semibold text-white shadow-lg shadow-brand-900/50 hover:bg-brand-400"
+                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-brand-600 px-6 py-3.5 text-base font-semibold text-white shadow-lg shadow-brand-900/50 hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-white/40"
                   >
                     Start Free Trial
                     <ArrowRight className="h-4.5 w-4.5" />

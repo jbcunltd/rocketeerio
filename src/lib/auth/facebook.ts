@@ -20,19 +20,46 @@ function requireEnv(name: string): string {
   return v;
 }
 
-export function getLoginClient(): Facebook {
+/**
+ * Resolve the canonical app origin without depending on a single env var.
+ * Order of preference:
+ *   1. Explicit `origin` argument (from the incoming request)
+ *   2. `NEXT_PUBLIC_APP_URL`
+ *   3. `APP_URL`
+ *   4. `VERCEL_PROJECT_PRODUCTION_URL` (Vercel injects this automatically)
+ *   5. `VERCEL_URL` (per-deployment URL Vercel injects)
+ *   6. `http://localhost:3000` (dev fallback)
+ */
+export function resolveAppUrl(origin?: string): string {
+  if (origin) return origin.replace(/\/$/, "");
+  const candidates = [
+    process.env.NEXT_PUBLIC_APP_URL,
+    process.env.APP_URL,
+    process.env.VERCEL_PROJECT_PRODUCTION_URL
+      ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+      : undefined,
+    process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : undefined,
+    "http://localhost:3000",
+  ];
+  for (const c of candidates) {
+    if (c && c.length > 0) return c.replace(/\/$/, "");
+  }
+  return "http://localhost:3000";
+}
+
+export function getLoginClient(origin?: string): Facebook {
   return new Facebook(
     requireEnv("FACEBOOK_APP_ID"),
     requireEnv("FACEBOOK_APP_SECRET"),
-    `${requireEnv("NEXT_PUBLIC_APP_URL")}/api/auth/facebook/callback`,
+    `${resolveAppUrl(origin)}/api/auth/facebook/callback`,
   );
 }
 
-export function getPagesClient(): Facebook {
+export function getPagesClient(origin?: string): Facebook {
   return new Facebook(
     requireEnv("FACEBOOK_APP_ID"),
     requireEnv("FACEBOOK_APP_SECRET"),
-    `${requireEnv("NEXT_PUBLIC_APP_URL")}/api/facebook/pages/callback`,
+    `${resolveAppUrl(origin)}/api/facebook/pages/callback`,
   );
 }
 

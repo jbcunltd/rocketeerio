@@ -39,13 +39,19 @@ export function EmailCaptureForm({
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        throw new Error(data.error ?? "Something went wrong");
+        throw new Error(
+          data.error ?? "That didn't go through. Please try again.",
+        );
       }
       setStatus("ok");
       setEmail("");
     } catch (err) {
       setStatus("error");
-      setErrorMsg(err instanceof Error ? err.message : "Try again");
+      setErrorMsg(
+        err instanceof Error
+          ? err.message
+          : "That didn't go through. Please try again.",
+      );
     }
   }
 

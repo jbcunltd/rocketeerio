@@ -5,6 +5,7 @@ import { oauthAccountTable, userTable } from "@/lib/db/schema";
 import {
   fetchFacebookUser,
   getLoginClient,
+  resolveAppUrl,
 } from "@/lib/auth/facebook";
 import { consumeOAuthState } from "@/lib/auth/oauth-state";
 import {
@@ -16,15 +17,10 @@ import { newId } from "@/lib/auth/ids";
 
 export const runtime = "nodejs";
 
-function appUrl(path: string): string {
-  return new URL(
-    path,
-    process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000",
-  ).toString();
-}
-
 export async function GET(req: NextRequest) {
   const url = new URL(req.url);
+  const origin = resolveAppUrl(url.origin);
+  const appUrl = (path: string): string => new URL(path, origin).toString();
   const code = url.searchParams.get("code");
   const state = url.searchParams.get("state");
   const error = url.searchParams.get("error");
@@ -43,7 +39,7 @@ export async function GET(req: NextRequest) {
 
   let tokens;
   try {
-    const facebook = getLoginClient();
+    const facebook = getLoginClient(origin);
     tokens = await facebook.validateAuthorizationCode(code);
   } catch (err) {
     console.error("[fb login callback] token exchange failed", err);

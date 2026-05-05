@@ -56,28 +56,42 @@ export async function signupAction(
   }
   const { name, email, password } = parsed.data;
 
-  const existing = await db
-    .select({ id: userTable.id })
-    .from(userTable)
-    .where(eq(userTable.email, email))
-    .limit(1);
-  if (existing.length > 0) {
-    return { ok: false, error: "An account with that email already exists." };
+  let userId: string;
+  let session: { expiresAt: Date };
+  let token: string;
+  try {
+    const existing = await db
+      .select({ id: userTable.id })
+      .from(userTable)
+      .where(eq(userTable.email, email))
+      .limit(1);
+    if (existing.length > 0) {
+      return {
+        ok: false,
+        error: "An account with that email already exists.",
+      };
+    }
+
+    const passwordHash = await hashPassword(password);
+    userId = newId();
+    await db.insert(userTable).values({
+      id: userId,
+      email,
+      name,
+      passwordHash,
+    });
+
+    token = generateSessionToken();
+    session = await createSession(token, userId);
+  } catch (err) {
+    console.error("[signup] failed", err);
+    return {
+      ok: false,
+      error:
+        "We couldn't create your account right now. Please try again in a moment.",
+    };
   }
-
-  const passwordHash = await hashPassword(password);
-  const userId = newId();
-  await db.insert(userTable).values({
-    id: userId,
-    email,
-    name,
-    passwordHash,
-  });
-
-  const token = generateSessionToken();
-  const session = await createSession(token, userId);
   await setSessionCookie(token, session.expiresAt);
-
   redirect("/dashboard");
 }
 
@@ -97,25 +111,35 @@ export async function loginAction(
   }
   const { email, password } = parsed.data;
 
-  const rows = await db
-    .select()
-    .from(userTable)
-    .where(eq(userTable.email, email))
-    .limit(1);
-  const user = rows[0];
-  if (!user || !user.passwordHash) {
-    return { ok: false, error: "Invalid email or password." };
-  }
+  let token: string;
+  let session: { expiresAt: Date };
+  try {
+    const rows = await db
+      .select()
+      .from(userTable)
+      .where(eq(userTable.email, email))
+      .limit(1);
+    const user = rows[0];
+    if (!user || !user.passwordHash) {
+      return { ok: false, error: "Invalid email or password." };
+    }
 
-  const valid = await verifyPassword(user.passwordHash, password);
-  if (!valid) {
-    return { ok: false, error: "Invalid email or password." };
-  }
+    const valid = await verifyPassword(user.passwordHash, password);
+    if (!valid) {
+      return { ok: false, error: "Invalid email or password." };
+    }
 
-  const token = generateSessionToken();
-  const session = await createSession(token, user.id);
+    token = generateSessionToken();
+    session = await createSession(token, user.id);
+  } catch (err) {
+    console.error("[login] failed", err);
+    return {
+      ok: false,
+      error:
+        "We couldn't sign you in right now. Please try again in a moment.",
+    };
+  }
   await setSessionCookie(token, session.expiresAt);
-
   redirect("/dashboard");
 }
 

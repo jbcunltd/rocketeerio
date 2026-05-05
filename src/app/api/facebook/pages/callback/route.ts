@@ -7,26 +7,22 @@ import {
   fetchFacebookUser,
   FB_PAGES_SCOPES,
   getPagesClient,
+  resolveAppUrl,
 } from "@/lib/auth/facebook";
 import { consumeOAuthState } from "@/lib/auth/oauth-state";
 import { getCurrentSession } from "@/lib/auth/cookies";
 
 export const runtime = "nodejs";
 
-function appUrl(path: string): string {
-  return new URL(
-    path,
-    process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000",
-  ).toString();
-}
-
 export async function GET(req: NextRequest) {
+  const url = new URL(req.url);
+  const origin = resolveAppUrl(url.origin);
+  const appUrl = (path: string): string => new URL(path, origin).toString();
   const { user } = await getCurrentSession();
   if (!user) {
     return NextResponse.redirect(appUrl("/login"));
   }
 
-  const url = new URL(req.url);
   const code = url.searchParams.get("code");
   const state = url.searchParams.get("state");
   const error = url.searchParams.get("error");
@@ -55,7 +51,7 @@ export async function GET(req: NextRequest) {
 
   let shortLived: string;
   try {
-    const facebook = getPagesClient();
+    const facebook = getPagesClient(origin);
     const tokens = await facebook.validateAuthorizationCode(code);
     shortLived = tokens.accessToken();
   } catch (err) {
