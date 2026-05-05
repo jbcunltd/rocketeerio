@@ -11,6 +11,25 @@ export const metadata: Metadata = {
   description:
     "Real outcomes from Rocketeerio customers: faster response times, higher qualification rates, and lower cost per close. Join 500+ businesses.",
   alternates: { canonical: "https://rocketeerio.com/testimonials" },
+  openGraph: {
+    title: "Customer Results — Rocketeerio",
+    description:
+      "Real outcomes from 500+ businesses converting 3× more Facebook leads with Rocketeerio.",
+    url: "https://rocketeerio.com/testimonials",
+    images: [
+      {
+        url: "/api/og?title=Real%20results%20from%20real%20businesses&eyebrow=CUSTOMER%20RESULTS&kicker=Rated%204.9%2F5%20by%20127%20business%20owners.",
+        width: 1200,
+        height: 630,
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    images: [
+      "/api/og?title=Real%20results%20from%20real%20businesses&eyebrow=CUSTOMER%20RESULTS&kicker=Rated%204.9%2F5%20by%20127%20business%20owners.",
+    ],
+  },
 };
 
 const TESTIMONIALS = [

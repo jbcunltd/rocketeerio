@@ -11,6 +11,25 @@ export const metadata: Metadata = {
   description:
     "Practical, no-fluff guides on Facebook lead automation, response speed, qualification flows, and turning paid social leads into paying customers.",
   alternates: { canonical: "https://rocketeerio.com/blog" },
+  openGraph: {
+    title: "Rocketeerio Blog",
+    description:
+      "Playbooks, guides, and case studies on Facebook lead conversion.",
+    url: "https://rocketeerio.com/blog",
+    images: [
+      {
+        url: "/api/og?title=Facebook%20lead%20conversion%20playbooks&eyebrow=ROCKETEERIO%20BLOG&kicker=No-fluff%20guides%20on%20response%20speed%2C%20qualification%2C%20and%20automation.",
+        width: 1200,
+        height: 630,
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    images: [
+      "/api/og?title=Facebook%20lead%20conversion%20playbooks&eyebrow=ROCKETEERIO%20BLOG&kicker=No-fluff%20guides%20on%20response%20speed%2C%20qualification%2C%20and%20automation.",
+    ],
+  },
 };
 
 const formatDate = (iso: string) =>

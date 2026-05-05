@@ -10,6 +10,25 @@ export const metadata: Metadata = {
   description:
     "Why Rocketeerio exists, who it's for, and the mission driving us: make sure no business ever loses another paid lead to a slow reply.",
   alternates: { canonical: "https://rocketeerio.com/about" },
+  openGraph: {
+    title: "About Rocketeerio",
+    description:
+      "Why Rocketeerio exists — and the mission to make sure no business ever loses a paid lead to a slow reply.",
+    url: "https://rocketeerio.com/about",
+    images: [
+      {
+        url: "/api/og?title=Built%20so%20you%20never%20lose%20another%20paid%20lead&eyebrow=ABOUT%20US&kicker=The%20mission%20behind%20Rocketeerio.",
+        width: 1200,
+        height: 630,
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    images: [
+      "/api/og?title=Built%20so%20you%20never%20lose%20another%20paid%20lead&eyebrow=ABOUT%20US&kicker=The%20mission%20behind%20Rocketeerio.",
+    ],
+  },
 };
 
 const VALUES = [

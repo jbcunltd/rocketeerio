@@ -8,6 +8,7 @@ import { ExitIntentPopup } from "@/components/exit-intent-popup";
 import { ConditionalChrome } from "@/components/conditional-chrome";
 import { RevealOnScroll } from "@/components/reveal-on-scroll";
 import { ChatWidget } from "@/components/chat-widget";
+import { SkipToContent } from "@/components/skip-to-content";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -58,12 +59,23 @@ export const metadata: Metadata = {
     description:
       "Auto-reply to Facebook leads in under 60 seconds, qualify them with AI, and step in only when they're ready to buy.",
     locale: "en_US",
+    images: [
+      {
+        url: "/api/og?title=AI-Powered%20Facebook%20Lead%20Conversion&eyebrow=ROCKETEERIO&kicker=Auto-reply%2C%20qualify%2C%20and%20close%20%E2%80%94%20in%20under%2060%20seconds.",
+        width: 1200,
+        height: 630,
+        alt: "Rocketeerio — AI-Powered Facebook Lead Conversion",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
     title: "Rocketeerio — AI-Powered Facebook Lead Conversion",
     description:
       "Auto-reply, qualify, and convert Facebook leads on autopilot. Built for businesses that live and die by paid social.",
+    images: [
+      "/api/og?title=AI-Powered%20Facebook%20Lead%20Conversion&eyebrow=ROCKETEERIO&kicker=Auto-reply%2C%20qualify%2C%20and%20close%20%E2%80%94%20in%20under%2060%20seconds.",
+    ],
   },
   robots: {
     index: true,
@@ -149,11 +161,14 @@ export default function RootLayout({
         />
       </head>
       <body className="min-h-full flex flex-col bg-white text-ink-900 font-sans">
+        <SkipToContent />
         <ConditionalChrome>
           <SiteHeader />
         </ConditionalChrome>
         <RevealOnScroll />
-        <main className="flex-1">{children}</main>
+        <main id="main-content" tabIndex={-1} className="flex-1 focus:outline-none">
+          {children}
+        </main>
         <ConditionalChrome>
           <SiteFooter />
           <FloatingCTA />

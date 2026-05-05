@@ -18,6 +18,19 @@ export const metadata: Metadata = {
     description:
       "Pick the plan that matches your lead volume. Save 20% on annual billing. 14-day money-back guarantee.",
     url: "https://rocketeerio.com/pricing",
+    images: [
+      {
+        url: "/api/og?title=Simple%2C%20transparent%20pricing&eyebrow=PRICING&kicker=Start%20free.%20Scale%20to%20Pro.%20Cancel%20anytime.",
+        width: 1200,
+        height: 630,
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    images: [
+      "/api/og?title=Simple%2C%20transparent%20pricing&eyebrow=PRICING&kicker=Start%20free.%20Scale%20to%20Pro.%20Cancel%20anytime.",
+    ],
   },
 };
 
