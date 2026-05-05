@@ -7,7 +7,7 @@ import { FloatingCTA } from "@/components/floating-cta";
 import { ExitIntentPopup } from "@/components/exit-intent-popup";
 import { ConditionalChrome } from "@/components/conditional-chrome";
 import { RevealOnScroll } from "@/components/reveal-on-scroll";
-import { ChatWidget } from "@/components/chat-widget";
+import { MessengerChatPlugin } from "@/components/messenger-chat-plugin";
 import { SkipToContent } from "@/components/skip-to-content";
 
 const inter = Inter({
@@ -173,7 +173,7 @@ export default function RootLayout({
           <SiteFooter />
           <FloatingCTA />
           <ExitIntentPopup />
-          <ChatWidget />
+          <MessengerChatPlugin />
         </ConditionalChrome>
       </body>
     </html>
