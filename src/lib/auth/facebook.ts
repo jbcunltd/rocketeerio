@@ -24,7 +24,7 @@ export function getLoginClient(): Facebook {
   return new Facebook(
     requireEnv("FACEBOOK_APP_ID"),
     requireEnv("FACEBOOK_APP_SECRET"),
-    requireEnv("FACEBOOK_LOGIN_REDIRECT_URI"),
+    `${requireEnv("NEXT_PUBLIC_APP_URL")}/api/auth/facebook/callback`,
   );
 }
 
@@ -32,7 +32,7 @@ export function getPagesClient(): Facebook {
   return new Facebook(
     requireEnv("FACEBOOK_APP_ID"),
     requireEnv("FACEBOOK_APP_SECRET"),
-    requireEnv("FACEBOOK_PAGES_REDIRECT_URI"),
+    `${requireEnv("NEXT_PUBLIC_APP_URL")}/api/facebook/pages/callback`,
   );
 }
 
