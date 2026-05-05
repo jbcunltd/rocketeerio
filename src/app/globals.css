@@ -1,0 +1,232 @@
+@import "tailwindcss";
+
+:root {
+  /* Brand palette built around Messenger blue #0084FF */
+  --brand-50: #e6f3ff;
+  --brand-100: #cce6ff;
+  --brand-200: #99cdff;
+  --brand-300: #66b3ff;
+  --brand-400: #339aff;
+  --brand-500: #0084ff;
+  --brand-600: #006bd1;
+  --brand-700: #0055a8;
+  --brand-800: #003f7d;
+  --brand-900: #002a55;
+
+  --ink-900: #0a1628;
+  --ink-800: #14233a;
+  --ink-700: #1f3050;
+  --ink-600: #344563;
+  --ink-500: #4a5b78;
+  --ink-400: #6b7b96;
+  --ink-300: #95a3ba;
+  --ink-200: #c4cdda;
+  --ink-100: #e4e9ef;
+  --ink-50: #f4f6fa;
+
+  --accent-mint: #00d49a;
+  --accent-amber: #ffb020;
+  --accent-rose: #ff4d6d;
+
+  --background: #ffffff;
+  --foreground: var(--ink-900);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+
+  --color-brand-50: var(--brand-50);
+  --color-brand-100: var(--brand-100);
+  --color-brand-200: var(--brand-200);
+  --color-brand-300: var(--brand-300);
+  --color-brand-400: var(--brand-400);
+  --color-brand-500: var(--brand-500);
+  --color-brand-600: var(--brand-600);
+  --color-brand-700: var(--brand-700);
+  --color-brand-800: var(--brand-800);
+  --color-brand-900: var(--brand-900);
+
+  --color-ink-50: var(--ink-50);
+  --color-ink-100: var(--ink-100);
+  --color-ink-200: var(--ink-200);
+  --color-ink-300: var(--ink-300);
+  --color-ink-400: var(--ink-400);
+  --color-ink-500: var(--ink-500);
+  --color-ink-600: var(--ink-600);
+  --color-ink-700: var(--ink-700);
+  --color-ink-800: var(--ink-800);
+  --color-ink-900: var(--ink-900);
+
+  --color-mint: var(--accent-mint);
+  --color-amber: var(--accent-amber);
+  --color-rose: var(--accent-rose);
+
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+* {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+}
+
+/* Subtle grid background utility */
+.bg-grid {
+  background-image:
+    linear-gradient(to right, rgba(10, 22, 40, 0.04) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(10, 22, 40, 0.04) 1px, transparent 1px);
+  background-size: 48px 48px;
+}
+
+.bg-radial-fade {
+  background: radial-gradient(ellipse at top, rgba(0, 132, 255, 0.12), transparent 60%);
+}
+
+/* Marquee */
+@keyframes marquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+.animate-marquee {
+  animation: marquee 28s linear infinite;
+}
+
+/* Subtle blob */
+@keyframes blob {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(30px, -20px) scale(1.05); }
+  66% { transform: translate(-20px, 20px) scale(0.97); }
+}
+.animate-blob {
+  animation: blob 14s ease-in-out infinite;
+}
+
+/* Type pulse for chat dots */
+@keyframes typing {
+  0%, 60%, 100% { opacity: 0.25; transform: translateY(0); }
+  30% { opacity: 1; transform: translateY(-2px); }
+}
+.dot-1 { animation: typing 1.2s infinite; }
+.dot-2 { animation: typing 1.2s infinite 0.15s; }
+.dot-3 { animation: typing 1.2s infinite 0.3s; }
+
+/* Reusable prose tweaks for blog */
+.prose-rocket h2 {
+  font-size: 1.875rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin-top: 2.5rem;
+  margin-bottom: 1rem;
+  color: var(--ink-900);
+}
+.prose-rocket h3 {
+  font-size: 1.375rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  margin-top: 2rem;
+  margin-bottom: 0.75rem;
+  color: var(--ink-900);
+}
+.prose-rocket p {
+  font-size: 1.0625rem;
+  line-height: 1.75;
+  color: var(--ink-700);
+  margin-bottom: 1.25rem;
+}
+.prose-rocket a {
+  color: var(--brand-600);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.prose-rocket a:hover {
+  color: var(--brand-700);
+}
+.prose-rocket ul {
+  list-style: disc;
+  margin: 1rem 0 1.25rem 1.25rem;
+  color: var(--ink-700);
+}
+.prose-rocket ul li {
+  margin-bottom: 0.5rem;
+  font-size: 1.0625rem;
+  line-height: 1.7;
+}
+.prose-rocket ol {
+  list-style: decimal;
+  margin: 1rem 0 1.25rem 1.5rem;
+  color: var(--ink-700);
+}
+.prose-rocket ol li {
+  margin-bottom: 0.5rem;
+  font-size: 1.0625rem;
+  line-height: 1.7;
+}
+.prose-rocket blockquote {
+  border-left: 4px solid var(--brand-500);
+  background: var(--brand-50);
+  padding: 1rem 1.25rem;
+  margin: 1.5rem 0;
+  border-radius: 0.5rem;
+  color: var(--ink-800);
+  font-style: italic;
+}
+.prose-rocket strong {
+  color: var(--ink-900);
+  font-weight: 700;
+}
+
+/* ===== Animations & motion ===== */
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.animate-fade-in {
+  animation: fade-in 0.18s ease-out both;
+}
+
+@keyframes pop-in {
+  0% { opacity: 0; transform: scale(0.95) translateY(6px); }
+  100% { opacity: 1; transform: scale(1) translateY(0); }
+}
+.animate-pop-in {
+  animation: pop-in 0.24s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Scroll-reveal: components apply .reveal initially, IntersectionObserver
+   adds .reveal-in to fade them up into place. */
+.reveal {
+  opacity: 0;
+  transform: translateY(14px);
+  transition:
+    opacity 0.7s ease-out,
+    transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: opacity, transform;
+}
+.reveal-in {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal,
+  .reveal-in,
+  .animate-fade-in,
+  .animate-pop-in,
+  .animate-marquee,
+  .animate-blob {
+    animation: none !important;
+    transition: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}
