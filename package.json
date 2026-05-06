@@ -12,7 +12,6 @@
     "db:studio": "drizzle-kit studio"
   },
   "dependencies": {
-    "@neondatabase/serverless": "^0.10.4",
     "@oslojs/crypto": "^1.0.1",
     "@oslojs/encoding": "^1.1.0",
     "arctic": "^3.1.4",
@@ -21,6 +20,7 @@
     "drizzle-orm": "^0.38.3",
     "lucide-react": "^0.469.0",
     "next": "^15.5.15",
+    "postgres": "^3.4.4",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "tailwind-merge": "^2.6.0",
