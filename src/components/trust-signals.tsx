@@ -11,7 +11,7 @@ export function TrustSignals({ className = "" }: { className?: string }) {
       </li>
       <li className="inline-flex items-center gap-1.5 font-medium">
         <RefreshCw className="h-4 w-4 text-brand-600" aria-hidden />
-        30-day money-back guarantee
+        14-day money-back guarantee
       </li>
       <li className="inline-flex items-center gap-1.5 font-medium">
         <ShieldCheck className="h-4 w-4 text-brand-600" aria-hidden />

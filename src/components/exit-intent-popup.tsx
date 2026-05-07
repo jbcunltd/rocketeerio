@@ -133,8 +133,7 @@ export function ExitIntentPopup() {
             Free Guide: 5 Reasons Your Facebook Leads Go Cold
           </h2>
           <p className="mt-2 text-sm text-white/90">
-            The 7-page playbook 500+ businesses use to triple their conversion
-            rate — yours instantly.
+            A practical 7-page guide to fixing slow Facebook lead follow-up — yours instantly.
           </p>
         </div>
         <div className="p-6">

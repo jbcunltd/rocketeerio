@@ -150,7 +150,7 @@ export function PricingClient() {
                   <ArrowRight className="h-4 w-4" />
                 </Link>
                 <p className="mt-2 text-center text-[11px] text-ink-600">
-                  No credit card · Cancel anytime · 30-day money back
+                  No credit card · Cancel anytime · 14-day money back
                 </p>
 
                 <ul className="mt-7 space-y-3">

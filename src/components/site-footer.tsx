@@ -7,7 +7,7 @@ const COL_PRODUCT = [
   { label: "How it works", href: "/#how-it-works" },
   { label: "Features", href: "/#features" },
   { label: "Pricing", href: "/pricing" },
-  { label: "Testimonials", href: "/testimonials" },
+  { label: "Early Access", href: "/testimonials" },
 ];
 
 const COL_COMPANY = [
@@ -39,9 +39,8 @@ export function SiteFooter() {
           <div className="lg:col-span-4">
             <Logo />
             <p className="mt-4 max-w-sm text-sm leading-relaxed text-ink-700">
-              The AI-powered Facebook lead conversion system. Reply instantly,
-              qualify automatically, close more deals — even while you sleep.
-              Trusted by 500+ businesses.
+              Rocketeerio is your AI manpower agency for Facebook lead conversion.
+              Reply quickly, qualify automatically, and stay covered 24/7 — now in early access.
             </p>
 
             <form
@@ -78,7 +77,7 @@ export function SiteFooter() {
                 <CreditCard className="h-3.5 w-3.5 text-brand-600" /> No credit card
               </span>
               <span className="inline-flex items-center gap-1.5">
-                <RefreshCw className="h-3.5 w-3.5 text-brand-600" /> 30-day refund
+                <RefreshCw className="h-3.5 w-3.5 text-brand-600" /> 14-day refund
               </span>
               <span className="inline-flex items-center gap-1.5">
                 <MessageCircle className="h-3.5 w-3.5 text-brand-600" /> Meta-compliant

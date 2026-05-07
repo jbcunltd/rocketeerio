@@ -9,7 +9,6 @@ import {
   PlayCircle,
   Rocket,
   Sparkles,
-  Star,
   Target,
   TrendingUp,
   Truck,
@@ -128,11 +127,6 @@ export default function HomePage() {
       highPrice: "199",
       offerCount: 3,
     },
-    aggregateRating: {
-      "@type": "AggregateRating",
-      ratingValue: "4.9",
-      reviewCount: "127",
-    },
   };
 
   return (
@@ -186,9 +180,8 @@ export default function HomePage() {
                 Rocketeerio auto-replies to every Facebook lead in{" "}
                 <strong className="text-ink-900">under 60 seconds</strong>,
                 qualifies them with AI, and pings you the moment one is ready
-                to close. Join{" "}
-                <strong className="text-ink-900">500+ businesses</strong>{" "}
-                getting 3× faster lead response and 40% lower cost per close.
+                to close. <strong className="text-ink-900">Now in early access</strong>{" "}
+                for businesses that depend on fast Meta lead follow-up.
               </p>
 
               <div className="mt-8 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
@@ -213,9 +206,9 @@ export default function HomePage() {
               </div>
 
               <div className="mt-10 grid grid-cols-3 gap-6 max-w-lg">
-                <Stat value="<60s" label="Avg first reply" />
-                <Stat value="3×" label="Faster lead response" />
-                <Stat value="40%" label="Lower cost per close" />
+                <Stat value="<60s" label="First-reply target" />
+                <Stat value="24/7" label="Lead coverage" />
+                <Stat value="Meta" label="Messenger + Instagram" />
               </div>
             </div>
 
@@ -226,36 +219,16 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* LOGO BAR */}
-      <section className="border-y border-ink-100 bg-ink-50/40 py-8" aria-label="Trusted by">
+      {/* EARLY ACCESS BAR */}
+      <section className="border-y border-ink-100 bg-ink-50/40 py-8" aria-label="Early access">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <p className="text-center text-xs font-semibold uppercase tracking-[0.2em] text-ink-700">
-            As featured in · Trusted by 500+ businesses running Meta ads
+          <p className="text-center text-xs font-semibold uppercase tracking-[0.2em] text-brand-700">
+            Now in early access
           </p>
-          <div className="mt-6 overflow-hidden">
-            <div className="flex animate-marquee gap-12 whitespace-nowrap text-ink-500">
-              {[0, 1].map((n) => (
-                <div key={n} className="flex items-center gap-12">
-                  {[
-                    "MetaPress",
-                    "AdWeek",
-                    "DigitalToday",
-                    "GrowthLab",
-                    "MarketerMag",
-                    "SaaSDigest",
-                    "LocalBizPro",
-                    "Conversion.io",
-                  ].map((name) => (
-                    <span
-                      key={name + n}
-                      className="text-xl sm:text-2xl font-bold tracking-tight"
-                    >
-                      {name}
-                    </span>
-                  ))}
-                </div>
-              ))}
-            </div>
+          <div className="mt-5 grid gap-4 text-center text-sm font-medium text-ink-700 sm:grid-cols-3">
+            <span>Replies in under 60 seconds</span>
+            <span>Available 24/7 for new Meta leads</span>
+            <span>Escalates hot leads when they are ready</span>
           </div>
         </div>
       </section>
@@ -456,42 +429,25 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* SOCIAL PROOF */}
+      {/* EARLY ACCESS FEEDBACK */}
       <section className="py-20 sm:py-28">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <SectionHeading
-            eyebrow="What our users say"
-            title="The leads they paid for finally started closing."
-            description="Real results from Rocketeerio customers across roofing, real estate, automotive, beauty, finance, and fitness."
-          />
-
-          <div className="mt-14 grid gap-6 lg:grid-cols-3">
-            <Testimonial
-              quote="We were spending $4K/mo on Facebook ads and converting maybe 1 in 20 leads. After Rocketeerio? 1 in 6. Same ad spend, three times the revenue."
-              name="Marco D."
-              role="Owner, Apex Roofing"
+        <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
+          <div className="rounded-3xl border border-ink-100 bg-white p-8 text-center shadow-sm sm:p-12">
+            <SectionHeading
+              eyebrow="Early access"
+              title="Real customer feedback is coming next."
+              description="Rocketeerio is removing placeholder social proof while early-access users put the system to work. We will publish customer names, numbers, and case studies only after they are real, permissioned, and measured."
+              align="center"
             />
-            <Testimonial
-              quote="I used to wake up to 30 unread messages. Now I wake up to a list of 3 hot leads ready to book. Game changer."
-              name="Janelle R."
-              role="Real Estate Broker"
-              featured
-            />
-            <Testimonial
-              quote="The AI replies sound like me. Customers don't even realize until I take over to close. Best $69 I spend every month."
-              name="Tobias K."
-              role="GM, MetroAuto Dealership"
-            />
-          </div>
-
-          <div className="mt-10 text-center">
-            <Link
-              href="/testimonials"
-              className="inline-flex items-center gap-1.5 text-sm font-semibold text-brand-600 hover:text-brand-700"
-            >
-              See more results
-              <ArrowRight className="h-4 w-4" />
-            </Link>
+            <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
+              <Link
+                href="/testimonials"
+                className="inline-flex items-center gap-1.5 text-sm font-semibold text-brand-600 hover:text-brand-700"
+              >
+                View the early-access results page
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+            </div>
           </div>
         </div>
       </section>
@@ -696,73 +652,3 @@ function FeatureCard({
   );
 }
 
-function Testimonial({
-  quote,
-  name,
-  role,
-  featured,
-}: {
-  quote: string;
-  name: string;
-  role: string;
-  featured?: boolean;
-}) {
-  const initials = name
-    .split(" ")
-    .map((s) => s[0])
-    .join("")
-    .slice(0, 2);
-  return (
-    <figure
-      className={`rounded-2xl border p-7 ${
-        featured
-          ? "border-brand-500 bg-brand-500 text-white shadow-xl shadow-brand-500/30"
-          : "border-ink-100 bg-white"
-      }`}
-    >
-      <div
-        className={`flex items-center gap-1 ${
-          featured ? "text-white" : "text-amber"
-        }`}
-      >
-        {Array.from({ length: 5 }).map((_, i) => (
-          <Star key={i} className="h-4 w-4 fill-current" />
-        ))}
-      </div>
-      <blockquote
-        className={`mt-4 text-lg leading-relaxed ${
-          featured ? "text-white" : "text-ink-800"
-        }`}
-      >
-        “{quote}”
-      </blockquote>
-      <figcaption className="mt-6 flex items-center gap-3">
-        <span
-          className={`grid h-10 w-10 place-items-center rounded-full text-sm font-semibold ${
-            featured
-              ? "bg-white/20 text-white"
-              : "bg-ink-100 text-ink-700"
-          }`}
-        >
-          {initials}
-        </span>
-        <div>
-          <p
-            className={`text-sm font-semibold ${
-              featured ? "text-white" : "text-ink-900"
-            }`}
-          >
-            {name}
-          </p>
-          <p
-            className={`text-xs ${
-              featured ? "text-white/80" : "text-ink-500"
-            }`}
-          >
-            {role}
-          </p>
-        </div>
-      </figcaption>
-    </figure>
-  );
-}

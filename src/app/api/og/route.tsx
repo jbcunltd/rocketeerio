@@ -150,8 +150,8 @@ export async function GET(req: NextRequest) {
         <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
           {[
             "Sub-60s response",
-            "500+ businesses",
-            "98% uptime",
+            "24/7 coverage",
+            "Early access",
           ].map((s) => (
             <div
               key={s}

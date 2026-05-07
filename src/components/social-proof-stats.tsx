@@ -1,25 +1,25 @@
-import { TrendingUp, Users, Zap, ShieldCheck } from "lucide-react";
+import { Clock, MessageCircle, ShieldCheck, Zap } from "lucide-react";
 
 const STATS = [
   {
-    Icon: Users,
-    value: "500+",
-    label: "businesses running on Rocketeerio",
+    Icon: Clock,
+    value: "<60s",
+    label: "first-reply target for new Meta leads",
   },
   {
     Icon: Zap,
-    value: "10,000+",
-    label: "leads qualified every month",
+    value: "24/7",
+    label: "lead coverage, including nights and weekends",
   },
   {
-    Icon: TrendingUp,
-    value: "3×",
-    label: "faster lead response time",
+    Icon: MessageCircle,
+    value: "Meta",
+    label: "Facebook Messenger, Instagram DMs, and Lead Ads",
   },
   {
     Icon: ShieldCheck,
-    value: "98%",
-    label: "platform uptime over the last year",
+    value: "Human",
+    label: "handoff when a lead is ready to close",
   },
 ];
 
@@ -47,7 +47,7 @@ export function SocialProofStats({
               isDark ? "text-brand-200" : "text-brand-700"
             }`}
           >
-            By the numbers
+            Now in early access
           </p>
           <h2
             id="social-proof-heading"
@@ -55,12 +55,16 @@ export function SocialProofStats({
               isDark ? "text-white" : "text-ink-900"
             }`}
           >
-            Join{" "}
-            <span className={isDark ? "text-brand-300" : "text-brand-600"}>
-              500+ businesses
-            </span>{" "}
-            closing more Facebook leads, faster.
+            Honest lead-response math, without inflated customer counts.
           </h2>
+          <p
+            className={`mx-auto mt-3 max-w-2xl text-sm sm:text-base ${
+              isDark ? "text-white/70" : "text-ink-600"
+            }`}
+          >
+            Rocketeerio is built for one measurable job: reply quickly, qualify clearly,
+            and alert you when a lead is worth your attention.
+          </p>
         </div>
         <div className="mt-10 grid grid-cols-2 gap-6 sm:gap-10 lg:grid-cols-4">
           {STATS.map(({ Icon, value, label }) => (

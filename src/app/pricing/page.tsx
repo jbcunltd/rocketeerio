@@ -83,13 +83,6 @@ export default function PricingPage() {
       offerCount: 3,
       url: "https://rocketeerio.com/pricing",
     },
-    aggregateRating: {
-      "@type": "AggregateRating",
-      ratingValue: "4.9",
-      reviewCount: "127",
-      bestRating: "5",
-      worstRating: "1",
-    },
   };
 
   return (
@@ -120,9 +113,8 @@ export default function PricingPage() {
           </h1>
           <p className="mt-5 mx-auto max-w-2xl text-lg text-ink-700">
             Start free. Close more deals. Scale when you&apos;re ready. Every
-            plan includes instant replies, AI qualification, and hot-lead alerts.{" "}
-            <span className="font-semibold text-ink-900">Join 500+ businesses</span>{" "}
-            already running on Rocketeerio.
+            plan includes instant replies, AI qualification, and hot-lead alerts.
+            Rocketeerio is now in early access for teams that depend on fast Meta lead follow-up.
           </p>
           <div className="mt-7">
             <TrustSignals />
@@ -138,8 +130,8 @@ export default function PricingPage() {
           <div className="grid gap-6 sm:grid-cols-3">
             <GuaranteeCard
               Icon={RefreshCw}
-              title="30-day money back"
-              body="If we don't deliver more replies and more closes, get every cent back. No forms, no friction."
+              title="14-day money back"
+              body="If Rocketeerio does not reply faster, qualify cleaner, or route hot leads to you within 14 days, get every cent back. No forms, no friction."
             />
             <GuaranteeCard
               Icon={ShieldCheck}

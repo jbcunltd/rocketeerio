@@ -81,9 +81,8 @@ export default function AboutPage() {
           <p className="mt-5 text-lg text-ink-700">
             Every business owner spends thousands on Facebook ads only to watch
             half the leads go cold in their inbox. We refused to keep doing
-            that — so we built the fix. Today,{" "}
-            <Link href="/testimonials" className="font-semibold text-brand-700 hover:text-brand-800 underline-offset-2 hover:underline">500+ businesses</Link>{" "}
-            run on Rocketeerio.
+            that — so we built the fix. Rocketeerio is now in early access for
+            businesses that depend on fast Facebook and Instagram follow-up.
           </p>
         </div>
       </section>
@@ -269,7 +268,7 @@ export default function AboutPage() {
               href="/testimonials"
               className="font-semibold text-brand-700 hover:text-brand-800 underline-offset-2 hover:underline"
             >
-              Read 6 verified case studies
+              See the early-access results page
             </Link>
             .
           </p>

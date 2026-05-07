@@ -5,7 +5,7 @@ type Variant = "light" | "dark" | "compact";
 const BADGES = [
   { Icon: CreditCard, label: "No credit card required" },
   { Icon: RefreshCw, label: "Cancel anytime" },
-  { Icon: ShieldCheck, label: "30-day money-back guarantee" },
+  { Icon: ShieldCheck, label: "14-day money-back guarantee" },
   { Icon: Lock, label: "SSL secured" },
 ];
 
@@ -76,7 +76,7 @@ export function SecuritySection({ className = "" }: { className?: string }) {
       Icon: X,
       title: "No long-term contracts",
       body:
-        "Month-to-month, cancel anytime, full refund inside 30 days. Zero handcuffs.",
+        "Month-to-month, cancel anytime, full refund inside 14 days. Zero handcuffs.",
     },
   ];
   return (
@@ -91,8 +91,8 @@ export function SecuritySection({ className = "" }: { className?: string }) {
             Your leads, your data, your business — protected.
           </h2>
           <p className="mt-3 mx-auto max-w-2xl text-ink-600">
-            Rocketeerio is built to the same security standards trusted by
-            500+ businesses running paid Meta ads every day.
+            Rocketeerio is built with security-minded defaults for teams that
+            depend on paid Meta leads every day.
           </p>
         </div>
         <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
