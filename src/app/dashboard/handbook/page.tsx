@@ -31,7 +31,7 @@ const folders: HandbookFolder[] = [
   },
 ];
 
-export default function CompanyHandbookPage() {
+export default async function CompanyHandbookPage() {
   return (
     <div className="space-y-8">
       <header>
@@ -100,7 +100,7 @@ export default function CompanyHandbookPage() {
             Knowledge and playbooks that all agents inherit. Edit these settings to affect every agent on your team.
           </p>
         </div>
-        <HandbookSections scope="general" />
+        <HandbookSections scope="general" pageId="general" />
       </section>
     </div>
   );

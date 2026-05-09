@@ -1,10 +1,12 @@
 import { AlertCircle, BookOpen } from "lucide-react";
 import { JoshForSalesTabs } from "@/components/dashboard/josh-for-sales-tabs";
 import { HandbookSections } from "@/components/dashboard/handbook-sections";
+import { getFirstConnectedFacebookPage } from "@/lib/handbook-page-context";
 
 export const dynamic = "force-dynamic";
 
-export default function JoshHandbookPage() {
+export default async function JoshHandbookPage() {
+  const { pageId, pageName, dbUnavailable } = await getFirstConnectedFacebookPage();
   return (
     <div className="space-y-5">
       <header className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
@@ -34,7 +36,7 @@ export default function JoshHandbookPage() {
         </div>
       </div>
 
-      <HandbookSections scope="josh" />
+      <HandbookSections scope="josh" pageId={pageId} pageName={pageName} dbUnavailable={dbUnavailable} />
     </div>
   );
 }
