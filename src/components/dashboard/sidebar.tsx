@@ -140,9 +140,7 @@ export function Sidebar({ user, onLogout }: SidebarProps) {
     <>
       {/* Mobile top bar */}
       <div className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-ink-100 bg-white px-4 md:hidden">
-        <Link href="/dashboard">
-          <Logo />
-        </Link>
+        <Logo href="/dashboard" />
         <button
           type="button"
           aria-label="Open menu"
@@ -156,9 +154,7 @@ export function Sidebar({ user, onLogout }: SidebarProps) {
       {/* Desktop sidebar */}
       <aside className="hidden h-screen w-64 shrink-0 flex-col border-r border-ink-100 bg-white md:sticky md:top-0 md:flex">
         <div className="flex h-16 items-center px-5">
-          <Link href="/dashboard">
-            <Logo />
-          </Link>
+          <Logo href="/dashboard" />
         </div>
         <NavList pathname={pathname} />
         <UserBlock user={user} onLogout={onLogout} />
@@ -173,9 +169,7 @@ export function Sidebar({ user, onLogout }: SidebarProps) {
           />
           <div className="absolute left-0 top-0 flex h-full w-72 flex-col bg-white shadow-xl">
             <div className="flex h-14 items-center justify-between border-b border-ink-100 px-4">
-              <Link href="/dashboard" onClick={() => setOpen(false)}>
-                <Logo />
-              </Link>
+              <Logo href="/dashboard" />
               <button
                 type="button"
                 aria-label="Close menu"
