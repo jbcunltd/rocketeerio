@@ -12,7 +12,7 @@ export default async function DashboardLayout({
   if (!user) redirect("/login");
 
   return (
-    <div className="flex min-h-screen bg-ink-50/40 md:flex-row">
+    <div className="flex flex-col min-h-screen bg-ink-50/40 md:flex-row">
       <Sidebar
         user={{
           name: user.name ?? null,
