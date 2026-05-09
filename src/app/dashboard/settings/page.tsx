@@ -186,14 +186,16 @@ export default async function SettingsPage({
               {user.name ?? "—"}
             </dd>
           </div>
-          <div>
-            <dt className="text-xs uppercase tracking-wider text-ink-500">
-              Email
-            </dt>
-            <dd className="mt-1 text-sm font-medium text-ink-900">
-              {user.email}
-            </dd>
-          </div>
+          {user.email && (
+            <div>
+              <dt className="text-xs uppercase tracking-wider text-ink-500">
+                Email
+              </dt>
+              <dd className="mt-1 text-sm font-medium text-ink-900">
+                {user.email}
+              </dd>
+            </div>
+          )}
         </dl>
         <p className="mt-4 text-xs text-ink-500">
           <Link

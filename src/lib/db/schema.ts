@@ -18,7 +18,7 @@ export const userTable = pgTable(
   "users",
   {
     id: text("id").primaryKey(), // ULID-like id
-    email: text("email").notNull(),
+    email: text("email"),
     name: text("name"),
     avatarUrl: text("avatar_url"),
     passwordHash: text("password_hash"),

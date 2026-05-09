@@ -122,7 +122,7 @@ export async function GET(req: NextRequest) {
           userId = newId();
           await db.insert(userTable).values({
             id: userId,
-            email: (fbUser.email ?? `${fbUser.id}@facebook.local`).toLowerCase(),
+            email: fbUser.email ? fbUser.email.toLowerCase() : null,
             name: fbUser.name,
             avatarUrl: fbUser.picture?.data?.url ?? null,
           });

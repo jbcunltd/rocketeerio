@@ -4,10 +4,8 @@ export const FB_LOGIN_SCOPES = ["public_profile", "pages_show_list"];
 
 export const FB_PAGES_SCOPES = [
   "pages_show_list",
-  "pages_read_engagement",
   "pages_manage_metadata",
   "pages_messaging",
-  "business_management",
 ];
 
 function requireEnv(name: string): string {

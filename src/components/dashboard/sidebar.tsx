@@ -88,7 +88,7 @@ function UserBlock({
   user: SidebarProps["user"];
   onLogout: () => Promise<void>;
 }) {
-  const initials = (user.name ?? user.email)
+  const initials = (user.name ?? user.email ?? "U")
     .split(" ")
     .map((p) => p[0])
     .join("")
@@ -115,9 +115,11 @@ function UserBlock({
         </div>
         <div className="min-w-0 flex-1">
           <div className="truncate text-sm font-medium text-ink-900">
-            {user.name ?? user.email.split("@")[0]}
+            {user.name ?? user.email?.split("@")[0] ?? "User"}
           </div>
-          <div className="truncate text-xs text-ink-500">{user.email}</div>
+          {user.email && (
+            <div className="truncate text-xs text-ink-500">{user.email}</div>
+          )}
         </div>
       </div>
       <button
