@@ -1,5 +1,5 @@
 import { eq } from "drizzle-orm";
-import { Bot, Sparkles } from "lucide-react";
+import { Sparkles } from "lucide-react";
 import { redirect } from "next/navigation";
 import { JoshSettingsForm } from "@/components/dashboard/josh-settings-form";
 import { getCurrentSession } from "@/lib/auth/cookies";
@@ -32,27 +32,47 @@ export default async function JoshForSalesPage() {
 
   return (
     <div className="space-y-8">
-      <header className="flex flex-col gap-5 rounded-3xl border border-brand-100 bg-white p-6 shadow-sm md:flex-row md:items-center md:justify-between">
-        <div className="flex items-start gap-4">
-          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-brand-50 text-brand-600 ring-1 ring-brand-100">
-            <Bot className="h-7 w-7" />
-          </div>
-          <div>
-            <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-brand-600">
-              <Sparkles className="h-3.5 w-3.5" />
-              AI agent settings
-            </p>
-            <h1 className="mt-2 text-2xl font-bold tracking-tight text-ink-900 md:text-3xl">
-              Josh for Sales
-            </h1>
-            <p className="mt-2 max-w-3xl text-sm leading-6 text-ink-600">
-              Configure Josh&apos;s sales identity, capabilities, knowledge base, and behavior rules directly from your dashboard. These settings are saved per user in PostgreSQL and are ready for the middleware to consume later.
-            </p>
-          </div>
+      <header className="relative overflow-hidden rounded-3xl border border-brand-100 bg-white shadow-sm">
+        {/* Cover photo */}
+        <div className="h-40 w-full overflow-hidden md:h-52">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/josh-cover.jpg"
+            alt="Josh cover"
+            className="h-full w-full object-cover"
+          />
         </div>
-        <div className="rounded-2xl border border-ink-100 bg-ink-50 px-4 py-3 text-sm text-ink-700 md:max-w-xs">
-          <span className="font-semibold text-ink-900">Current owner:</span>{" "}
-          {user.name ?? user.email}
+        {/* Profile section overlapping the cover */}
+        <div className="relative px-6 pb-6">
+          <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+            <div className="flex items-end gap-4">
+              {/* Avatar overlapping cover */}
+              <div className="-mt-10 flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-full border-4 border-white bg-brand-50 shadow-md">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src="/josh-avatar.jpg"
+                  alt="Josh"
+                  className="h-full w-full object-cover"
+                />
+              </div>
+              <div className="pb-1">
+                <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-brand-600">
+                  <Sparkles className="h-3.5 w-3.5" />
+                  AI agent settings
+                </p>
+                <h1 className="mt-1 text-2xl font-bold tracking-tight text-ink-900 md:text-3xl">
+                  Josh for Sales
+                </h1>
+                <p className="mt-1 max-w-3xl text-sm leading-6 text-ink-600">
+                  Configure Josh&apos;s sales identity, capabilities, knowledge base, and behavior rules.
+                </p>
+              </div>
+            </div>
+            <div className="rounded-2xl border border-ink-100 bg-ink-50 px-4 py-3 text-sm text-ink-700 md:max-w-xs">
+              <span className="font-semibold text-ink-900">Current owner:</span>{" "}
+              {user.name ?? user.email}
+            </div>
+          </div>
         </div>
       </header>
 
