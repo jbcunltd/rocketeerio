@@ -23,6 +23,7 @@ export async function GET(req: NextRequest) {
   const code = url.searchParams.get("code");
   const state = url.searchParams.get("state");
   const error = url.searchParams.get("error");
+  const debug = url.searchParams.get("debug");
 
   if (error) {
     return NextResponse.redirect(appUrl(`/login?error=${encodeURIComponent(error)}`));
@@ -38,26 +39,46 @@ export async function GET(req: NextRequest) {
 
   let accessToken: string;
   try {
+    const redirectUri = `${origin}/api/auth/facebook/callback`;
     const tokenUrl = new URL("https://graph.facebook.com/v21.0/oauth/access_token");
     tokenUrl.searchParams.set("client_id", process.env.FACEBOOK_APP_ID!);
     tokenUrl.searchParams.set("client_secret", process.env.FACEBOOK_APP_SECRET!);
-    tokenUrl.searchParams.set("redirect_uri", `${origin}/api/auth/facebook/callback`);
+    tokenUrl.searchParams.set("redirect_uri", redirectUri);
     tokenUrl.searchParams.set("code", code);
 
+    console.error("[fb login callback] attempting token exchange", {
+      origin,
+      redirectUri,
+      hasCode: !!code,
+      codeLength: code.length,
+      clientId: process.env.FACEBOOK_APP_ID?.slice(0, 6) + "...",
+      hasSecret: !!process.env.FACEBOOK_APP_SECRET,
+    });
+
     const tokenRes = await fetch(tokenUrl.toString(), { cache: "no-store" });
+    const responseText = await tokenRes.text();
+
+    console.error("[fb login callback] Facebook response", {
+      status: tokenRes.status,
+      body: responseText.slice(0, 500),
+    });
+
     if (!tokenRes.ok) {
-      const errBody = await tokenRes.text();
-      console.error("[fb login callback] token exchange HTTP error", tokenRes.status, errBody);
-      throw new Error(`Token exchange failed: ${tokenRes.status} - ${errBody}`);
+      // Return debug info as JSON if debug mode, otherwise redirect with error details
+      return NextResponse.redirect(
+        appUrl(`/login?error=token_exchange&detail=${encodeURIComponent(responseText.slice(0, 200))}`)
+      );
     }
-    const tokenData = await tokenRes.json() as { access_token: string; token_type: string; expires_in?: number };
+
+    const tokenData = JSON.parse(responseText) as { access_token: string; token_type: string; expires_in?: number };
     accessToken = tokenData.access_token;
     if (!accessToken) {
       throw new Error("No access_token in response");
     }
   } catch (err) {
     console.error("[fb login callback] token exchange failed", err);
-    return NextResponse.redirect(appUrl("/login?error=token_exchange"));
+    const errMsg = err instanceof Error ? err.message : String(err);
+    return NextResponse.redirect(appUrl(`/login?error=token_exchange&detail=${encodeURIComponent(errMsg.slice(0, 200))}`));
   }
 
   let fbUser;
