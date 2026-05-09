@@ -33,8 +33,8 @@ export default async function JoshForSalesPage() {
   return (
     <div className="space-y-8">
       <header className="relative overflow-hidden rounded-3xl border border-brand-100 bg-white shadow-sm">
-        {/* Cover photo */}
-        <div className="h-40 w-full overflow-hidden md:h-52">
+        {/* Cover photo — Facebook standard 820×312 aspect ratio */}
+        <div className="aspect-[820/312] w-full overflow-hidden">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src="/josh-cover.jpg"
@@ -46,8 +46,8 @@ export default async function JoshForSalesPage() {
         <div className="relative px-6 pb-5 pt-0">
           <div className="flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
             <div className="flex items-end gap-5">
-              {/* Avatar overlapping cover — Facebook page size */}
-              <div className="-mt-16 flex h-[120px] w-[120px] shrink-0 items-center justify-center overflow-hidden rounded-full border-[5px] border-white bg-brand-50 shadow-lg">
+              {/* Avatar overlapping cover — Facebook page standard 176px */}
+              <div className="-mt-20 flex h-[176px] w-[176px] shrink-0 items-center justify-center overflow-hidden rounded-full border-[5px] border-white bg-brand-50 shadow-lg">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src="/josh-avatar.jpg"
