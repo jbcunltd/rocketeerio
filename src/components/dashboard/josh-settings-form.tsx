@@ -430,7 +430,7 @@ export function JoshSettingsForm({
             <div className="mx-auto flex h-24 w-24 items-center justify-center overflow-hidden rounded-full bg-brand-100 text-2xl font-bold text-brand-700 ring-4 ring-white">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src={avatarUrl || "/josh-avatar.jpg"}
+                src={avatarUrl || "/josh-avatar.jpg?v=2"}
                 alt="Josh avatar preview"
                 width={96}
                 height={96}

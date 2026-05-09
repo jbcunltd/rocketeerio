@@ -50,7 +50,7 @@ export default async function JoshForSalesPage() {
               <div className="-mt-20 flex h-[176px] w-[176px] shrink-0 items-center justify-center overflow-hidden rounded-full border-[5px] border-white bg-brand-50 shadow-lg">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
-                  src="/josh-avatar.jpg"
+                  src="/josh-avatar.jpg?v=2"
                   alt="Josh"
                   className="h-full w-full object-cover"
                 />

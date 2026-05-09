@@ -27,7 +27,7 @@ const NAV = [
     href: "/dashboard/josh-for-sales",
     label: "Josh for Sales",
     icon: Bot,
-    avatar: "/josh-avatar.jpg",
+    avatar: "/josh-avatar.jpg?v=2",
   },
   { href: "/dashboard/settings", label: "Settings", icon: Settings, avatar: null },
 ];
