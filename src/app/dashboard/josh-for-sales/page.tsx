@@ -43,11 +43,11 @@ export default async function JoshForSalesPage() {
           />
         </div>
         {/* Profile section overlapping the cover */}
-        <div className="relative px-6 pb-6">
-          <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-            <div className="flex items-end gap-4">
-              {/* Avatar overlapping cover */}
-              <div className="-mt-10 flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-full border-4 border-white bg-brand-50 shadow-md">
+        <div className="relative px-6 pb-5 pt-0">
+          <div className="flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
+            <div className="flex items-end gap-5">
+              {/* Avatar overlapping cover — Facebook page size */}
+              <div className="-mt-16 flex h-[120px] w-[120px] shrink-0 items-center justify-center overflow-hidden rounded-full border-[5px] border-white bg-brand-50 shadow-lg">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src="/josh-avatar.jpg"
@@ -55,20 +55,20 @@ export default async function JoshForSalesPage() {
                   className="h-full w-full object-cover"
                 />
               </div>
-              <div className="pb-1">
-                <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-brand-600">
+              <div className="pb-2">
+                <p className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-brand-600">
                   <Sparkles className="h-3.5 w-3.5" />
                   AI agent settings
                 </p>
-                <h1 className="mt-1 text-2xl font-bold tracking-tight text-ink-900 md:text-3xl">
+                <h1 className="mt-1.5 text-2xl font-bold tracking-tight text-ink-900 md:text-3xl">
                   Josh for Sales
                 </h1>
-                <p className="mt-1 max-w-3xl text-sm leading-6 text-ink-600">
+                <p className="mt-1.5 max-w-2xl text-sm leading-relaxed text-ink-600">
                   Configure Josh&apos;s sales identity, capabilities, knowledge base, and behavior rules.
                 </p>
               </div>
             </div>
-            <div className="rounded-2xl border border-ink-100 bg-ink-50 px-4 py-3 text-sm text-ink-700 md:max-w-xs">
+            <div className="mb-2 rounded-2xl border border-ink-100 bg-ink-50 px-4 py-3 text-sm text-ink-700 md:max-w-xs">
               <span className="font-semibold text-ink-900">Current owner:</span>{" "}
               {user.name ?? user.email}
             </div>
