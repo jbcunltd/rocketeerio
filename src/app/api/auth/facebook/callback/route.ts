@@ -4,7 +4,6 @@ import { db } from "@/lib/db";
 import { oauthAccountTable, userTable } from "@/lib/db/schema";
 import {
   fetchFacebookUser,
-  getLoginClient,
   resolveAppUrl,
 } from "@/lib/auth/facebook";
 import { consumeOAuthState } from "@/lib/auth/oauth-state";
@@ -37,16 +36,29 @@ export async function GET(req: NextRequest) {
     return NextResponse.redirect(appUrl("/login?error=invalid_state"));
   }
 
-  let tokens;
+  let accessToken: string;
   try {
-    const facebook = getLoginClient(origin);
-    tokens = await facebook.validateAuthorizationCode(code);
+    const tokenUrl = new URL("https://graph.facebook.com/v21.0/oauth/access_token");
+    tokenUrl.searchParams.set("client_id", process.env.FACEBOOK_APP_ID!);
+    tokenUrl.searchParams.set("client_secret", process.env.FACEBOOK_APP_SECRET!);
+    tokenUrl.searchParams.set("redirect_uri", `${origin}/api/auth/facebook/callback`);
+    tokenUrl.searchParams.set("code", code);
+
+    const tokenRes = await fetch(tokenUrl.toString(), { cache: "no-store" });
+    if (!tokenRes.ok) {
+      const errBody = await tokenRes.text();
+      console.error("[fb login callback] token exchange HTTP error", tokenRes.status, errBody);
+      throw new Error(`Token exchange failed: ${tokenRes.status} - ${errBody}`);
+    }
+    const tokenData = await tokenRes.json() as { access_token: string; token_type: string; expires_in?: number };
+    accessToken = tokenData.access_token;
+    if (!accessToken) {
+      throw new Error("No access_token in response");
+    }
   } catch (err) {
     console.error("[fb login callback] token exchange failed", err);
     return NextResponse.redirect(appUrl("/login?error=token_exchange"));
   }
-
-  const accessToken = tokens.accessToken();
 
   let fbUser;
   try {
