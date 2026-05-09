@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import {
@@ -15,18 +16,20 @@ import { Logo } from "@/components/logo";
 import { cn } from "@/lib/utils";
 
 const NAV = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard, avatar: null },
   {
     href: "/dashboard/pages",
     label: "Connected Pages",
     icon: MessageCircleHeart,
+    avatar: null,
   },
   {
     href: "/dashboard/josh-for-sales",
     label: "Josh for Sales",
     icon: Bot,
+    avatar: "/josh-avatar.jpg",
   },
-  { href: "/dashboard/settings", label: "Settings", icon: Settings },
+  { href: "/dashboard/settings", label: "Settings", icon: Settings, avatar: null },
 ];
 
 interface SidebarProps {
@@ -59,7 +62,17 @@ function NavList({
                 : "text-ink-600 hover:bg-ink-50 hover:text-ink-900",
             )}
           >
-            <item.icon className="h-4 w-4" />
+            {item.avatar ? (
+              <Image
+                src={item.avatar}
+                alt={item.label}
+                width={20}
+                height={20}
+                className="h-5 w-5 rounded-full object-cover"
+              />
+            ) : (
+              <item.icon className="h-4 w-4" />
+            )}
             {item.label}
           </Link>
         );

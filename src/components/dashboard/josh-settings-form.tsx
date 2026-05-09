@@ -428,18 +428,14 @@ export function JoshSettingsForm({
 
           <div className="rounded-2xl border border-ink-100 bg-ink-50 p-4 text-center">
             <div className="mx-auto flex h-24 w-24 items-center justify-center overflow-hidden rounded-full bg-brand-100 text-2xl font-bold text-brand-700 ring-4 ring-white">
-              {avatarUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={avatarUrl}
-                  alt="Josh avatar preview"
-                  width={96}
-                  height={96}
-                  className="h-full w-full object-cover"
-                />
-              ) : (
-                agentName.slice(0, 1).toUpperCase() || "J"
-              )}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={avatarUrl || "/josh-avatar.jpg"}
+                alt="Josh avatar preview"
+                width={96}
+                height={96}
+                className="h-full w-full object-cover"
+              />
             </div>
             <label className="mt-4 inline-flex cursor-pointer items-center justify-center gap-2 rounded-lg border border-ink-200 bg-white px-3 py-2 text-xs font-semibold text-ink-700 hover:bg-ink-50">
               <Upload className="h-4 w-4" />
