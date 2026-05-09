@@ -16,7 +16,7 @@ export default async function DashboardLayout({
       <Sidebar
         user={{
           name: user.name ?? null,
-          email: user.email,
+          email: user.email ?? null,
           avatarUrl: user.avatarUrl ?? null,
         }}
         onLogout={logoutAction}

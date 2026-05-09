@@ -48,7 +48,7 @@ export default async function DashboardPage() {
     console.error("[dashboard] db unavailable", err);
   }
 
-  const firstName = (user.name ?? user.email.split("@")[0]).split(" ")[0];
+  const firstName = (user.name ?? user.email?.split("@")[0] ?? "there").split(" ")[0];
 
   return (
     <div className="space-y-8">

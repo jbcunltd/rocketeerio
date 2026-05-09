@@ -33,7 +33,7 @@ const NAV = [
 ];
 
 interface SidebarProps {
-  user: { name?: string | null; email: string; avatarUrl?: string | null };
+  user: { name?: string | null; email?: string | null; avatarUrl?: string | null };
   onLogout: () => Promise<void>;
 }
 
