@@ -1,6 +1,6 @@
 import { Facebook } from "arctic";
 
-export const FB_LOGIN_SCOPES = ["email", "public_profile"];
+export const FB_LOGIN_SCOPES = ["public_profile"];
 
 export const FB_PAGES_SCOPES = [
   "pages_show_list",
