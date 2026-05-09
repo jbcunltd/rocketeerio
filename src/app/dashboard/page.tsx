@@ -3,6 +3,7 @@ import Image from "next/image";
 import {
   ArrowRight,
   ChevronRight,
+  Flame,
   MessageCircle,
   Sparkles,
   Users,
@@ -154,61 +155,93 @@ export default async function DashboardPage() {
           </div>
         </div>
 
-        {/* KPI Grid — all Josh's metrics */}
-        <div className="grid grid-cols-2 gap-px bg-ink-100 border-t border-ink-100 lg:grid-cols-4">
+        {/* KPI Grid — all Josh's live-ready metrics */}
+        <div className="grid grid-cols-2 gap-px bg-ink-100 border-t border-ink-100 lg:grid-cols-3">
           {[
             {
               icon: MessageCircle,
               label: "Conversations (24h)",
-              value: activePage ? "0" : "—",
+              value: "0",
               sub: activePage
                 ? "Waiting for first message"
                 : "Connect a Page to start",
+              tone: "brand",
             },
             {
               icon: Users,
-              label: "Qualified leads",
-              value: activePage ? "0" : "—",
+              label: "Total Contacts",
+              value: "0",
+              sub: activePage
+                ? "Everyone who messages Josh"
+                : "Tracked after connection",
+              tone: "neutral",
+            },
+            {
+              icon: Flame,
+              label: "Hot Leads",
+              value: "0",
+              sub: activePage
+                ? "Pricing, timeline, budget, or call signals"
+                : "Detected after connection",
+              tone: "hot",
+            },
+            {
+              icon: Users,
+              label: "Qualified Leads",
+              value: "0",
               sub: activePage
                 ? "Josh will track qualifications"
                 : "Tracked after first qualification",
+              tone: "qualified",
             },
             {
               icon: Zap,
-              label: "Avg. response time",
-              value: activePage ? "<1s" : "—",
+              label: "Avg Response Time",
+              value: "0",
               sub: activePage
-                ? "Josh responds instantly"
+                ? "Measured from real replies"
                 : "Measured once connected",
+              tone: "brand",
             },
             {
               icon: Sparkles,
-              label: "Booked calls",
-              value: activePage ? "0" : "—",
+              label: "Booked Calls",
+              value: "0",
               sub: activePage
                 ? "Updates as bookings land"
-                : "Updates as bookings land",
+                : "Updates after connection",
+              tone: "qualified",
             },
           ].map((m, i) => (
             <div
               key={m.label}
               className={`bg-white p-4 ${
-                i === 0
-                  ? "rounded-bl-2xl lg:rounded-bl-2xl"
-                  : i === 1
-                    ? "lg:rounded-none"
-                    : i === 3
-                      ? "rounded-br-2xl lg:rounded-br-2xl"
-                      : ""
-              }`}
+                i === 4 ? "rounded-bl-2xl lg:rounded-bl-2xl" : ""
+              } ${i === 5 ? "rounded-br-2xl lg:rounded-br-2xl" : ""}`}
             >
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between gap-3">
                 <p className="text-[10px] font-semibold uppercase tracking-wider text-ink-500 sm:text-xs">
                   {m.label}
                 </p>
-                <m.icon className="h-3.5 w-3.5 text-brand-500" />
+                <m.icon
+                  className={`h-3.5 w-3.5 ${
+                    m.tone === "hot"
+                      ? "text-orange-500"
+                      : m.tone === "qualified"
+                        ? "text-emerald-600"
+                        : m.tone === "neutral"
+                          ? "text-ink-400"
+                          : "text-brand-500"
+                  }`}
+                />
               </div>
-              <p className="mt-2 text-2xl font-bold tracking-tight text-ink-900">
+              <p
+                className={`mt-2 text-2xl font-bold tracking-tight ${
+                  m.tone === "hot" && Number(m.value) > 0
+                    ? "text-orange-600"
+                    : "text-ink-900"
+                }`}
+              >
                 {m.value}
               </p>
               <p className="mt-0.5 text-[10px] text-ink-500 sm:text-xs">
