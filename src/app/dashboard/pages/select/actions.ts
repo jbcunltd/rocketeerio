@@ -96,9 +96,10 @@ export async function connectSinglePageAction(
     });
   }
 
+  revalidatePath("/dashboard");
   revalidatePath("/dashboard/pages");
   revalidatePath("/dashboard/pages/select");
   revalidatePath("/dashboard/settings");
 
-  redirect("/dashboard/pages");
+  redirect("/dashboard");
 }

@@ -1,9 +1,9 @@
 import Link from "next/link";
 
-export function Logo({ className = "" }: { className?: string }) {
+export function Logo({ className = "", href = "/" }: { className?: string; href?: string }) {
   return (
     <Link
-      href="/"
+      href={href}
       className={`inline-flex items-center gap-2 group ${className}`}
       aria-label="Rocketeerio home"
     >
