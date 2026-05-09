@@ -29,12 +29,12 @@ export async function GET(req: NextRequest) {
 
   if (error) {
     return NextResponse.redirect(
-      appUrl(`/dashboard/settings?error=${encodeURIComponent(error)}`),
+      appUrl(`/dashboard/pages/select?error=${encodeURIComponent(error)}`),
     );
   }
   if (!code || !state) {
     return NextResponse.redirect(
-      appUrl("/dashboard/settings?error=missing_code"),
+      appUrl("/dashboard/pages/select?error=missing_code"),
     );
   }
 
@@ -45,7 +45,7 @@ export async function GET(req: NextRequest) {
     persisted.userId !== user.id
   ) {
     return NextResponse.redirect(
-      appUrl("/dashboard/settings?error=invalid_state"),
+      appUrl("/dashboard/pages/select?error=invalid_state"),
     );
   }
 
@@ -57,7 +57,7 @@ export async function GET(req: NextRequest) {
   } catch (err) {
     console.error("[fb pages cb] token exchange failed", err);
     return NextResponse.redirect(
-      appUrl("/dashboard/settings?error=token_exchange"),
+      appUrl("/dashboard/pages/select?error=token_exchange"),
     );
   }
 
@@ -67,7 +67,7 @@ export async function GET(req: NextRequest) {
   } catch (err) {
     console.error("[fb pages cb] long-lived exchange failed", err);
     return NextResponse.redirect(
-      appUrl("/dashboard/settings?error=token_exchange"),
+      appUrl("/dashboard/pages/select?error=token_exchange"),
     );
   }
 
@@ -77,7 +77,7 @@ export async function GET(req: NextRequest) {
   } catch (err) {
     console.error("[fb pages cb] fetch user failed", err);
     return NextResponse.redirect(
-      appUrl("/dashboard/settings?error=graph_failed"),
+      appUrl("/dashboard/pages/select?error=graph_failed"),
     );
   }
 
@@ -113,5 +113,5 @@ export async function GET(req: NextRequest) {
     });
   }
 
-  return NextResponse.redirect(appUrl("/dashboard/settings?fb=authorized"));
+  return NextResponse.redirect(appUrl("/dashboard/pages/select"));
 }

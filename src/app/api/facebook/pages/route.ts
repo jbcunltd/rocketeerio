@@ -18,7 +18,7 @@ export async function GET(req: NextRequest) {
     const state = await createOAuthState({
       purpose: "connect_pages",
       userId: user.id,
-      redirectTo: "/dashboard/settings?fb=connected",
+      redirectTo: "/dashboard/pages/select",
     });
 
     const redirectUri = `${origin}/api/facebook/pages/callback`;
@@ -37,7 +37,7 @@ export async function GET(req: NextRequest) {
   } catch (err) {
     console.error("[fb pages start]", err);
     return NextResponse.redirect(
-      new URL("/dashboard/settings?error=facebook_unavailable", origin),
+      new URL("/dashboard/pages/select?error=facebook_unavailable", origin),
     );
   }
 }
