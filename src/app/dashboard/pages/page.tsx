@@ -35,7 +35,7 @@ export default async function ConnectedPagesPage() {
           </p>
         </div>
         <Link
-          href="/dashboard/settings"
+          href="/api/facebook/pages"
           className="inline-flex items-center gap-2 rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm shadow-brand-500/30 hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-brand-500/40"
         >
           Connect another Page
@@ -49,14 +49,14 @@ export default async function ConnectedPagesPage() {
             No Pages connected yet
           </h2>
           <p className="mt-1 text-sm text-ink-600">
-            Head over to Settings to authorize Facebook and pick the Pages you
-            want Rocketeerio to qualify leads for.
+            Authorize Facebook and pick the Pages you want Rocketeerio to
+            qualify leads for.
           </p>
           <Link
-            href="/dashboard/settings"
+            href="/api/facebook/pages"
             className="mt-4 inline-flex items-center gap-2 rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-brand-500/40"
           >
-            Go to Settings
+            Connect your first Page
           </Link>
         </div>
       ) : (
