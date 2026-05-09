@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import {
+  Bot,
   LayoutDashboard,
   MessageCircleHeart,
   Menu,
@@ -19,6 +20,11 @@ const NAV = [
     href: "/dashboard/pages",
     label: "Connected Pages",
     icon: MessageCircleHeart,
+  },
+  {
+    href: "/dashboard/josh-for-sales",
+    label: "Josh for Sales",
+    icon: Bot,
   },
   { href: "/dashboard/settings", label: "Settings", icon: Settings },
 ];

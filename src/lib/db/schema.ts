@@ -2,6 +2,7 @@ import {
   boolean,
   index,
   integer,
+  jsonb,
   pgTable,
   serial,
   text,
@@ -187,6 +188,92 @@ export const leadCaptureTable = pgTable(
 
 export type DbLeadCapture = typeof leadCaptureTable.$inferSelect;
 
+export type JoshAgentMode = "paused" | "testing" | "live";
+export type JoshPersonalityTone =
+  | "friendly_casual"
+  | "professional"
+  | "elevated_taglish";
+export type JoshResponseLength = "short" | "medium" | "detailed";
+
+export interface JoshSkillSettings {
+  leadQualification: boolean;
+  appointmentBooking: boolean;
+  objectionHandling: boolean;
+  productRecommendations: boolean;
+  pricingInquiries: boolean;
+  followUpSequences: boolean;
+  hotLeadAlerts: boolean;
+  instantQuotation: boolean;
+}
+
+export interface JoshBusinessInfo {
+  companyName: string;
+  description: string;
+  productsServices: string;
+}
+
+export interface JoshKnowledgeEntry {
+  id: string;
+  category:
+    | "products_pricing"
+    | "faqs"
+    | "objection_scripts"
+    | "golden_rules"
+    | "custom_notes";
+  title: string;
+  content: string;
+}
+
+export interface JoshBehaviorRules {
+  alwaysEndWithQuestion: boolean;
+  neverMentionCompetitors: boolean;
+  alwaysPushTowardSiteVisit: boolean;
+  responseLength: JoshResponseLength;
+  customRules: string[];
+}
+
+/**
+ * Per-user configuration for the Josh for Sales AI agent. The middleware can
+ * read this single row to configure Josh's identity, enabled skills, knowledge,
+ * and guardrails for each dashboard user.
+ */
+export const joshAgentSettingsTable = pgTable(
+  "josh_agent_settings",
+  {
+    id: serial("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => userTable.id, { onDelete: "cascade" }),
+    mode: text("mode").$type<JoshAgentMode>().notNull().default("paused"),
+    agentName: text("agent_name").notNull().default("Josh"),
+    roleTitle: text("role_title").notNull().default("Sales Agent"),
+    personalityTone: text("personality_tone")
+      .$type<JoshPersonalityTone>()
+      .notNull()
+      .default("friendly_casual"),
+    avatarUrl: text("avatar_url"),
+    skills: jsonb("skills").$type<JoshSkillSettings>().notNull(),
+    businessInfo: jsonb("business_info").$type<JoshBusinessInfo>().notNull(),
+    knowledgeBase: jsonb("knowledge_base")
+      .$type<JoshKnowledgeEntry[]>()
+      .notNull(),
+    behaviorRules: jsonb("behavior_rules")
+      .$type<JoshBehaviorRules>()
+      .notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (t) => ({
+    userUnique: uniqueIndex("josh_agent_settings_user_unique").on(t.userId),
+  }),
+);
+
+export type DbJoshAgentSettings = typeof joshAgentSettingsTable.$inferSelect;
+
 // Convenience re-exports
 export const tables = {
   userTable,
@@ -196,6 +283,7 @@ export const tables = {
   facebookPageTable,
   oauthStateTable,
   leadCaptureTable,
+  joshAgentSettingsTable,
 };
 
 export const integerCol = integer; // ensure import not pruned

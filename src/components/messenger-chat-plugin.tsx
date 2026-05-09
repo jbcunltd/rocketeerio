@@ -15,12 +15,9 @@ declare global {
 export function MessengerChatPlugin() {
   const pageId = process.env.NEXT_PUBLIC_FB_PAGE_ID;
 
-  // Don't render if page ID is not set
-  if (!pageId) {
-    return null;
-  }
-
   useEffect(() => {
+    if (!pageId) return;
+
     // Initialize the Facebook SDK
     window.fbAsyncInit = function () {
       if (window.FB) {
@@ -46,7 +43,12 @@ export function MessengerChatPlugin() {
         script.parentNode.removeChild(script);
       }
     };
-  }, []);
+  }, [pageId]);
+
+  // Don't render if page ID is not set
+  if (!pageId) {
+    return null;
+  }
 
   return (
     <div

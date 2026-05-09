@@ -8,6 +8,13 @@
       "when": 1777928470986,
       "tag": "0000_abnormal_aqueduct",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1778305436481,
+      "tag": "0001_add_josh_agent_settings",
+      "breakpoints": true
     }
   ]
 }
