@@ -5,6 +5,7 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import {
+  BookOpen,
   Bot,
   LayoutDashboard,
   MessageCircleHeart,
@@ -16,11 +17,17 @@ import { Logo } from "@/components/logo";
 import { cn } from "@/lib/utils";
 
 const NAV = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard, avatar: null },
   {
     href: "/dashboard/pages",
     label: "Connected Pages",
     icon: MessageCircleHeart,
+    avatar: null,
+  },
+  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard, avatar: null },
+  {
+    href: "/dashboard/handbook",
+    label: "Company Handbook",
+    icon: BookOpen,
     avatar: null,
   },
   {
