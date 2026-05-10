@@ -1214,14 +1214,14 @@ function ToggleRow({
         aria-checked={checked}
         onClick={onChange}
         className={cn(
-          "relative h-7 w-12 shrink-0 rounded-full transition-colors",
-          checked ? "bg-brand-600" : "bg-ink-200",
+          "relative inline-flex h-[31px] w-[51px] shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2",
+          checked ? "bg-brand-600" : "bg-ink-300",
         )}
       >
         <span
           className={cn(
-            "absolute top-1 h-5 w-5 rounded-full bg-white shadow-sm transition-transform",
-            checked ? "translate-x-6" : "translate-x-1",
+            "pointer-events-none inline-block h-[27px] w-[27px] rounded-full bg-white shadow-lg ring-0 transition-transform duration-200 ease-in-out",
+            checked ? "translate-x-5" : "translate-x-0",
           )}
         />
       </button>
