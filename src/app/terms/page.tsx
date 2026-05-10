@@ -29,7 +29,7 @@ export default function TermsPage() {
 
       <h2>2. The Service</h2>
       <p>
-        Rocketeerio provides AI-powered tools that auto-reply to leads on
+        Rocketeerio provides Josh, AI sales staff that replies to leads on
         Meta platforms (Facebook Messenger, Instagram DMs, and Lead Ads),
         qualify those leads using rules you configure, and notify you of
         leads ready for sales follow-up. The Service is provided

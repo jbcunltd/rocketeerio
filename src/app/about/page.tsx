@@ -122,7 +122,7 @@ export default function AboutPage() {
               non-technical owners running ads on Facebook.
             </p>
             <p>
-              Today, Rocketeerio replies to leads in under 60 seconds, qualifies
+              Today, Josh replies to leads in under 60 seconds, qualifies
               them in your tone of voice, and only escalates the ones that are
               actually ready to buy. Our customers run roofing companies,
               dealerships, real estate teams, gyms, and clinics — businesses
@@ -249,7 +249,7 @@ export default function AboutPage() {
               href="/signup"
               className="inline-flex items-center gap-2 rounded-xl bg-brand-600 px-6 py-3.5 text-base font-semibold text-white shadow-lg shadow-brand-500/30 hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-brand-500/40"
             >
-              Start Free Trial
+              Hire Josh
               <ArrowRight className="h-4 w-4" />
             </Link>
             <Link

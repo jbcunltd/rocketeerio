@@ -1,83 +1,85 @@
+import Image from "next/image";
 import Link from "next/link";
 import {
   ArrowRight,
   Bell,
+  BriefcaseBusiness,
+  CheckCircle2,
+  Clock3,
   Filter,
   Hammer,
   Home as HomeIcon,
   MessageSquare,
   PlayCircle,
   Rocket,
+  ShieldCheck,
   Sparkles,
   Target,
-  TrendingUp,
   Truck,
   Zap,
 } from "lucide-react";
 import { ChatPreview } from "@/components/chat-preview";
 import { SectionHeading, Eyebrow } from "@/components/section-heading";
 import { FAQAccordion, type FAQItem } from "@/components/faq-accordion";
-import { EmailCaptureForm } from "@/components/email-capture-form";
-import { SocialProofStats } from "@/components/social-proof-stats";
 import { TrustBadges } from "@/components/trust-badges";
 
 const FAQ: FAQItem[] = [
   {
-    q: "How fast does Rocketeerio actually reply to a Facebook lead?",
-    a: "Under 60 seconds, every time. The moment a lead messages your Facebook Page or fills out a Lead Ad form, our AI sends a personalized reply, asks the qualifying questions you set up, and keeps the conversation moving — even if it's 2am.",
+    q: "How fast does Josh reply to a Facebook lead?",
+    a: "Josh replies in under 60 seconds. The moment a lead messages your Facebook Page, Instagram account, or fills out a Lead Ad form, he sends a personalized reply, asks your qualifying questions, and keeps the conversation moving — even if it is 2am.",
   },
   {
-    q: "Will it sound like a robot or like my business?",
-    a: "Like your business. You give Rocketeerio your tone, your offer, and your pricing rules. The AI mirrors how you talk to customers — friendly, direct, on-brand. Most leads can't tell they're talking to AI until you take over to close.",
+    q: "Will Josh sound like a robot or like my business?",
+    a: "Josh is trained on your business, your tone, your offer, your pricing rules, and your follow-up standards. He should sound direct, helpful, and on-brand — and he will never pretend to be human if someone asks.",
   },
   {
-    q: "Do I need to be technical to set this up?",
-    a: "No. You connect your Facebook Page in two clicks, paste in a few details about your business, and you're live. The average setup takes under 10 minutes — no developers, no Zapier spaghetti.",
+    q: "Do I need to be technical to hire Josh?",
+    a: "No. You connect your Facebook Page, answer a few setup questions about your business, and train Josh on how you qualify a lead. Setup takes about 10 minutes — no developers, no Zapier spaghetti.",
   },
   {
-    q: "What channels does Rocketeerio support?",
-    a: "Facebook Messenger, Instagram DMs, and Facebook Lead Ads. If your customers can message you on Meta, Rocketeerio can reply, qualify, and route them to you.",
+    q: "What channels does Josh work in?",
+    a: "Josh works where your Meta leads show up: Facebook Messenger, Instagram DMs, and Facebook Lead Ads. If a lead starts the conversation on Meta, Josh can reply, qualify, and alert you when they are hot.",
   },
   {
     q: "How does the hot-lead alert work?",
-    a: "When a lead hits your qualifying criteria — budget, timeline, intent — Rocketeerio pings your phone (SMS or app), drops the full conversation in your CRM, and tags the lead as ready to close. You step in only when it matters.",
+    a: "When a lead hits your qualifying criteria — budget, timeline, location, and intent — Josh pings your phone, summarizes the conversation, and tells you it is time to step in and close.",
   },
   {
     q: "What's the money-back guarantee?",
-    a: "14 days, no questions asked. If Rocketeerio doesn't reply faster, qualify cleaner, or route hot leads to you, email us and we refund 100%.",
+    a: "14 days, no questions asked. If Josh does not reply faster, qualify cleaner, or keep hot leads from going cold, email us and we refund 100%.",
   },
 ];
 
 const FEATURES = [
   {
     icon: Zap,
-    title: "Instant replies, even at 2am",
-    desc: "Every lead gets a personalized first reply in under 60 seconds — the single biggest factor in whether they buy from you or your competitor.",
+    title: "60-second first replies",
+    desc: "Josh replies to every new Meta lead in under 60 seconds, before that lead starts buying from someone else.",
   },
   {
     icon: Filter,
-    title: "Auto-qualification that respects your time",
-    desc: "Budget, timeline, location, intent. Rocketeerio asks the questions you'd ask — so the leads that reach your inbox are the ones worth closing.",
+    title: "Qualification that protects your time",
+    desc: "Budget, timeline, location, intent. Josh asks the questions you would ask so only serious leads reach your desk.",
   },
   {
     icon: Bell,
-    title: "Hot-lead alerts to your phone",
-    desc: "When a lead is ready to buy, you get a push, an SMS, and a tagged conversation. No more inbox archaeology to find the gold.",
+    title: "Hot-lead alerts when it matters",
+    desc: "When a lead is ready to buy, Josh pings you with the context you need to step in and close.",
   },
   {
     icon: MessageSquare,
-    title: "Messenger + Instagram, one inbox",
-    desc: "Stop juggling tabs. Every conversation across Meta lands in one place, with full lead context attached.",
+    title: "Messenger + Instagram coverage",
+    desc: "Josh works the Facebook and Instagram inboxes where your paid Meta leads already start conversations.",
   },
   {
     icon: Sparkles,
-    title: "Brand-trained AI replies",
-    desc: "Train Rocketeerio on your offer, pricing, and tone. It mirrors how you talk to customers — not generic chatbot fluff.",
+    title: "Trained on your way of selling",
+    desc: "Train Josh on your offer, pricing, service area, availability, and standards so he works the inbox your way.",
   },
   {
-    icon: TrendingUp,
-    title: "Built-in pipeline + analytics",
-    desc: "See response time, qualification rate, hot-lead conversion, and revenue per lead. The metrics that actually move the needle.",
+    icon: ShieldCheck,
+    title: "Honest early access",
+    desc: "No fake stats and no fake testimonials. Josh is in early access, backed by a 14-day money-back guarantee.",
   },
 ];
 
@@ -86,20 +88,28 @@ const VERTICALS = [
     icon: Hammer,
     title: "Contractors",
     body:
-      "Quote requests come in at 9pm. Whoever replies first books the job. Rocketeerio replies in seconds — even when you're on the roof or asleep.",
+      "Quote requests come in at 9pm. Whoever replies first books the job. Josh replies in seconds — even when you are on a roof, in a truck, or asleep.",
   },
   {
     icon: HomeIcon,
     title: "Real estate",
     body:
-      "Buyers DM about listings on weekends. Reply Monday and the showing is already booked with another agent. Rocketeerio keeps you first, every time.",
+      "Buyers DM about listings on weekends. Reply Monday and the showing is already booked with another agent. Josh keeps your lead warm until you can take over.",
   },
   {
     icon: Truck,
     title: "Auto & dealerships",
     body:
-      '"Is it still available?" If you take six hours to answer, they\'ve already test-driven a different car at another lot. Rocketeerio answers in 30 seconds.',
+      '"Is it still available?" If you take six hours to answer, they have already test-driven a different car at another lot. Josh answers before the lead goes cold.',
   },
+];
+
+const RESPONSIBILITIES = [
+  "Reply to every Facebook and Instagram lead in under 60 seconds.",
+  "Ask your qualifying questions about budget, timeline, location, and intent.",
+  "Follow up without forgetting, drifting, or leaving the inbox unattended.",
+  "Escalate hot leads with a plain-English summary so you know when to step in.",
+  "Represent your business honestly and never pretend to be human if someone asks.",
 ];
 
 export default function HomePage() {
@@ -116,9 +126,9 @@ export default function HomePage() {
   const productSchema = {
     "@context": "https://schema.org",
     "@type": "Product",
-    name: "Rocketeerio",
+    name: "Josh by Rocketeerio",
     description:
-      "AI-powered Facebook lead conversion system that replies instantly, qualifies leads, and alerts you when to close.",
+      "AI sales staff for Facebook and Instagram leads. Josh replies in under 60 seconds, qualifies leads, and pings you when one is hot.",
     brand: { "@type": "Brand", name: "Rocketeerio" },
     offers: {
       "@type": "AggregateOffer",
@@ -149,98 +159,149 @@ export default function HomePage() {
           className="absolute -top-24 -right-24 h-[420px] w-[420px] rounded-full bg-brand-200/40 blur-3xl animate-blob"
         />
 
-        <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pt-14 pb-20 sm:pt-20 sm:pb-28">
-          <div className="grid items-center gap-12 lg:grid-cols-12">
+        <div className="relative mx-auto max-w-7xl px-4 pb-12 pt-10 sm:px-6 sm:pb-16 sm:pt-16 lg:px-8 lg:pb-24 lg:pt-20">
+          <div className="grid items-start gap-7 lg:grid-cols-12 lg:gap-x-12 lg:gap-y-8">
             <div className="lg:col-span-7">
-              <Eyebrow>The Facebook Lead Conversion System</Eyebrow>
+              <Eyebrow>AI manpower for Meta leads</Eyebrow>
 
-              <h1 className="mt-5 text-[2rem] sm:text-5xl lg:text-[3.75rem] font-bold leading-[1.1] sm:leading-[1.05] tracking-tight text-ink-900 text-balance break-words">
-                Stop losing the{" "}
-                <span className="relative inline-block text-brand-500">
-                  Facebook leads
-                  <svg
-                    aria-hidden
-                    viewBox="0 0 300 14"
-                    className="absolute left-0 -bottom-2 w-full"
-                    preserveAspectRatio="none"
-                  >
-                    <path
-                      d="M2 9 C 80 1, 220 1, 298 9"
-                      stroke="currentColor"
-                      strokeWidth="3"
-                      strokeLinecap="round"
-                      fill="none"
-                    />
-                  </svg>
-                </span>{" "}
-                you already paid for.
+              <h1 className="mt-5 text-[2rem] font-bold leading-[1.08] tracking-tight text-ink-900 text-balance break-words sm:text-5xl sm:leading-[1.05] lg:text-[3.75rem]">
+                Every Facebook lead you don&apos;t reply to is buying from someone else.
               </h1>
 
-              <p className="mt-6 max-w-xl text-lg leading-relaxed text-ink-700">
-                Rocketeerio auto-replies to every Facebook lead in{" "}
-                <strong className="text-ink-900">under 60 seconds</strong>,
-                qualifies them with AI, and pings you the moment one is ready
-                to close. <strong className="text-ink-900">Now in early access</strong>{" "}
-                for businesses that depend on fast Meta lead follow-up.
+              <p className="mt-5 max-w-2xl text-base leading-relaxed text-ink-700 sm:text-lg">
+                Josh replies to every lead in under 60 seconds. He qualifies them.
+                He pings you when one&apos;s hot. Hire him for less than minimum wage.
               </p>
+            </div>
 
-              <div className="mt-8 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+            <div id="josh-demo" className="scroll-mt-24 lg:col-span-5 lg:row-span-2">
+              <ChatPreview />
+            </div>
+
+            <div className="lg:col-span-7">
+              <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center">
                 <Link
                   href="/signup"
-                  className="group inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-xl bg-brand-600 px-6 py-3.5 text-base font-semibold text-white shadow-lg shadow-brand-500/30 hover:bg-brand-700 hover:shadow-xl hover:shadow-brand-500/40 focus:outline-none focus:ring-2 focus:ring-brand-500/40 transition-all"
+                  className="group inline-flex w-full items-center justify-center gap-2 rounded-xl bg-brand-600 px-6 py-3.5 text-base font-semibold text-white shadow-lg shadow-brand-500/30 transition-all hover:bg-brand-700 hover:shadow-xl hover:shadow-brand-500/40 focus:outline-none focus:ring-2 focus:ring-brand-500/40 sm:w-auto"
                 >
-                  Start Free Trial
+                  Hire Josh
                   <ArrowRight className="h-4.5 w-4.5 transition-transform group-hover:translate-x-0.5" />
                 </Link>
                 <Link
-                  href="#how-it-works"
-                  className="inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-xl border border-ink-300 bg-white px-6 py-3.5 text-base font-semibold text-ink-900 hover:bg-ink-50 hover:border-brand-500 transition-colors"
+                  href="#josh-demo"
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-ink-300 bg-white px-6 py-3.5 text-base font-semibold text-ink-900 transition-colors hover:border-brand-500 hover:bg-ink-50 sm:w-auto"
                 >
                   <PlayCircle className="h-5 w-5 text-brand-600" aria-hidden />
-                  See it in action
+                  Watch Josh work
                 </Link>
               </div>
 
-              <div className="mt-6">
+              <p className="mt-3 text-sm font-semibold text-ink-700">
+                14-day money-back guarantee · No questions asked
+              </p>
+              <div className="mt-5">
                 <TrustBadges variant="light" />
               </div>
-
-              <div className="mt-10 grid grid-cols-3 gap-6 max-w-lg">
-                <Stat value="<60s" label="First-reply target" />
-                <Stat value="24/7" label="Lead coverage" />
-                <Stat value="Meta" label="Messenger + Instagram" />
-              </div>
-            </div>
-
-            <div className="lg:col-span-5">
-              <ChatPreview />
             </div>
           </div>
         </div>
       </section>
 
-      {/* EARLY ACCESS BAR */}
-      <section className="border-y border-ink-100 bg-ink-50/40 py-8" aria-label="Early access">
+      {/* INSTANT PROOF STRIP */}
+      <section className="border-y border-ink-100 bg-ink-50/40 py-7" aria-label="Instant proof">
+        <div className="mx-auto grid max-w-7xl gap-4 px-4 text-center sm:px-6 md:grid-cols-3 lg:px-8">
+          <ProofItem icon={Clock3} text="60-second first-reply guarantee" />
+          <ProofItem icon={CheckCircle2} text="In early access · No fake stats, no fake testimonials" />
+          <ProofItem icon={ShieldCheck} text="14-day money-back guarantee · No questions asked" />
+        </div>
+      </section>
+
+      {/* MEET JOSH */}
+      <section className="py-16 sm:py-24">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <p className="text-center text-xs font-semibold uppercase tracking-[0.2em] text-brand-700">
-            Now in early access
-          </p>
-          <div className="mt-5 grid gap-4 text-center text-sm font-medium text-ink-700 sm:grid-cols-3">
-            <span>Replies in under 60 seconds</span>
-            <span>Available 24/7 for new Meta leads</span>
-            <span>Escalates hot leads when they are ready</span>
+          <div className="grid items-center gap-10 lg:grid-cols-12 lg:gap-14">
+            <div className="lg:col-span-5">
+              <div className="relative overflow-hidden rounded-[2rem] border border-ink-100 bg-ink-50 shadow-xl shadow-brand-900/10">
+                <Image
+                  src="/josh-cover.jpg"
+                  alt="Josh, Rocketeerio's AI sales staff"
+                  width={900}
+                  height={1100}
+                  className="h-[420px] w-full object-cover sm:h-[520px]"
+                  priority
+                />
+                <div className="absolute inset-x-5 bottom-5 rounded-2xl border border-white/30 bg-white/90 p-4 shadow-lg backdrop-blur">
+                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-brand-700">
+                    Available now
+                  </p>
+                  <p className="mt-1 text-lg font-bold text-ink-900">
+                    Josh is ready to work your inbox.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="lg:col-span-7">
+              <Eyebrow>YOUR FIRST HIRE</Eyebrow>
+              <h2 className="mt-4 text-3xl font-bold leading-tight tracking-tight text-ink-900 sm:text-4xl lg:text-5xl">
+                Meet Josh. AI sales staff. Real teammate.
+              </h2>
+              <div className="mt-6 space-y-4 text-lg leading-relaxed text-ink-700">
+                <p>
+                  Hi. I&apos;m Josh — Rocketeerio&apos;s first hire. I work the inbox so
+                  you don&apos;t have to. I reply to every lead in under 60 seconds. I
+                  ask the questions you&apos;d ask. I never miss a message, never
+                  forget a follow-up, and I&apos;ll never pretend to be human if
+                  someone asks.
+                </p>
+                <p>
+                  When a lead&apos;s ready to buy, I tap you on the shoulder. I&apos;m not
+                  a chatbot. I&apos;m an AI sales teammate trained on your business.
+                  Hire me, train me on your way of doing things, and I&apos;ll work
+                  your Facebook inbox like it&apos;s the only job I have. Because it
+                  is.
+                </p>
+              </div>
+              <p className="mt-5 text-base font-semibold text-ink-900">
+                — Josh, AI Sales Staff · Rocketeerio
+              </p>
+
+              <div className="mt-8 rounded-2xl border border-ink-100 bg-white p-6 shadow-sm">
+                <div className="flex items-center gap-3">
+                  <span className="grid h-11 w-11 place-items-center rounded-xl bg-brand-50 text-brand-600">
+                    <BriefcaseBusiness className="h-5 w-5" />
+                  </span>
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-brand-700">
+                      Job description
+                    </p>
+                    <h3 className="text-lg font-bold text-ink-900">
+                      Josh&apos;s responsibilities
+                    </h3>
+                  </div>
+                </div>
+                <ul className="mt-5 grid gap-3 text-sm leading-relaxed text-ink-700 sm:grid-cols-2">
+                  {RESPONSIBILITIES.map((item) => (
+                    <li key={item} className="flex gap-2">
+                      <CheckCircle2 className="mt-0.5 h-4 w-4 flex-none text-brand-600" />
+                      <span>{item}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
       {/* PROBLEM / SOLUTION */}
-      <section className="py-20 sm:py-28">
+      <section className="bg-ink-50/60 py-16 sm:py-24">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="grid gap-12 lg:grid-cols-12 lg:gap-16 items-start">
+          <div className="grid items-start gap-12 lg:grid-cols-12 lg:gap-16">
             <div className="lg:col-span-5">
               <Eyebrow>The real cost of slow replies</Eyebrow>
-              <h2 className="mt-4 text-3xl sm:text-4xl lg:text-[2.75rem] font-bold tracking-tight text-ink-900 leading-tight">
-                You&apos;re not losing leads because of bad ads.{" "}
+              <h2 className="mt-4 text-3xl font-bold leading-tight tracking-tight text-ink-900 sm:text-4xl lg:text-[2.75rem]">
+                You&apos;re not losing leads because of bad ads.{' '}
                 <span className="text-brand-500">
                   You&apos;re losing them because nobody replied in time.
                 </span>
@@ -248,32 +309,25 @@ export default function HomePage() {
               <p className="mt-5 text-lg leading-relaxed text-ink-600">
                 Every Facebook lead that messages your page is comparing you to
                 two or three other businesses at the same time. Whoever replies
-                first usually wins the sale — and right now, that probably
-                isn&apos;t you.
+                first usually wins the sale — and every unanswered minute makes
+                your lead colder.
               </p>
-              <Link
-                href="/blog/why-facebook-leads-arent-converting"
-                className="mt-6 inline-flex items-center gap-1.5 text-sm font-semibold text-brand-600 hover:text-brand-700"
-              >
-                Read: 7 reasons your Facebook leads aren&apos;t converting
-                <ArrowRight className="h-4 w-4" />
-              </Link>
             </div>
 
             <div className="lg:col-span-7">
               <div className="grid gap-4 sm:grid-cols-3">
                 <StatCard
-                  number="78%"
-                  text="of leads buy from the first business that responds to them."
+                  number="<60s"
+                  text="Josh replies before your lead starts shopping harder."
                 />
                 <StatCard
-                  number="5 min"
-                  text="is the response window before lead-to-sale conversion drops by 80%."
+                  number="24/7"
+                  text="Your inbox stays staffed after hours, weekends, and holidays."
                   highlight
                 />
                 <StatCard
                   number="$0"
-                  text="is the return on every Facebook lead you didn't reply to."
+                  text="The return on every Facebook lead nobody answered."
                 />
               </div>
 
@@ -284,13 +338,12 @@ export default function HomePage() {
                   </span>
                   <div>
                     <h3 className="text-lg font-bold text-ink-900">
-                      This isn&apos;t another chatbot.
+                      Josh is not here to chat for the sake of chatting.
                     </h3>
-                    <p className="mt-2 text-ink-600 leading-relaxed">
-                      Chatbots reply for the sake of replying. Rocketeerio
-                      replies to <strong>close</strong>. We answer instantly,
-                      ask the right questions, and only put a lead on your desk
-                      when they&apos;re ready to buy.
+                    <p className="mt-2 leading-relaxed text-ink-600">
+                      Josh replies, qualifies, follows up, and alerts you when a
+                      lead is ready to buy. You step in only when the conversation
+                      is worth your time.
                     </p>
                   </div>
                 </div>
@@ -300,13 +353,10 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* SOCIAL PROOF STATS */}
-      <SocialProofStats />
-
       {/* HOW IT WORKS */}
       <section
         id="how-it-works"
-        className="relative py-20 sm:py-28 bg-ink-900 text-white overflow-hidden"
+        className="relative overflow-hidden bg-ink-900 py-20 text-white sm:py-28"
       >
         <div
           aria-hidden
@@ -320,14 +370,13 @@ export default function HomePage() {
           <div className="max-w-3xl">
             <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-brand-200">
               <Rocket className="h-3.5 w-3.5" />
-              How it works
+              How Josh works
             </span>
-            <h2 className="mt-4 text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight leading-tight">
+            <h2 className="mt-4 text-3xl font-bold leading-tight tracking-tight sm:text-4xl lg:text-5xl">
               Three steps. Zero missed leads.
             </h2>
-            <p className="mt-4 text-lg text-white/70 max-w-xl">
-              Lead comes in. Bot qualifies. You close. That&apos;s the whole
-              system.
+            <p className="mt-4 max-w-xl text-lg text-white/70">
+              Lead comes in. Josh qualifies. You close. That&apos;s the whole system.
             </p>
           </div>
 
@@ -336,34 +385,21 @@ export default function HomePage() {
               n="01"
               icon={MessageSquare}
               title="A lead messages your Page"
-              body="From your Facebook Lead Ads, Messenger, or Instagram DM. Rocketeerio sees it the second it arrives."
+              body="From Facebook Lead Ads, Messenger, or Instagram DMs. Josh sees the lead the second it arrives."
             />
             <Step
               n="02"
               icon={Sparkles}
-              title="Rocketeerio replies & qualifies"
-              body="Instantly responds in your brand voice, asks the right qualifying questions, and keeps the lead engaged 24/7."
+              title="Josh replies & qualifies"
+              body="Josh responds in your brand voice, asks the right qualifying questions, and keeps the lead engaged 24/7."
               accent
             />
             <Step
               n="03"
               icon={Zap}
-              title="You get a hot-lead alert"
-              body="When a lead is ready to buy, your phone pings. You step in only to close — no inbox digging required."
+              title="Josh sends a hot-lead alert"
+              body="When a lead is ready to buy, your phone pings. You step in to close — no inbox digging required."
             />
-          </div>
-
-          <div className="mt-12 flex flex-col sm:flex-row items-center justify-center gap-3">
-            <Link
-              href="/signup"
-              className="inline-flex items-center gap-2 rounded-xl bg-brand-600 px-6 py-3.5 text-base font-semibold text-white shadow-lg shadow-brand-900/40 hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-white/40"
-            >
-              Start Free Trial
-              <ArrowRight className="h-4 w-4" />
-            </Link>
-            <p className="text-sm text-white/85">
-              Setup in under 10 minutes · No credit card required
-            </p>
           </div>
         </div>
       </section>
@@ -372,14 +408,14 @@ export default function HomePage() {
       <section id="features" className="py-20 sm:py-28">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <SectionHeading
-            eyebrow="Built to close, not just chat"
+            eyebrow="Built to stop lead loss"
             title={
               <>
-                More replies. More customers.{" "}
-                <span className="text-brand-500">More revenue.</span>
+                Your Facebook inbox gets staffed.{' '}
+                <span className="text-brand-500">Your leads stop going cold.</span>
               </>
             }
-            description="Every feature in Rocketeerio is built around one job: turning the leads you already paid for into paying customers."
+            description="Every feature is built around Josh's job: reply fast, qualify clearly, follow up consistently, and alert you when a lead is ready to buy."
           />
 
           <div className="mt-14 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -396,25 +432,24 @@ export default function HomePage() {
       </section>
 
       {/* WHO IT'S FOR */}
-      <section className="bg-ink-50/60 py-20 sm:py-28 border-y border-ink-100">
+      <section className="border-y border-ink-100 bg-ink-50/60 py-20 sm:py-28">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <SectionHeading
             eyebrow="Built for"
             title={
               <>
-                Built for businesses that{" "}
-                <span className="text-brand-500">live and die</span> by Facebook
-                leads.
+                Built for businesses that{' '}
+                <span className="text-brand-500">live and die</span> by Facebook leads.
               </>
             }
-            description="If you run paid Facebook or Instagram ads and your customers message before they buy, Rocketeerio is built for you."
+            description="If you run paid Facebook or Instagram ads and your customers message before they buy, Josh can work the inbox where your money is currently leaking."
           />
 
           <div className="mt-14 grid gap-6 lg:grid-cols-3">
             {VERTICALS.map((v) => (
               <div
                 key={v.title}
-                className="rounded-2xl border border-ink-100 bg-white p-7 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all"
+                className="rounded-2xl border border-ink-100 bg-white p-7 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md"
               >
                 <span className="grid h-12 w-12 place-items-center rounded-xl bg-brand-50 text-brand-600">
                   <v.icon className="h-6 w-6" />
@@ -422,32 +457,23 @@ export default function HomePage() {
                 <h3 className="mt-5 text-xl font-bold text-ink-900">
                   {v.title}
                 </h3>
-                <p className="mt-3 text-ink-600 leading-relaxed">{v.body}</p>
+                <p className="mt-3 leading-relaxed text-ink-600">{v.body}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* EARLY ACCESS FEEDBACK */}
+      {/* EARLY ACCESS HONESTY */}
       <section className="py-20 sm:py-28">
         <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
           <div className="rounded-3xl border border-ink-100 bg-white p-8 text-center shadow-sm sm:p-12">
             <SectionHeading
               eyebrow="Early access"
-              title="Real customer feedback is coming next."
-              description="Rocketeerio is removing placeholder social proof while early-access users put the system to work. We will publish customer names, numbers, and case studies only after they are real, permissioned, and measured."
+              title="No fake stats. No fake testimonials."
+              description="Rocketeerio is publishing honest early-access positioning while Josh gets put to work. Customer names, numbers, and case studies will only appear when they are real, permissioned, and measured."
               align="center"
             />
-            <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
-              <Link
-                href="/testimonials"
-                className="inline-flex items-center gap-1.5 text-sm font-semibold text-brand-600 hover:text-brand-700"
-              >
-                View the early-access results page
-                <ArrowRight className="h-4 w-4" />
-              </Link>
-            </div>
           </div>
         </div>
       </section>
@@ -455,7 +481,7 @@ export default function HomePage() {
       {/* CTA BLOCK */}
       <section id="cta" className="py-20 sm:py-28">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="relative overflow-hidden rounded-3xl bg-ink-900 px-6 py-14 sm:px-12 sm:py-20 text-white shadow-2xl">
+          <div className="relative overflow-hidden rounded-3xl bg-ink-900 px-6 py-14 text-center text-white shadow-2xl sm:px-12 sm:py-20">
             <div
               aria-hidden
               className="absolute -top-32 -right-20 h-96 w-96 rounded-full bg-brand-500/30 blur-3xl"
@@ -465,74 +491,54 @@ export default function HomePage() {
               className="absolute -bottom-32 -left-20 h-96 w-96 rounded-full bg-brand-500/20 blur-3xl"
             />
 
-            <div className="relative grid items-center gap-10 lg:grid-cols-12">
-              <div className="lg:col-span-7">
-                <span className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-brand-200">
-                  Stop losing leads
-                </span>
-                <h2 className="mt-4 text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight leading-tight">
-                  Turn the leads you already paid for{" "}
-                  <span className="text-brand-300">into paying customers.</span>
-                </h2>
-                <p className="mt-4 max-w-xl text-white/70 text-lg">
-                  Every minute you wait, another Facebook lead goes cold and
-                  another competitor closes the sale. Set up takes 10 minutes.
-                </p>
+            <div className="relative mx-auto max-w-3xl">
+              <span className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-brand-200">
+                Stop losing leads
+              </span>
+              <h2 className="mt-4 text-3xl font-bold leading-tight tracking-tight sm:text-4xl lg:text-5xl">
+                Stop losing leads. Hire Josh today.
+              </h2>
+              <p className="mx-auto mt-4 max-w-2xl text-lg text-white/75">
+                Every minute you wait, another Facebook lead goes cold. Setup takes 10 minutes.
+              </p>
 
-                <div className="mt-8 flex flex-col sm:flex-row gap-3">
-                  <Link
-                    href="/signup"
-                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-brand-600 px-6 py-3.5 text-base font-semibold text-white shadow-lg shadow-brand-900/50 hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-white/40"
-                  >
-                    Start Free Trial
-                    <ArrowRight className="h-4.5 w-4.5" />
-                  </Link>
-                  <Link
-                    href="/pricing"
-                    className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/20 bg-white/5 px-6 py-3.5 text-base font-semibold text-white hover:bg-white/10"
-                  >
-                    See pricing
-                  </Link>
-                </div>
-
-                <div className="mt-6">
-                  <TrustBadges variant="dark" />
-                </div>
+              <div className="mt-8">
+                <Link
+                  href="/signup"
+                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-brand-600 px-6 py-3.5 text-base font-semibold text-white shadow-lg shadow-brand-900/50 transition-colors hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-white/40"
+                >
+                  Hire Josh — Start Free Trial
+                  <ArrowRight className="h-4.5 w-4.5" />
+                </Link>
               </div>
 
-              <div className="lg:col-span-5">
-                <EmailCaptureForm
-                  variant="dark"
-                  source="home_cta"
-                  headline="Free Guide: 5 Reasons Your Facebook Leads Go Cold"
-                  description="The exact 7-page playbook our customers use to triple their conversion rate — yours free."
-                  cta="Send me the guide"
-                />
-              </div>
+              <p className="mt-5 text-sm font-semibold text-white/85">
+                No credit card · Cancel anytime · 14-day money-back guarantee
+              </p>
             </div>
           </div>
         </div>
       </section>
 
       {/* FAQ */}
-      <section className="bg-ink-50/60 py-20 sm:py-28 border-t border-ink-100">
+      <section className="border-t border-ink-100 bg-ink-50/60 py-20 sm:py-28">
         <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
           <SectionHeading
             eyebrow="FAQ"
             title="Questions, answered."
-            description="Everything you need to know before starting your free trial."
+            description="Everything you need to know before hiring Josh."
           />
           <div className="mt-12">
             <FAQAccordion items={FAQ} />
           </div>
 
           <p className="mt-10 text-center text-sm text-ink-500">
-            Still have questions?{" "}
+            Still have questions?{' '}
             <a
               href="mailto:hello@rocketeerio.com"
               className="font-semibold text-brand-600 hover:text-brand-700"
             >
-              Email us — we reply fast (obviously).
+              Email us — Josh will not pretend to be human, but the team replies fast.
             </a>
           </p>
         </div>
@@ -541,13 +547,17 @@ export default function HomePage() {
   );
 }
 
-function Stat({ value, label }: { value: string; label: string }) {
+function ProofItem({
+  icon: Icon,
+  text,
+}: {
+  icon: React.ComponentType<{ className?: string }>;
+  text: string;
+}) {
   return (
-    <div>
-      <p className="text-2xl sm:text-3xl font-bold text-ink-900 tracking-tight">
-        {value}
-      </p>
-      <p className="text-xs sm:text-sm text-ink-500 mt-1">{label}</p>
+    <div className="flex items-center justify-center gap-2 text-sm font-semibold text-ink-800">
+      <Icon className="h-4 w-4 flex-none text-brand-600" aria-hidden />
+      <span>{text}</span>
     </div>
   );
 }
@@ -570,7 +580,7 @@ function StatCard({
       }`}
     >
       <p
-        className={`text-3xl sm:text-4xl font-bold tracking-tight ${
+        className={`text-3xl font-bold tracking-tight sm:text-4xl ${
           highlight ? "text-white" : "text-brand-600"
         }`}
       >
@@ -618,16 +628,14 @@ function Step({
         </span>
         <span
           className={`grid h-11 w-11 place-items-center rounded-xl ${
-            accent
-              ? "bg-brand-500 text-white"
-              : "bg-white/10 text-brand-200"
+            accent ? "bg-brand-500 text-white" : "bg-white/10 text-brand-200"
           }`}
         >
           <Icon className="h-5 w-5" />
         </span>
       </div>
       <h3 className="mt-5 text-xl font-bold text-white">{title}</h3>
-      <p className="mt-2 text-white/70 leading-relaxed">{body}</p>
+      <p className="mt-2 leading-relaxed text-white/70">{body}</p>
     </div>
   );
 }
@@ -642,13 +650,12 @@ function FeatureCard({
   desc: string;
 }) {
   return (
-    <div className="group rounded-2xl border border-ink-100 bg-white p-7 hover:border-brand-200 hover:shadow-lg hover:shadow-brand-500/5 transition-all">
-      <span className="inline-grid h-12 w-12 place-items-center rounded-xl bg-brand-50 text-brand-600 group-hover:bg-brand-500 group-hover:text-white transition-colors">
+    <div className="group rounded-2xl border border-ink-100 bg-white p-7 transition-all hover:border-brand-200 hover:shadow-lg hover:shadow-brand-500/5">
+      <span className="inline-grid h-12 w-12 place-items-center rounded-xl bg-brand-50 text-brand-600 transition-colors group-hover:bg-brand-500 group-hover:text-white">
         <Icon className="h-6 w-6" />
       </span>
       <h3 className="mt-5 text-lg font-bold text-ink-900">{title}</h3>
-      <p className="mt-2 text-ink-600 leading-relaxed">{desc}</p>
+      <p className="mt-2 leading-relaxed text-ink-600">{desc}</p>
     </div>
   );
 }
-

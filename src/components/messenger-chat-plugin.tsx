@@ -62,8 +62,8 @@ export function MessengerChatPlugin() {
         data-page_id={pageId}
         data-attribution="setup_tool"
         data-theme_color="#0084FF"
-        data-logged_in_greeting="Hi! 👋 Want to see how Rocketeerio qualifies your leads automatically? Ask me anything."
-        data-logged_out_greeting="Hi! 👋 Want to see how Rocketeerio qualifies your leads automatically? Ask me anything."
+        data-logged_in_greeting="Hi! 👋 Want to see how Josh qualifies your leads automatically? Ask me anything."
+        data-logged_out_greeting="Hi! 👋 Want to see how Josh qualifies your leads automatically? Ask me anything."
       />
     </div>
   );

@@ -164,7 +164,7 @@ export default async function SettingsPage({
                   Select Pages to connect
                 </h3>
                 <p className="text-xs text-ink-500">
-                  Choose any Pages you&apos;d like Rocketeerio to qualify
+                  Choose any Pages you&apos;d like Josh to qualify
                   Messenger leads for.
                 </p>
               </div>

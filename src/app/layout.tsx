@@ -33,11 +33,11 @@ const SITE_URL = "https://rocketeerio.com";
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: "Rocketeerio — AI-Powered Facebook Lead Conversion System",
+    default: "Hire Josh — Your AI Sales Hire",
     template: "%s | Rocketeerio",
   },
   description:
-    "Rocketeerio instantly auto-replies to your Facebook leads, qualifies them automatically, and tells you exactly when to step in and close. Stop losing leads to slow replies.",
+    "Josh replies to every Facebook and Instagram lead in under 60 seconds. He qualifies them. He pings you when one's hot.",
   keywords: [
     "facebook leads not converting",
     "auto reply facebook leads",
@@ -56,26 +56,26 @@ export const metadata: Metadata = {
     type: "website",
     url: SITE_URL,
     siteName: "Rocketeerio",
-    title: "Rocketeerio — AI-Powered Facebook Lead Conversion System",
+    title: "Hire Josh — Your AI Sales Hire",
     description:
-      "Auto-reply to Facebook leads in under 60 seconds, qualify them with AI, and step in only when they're ready to buy.",
+      "Josh replies to every Facebook and Instagram lead in under 60 seconds. He qualifies them. He pings you when one's hot.",
     locale: "en_US",
     images: [
       {
-        url: "/api/og?title=AI-Powered%20Facebook%20Lead%20Conversion&eyebrow=ROCKETEERIO&kicker=Auto-reply%2C%20qualify%2C%20and%20close%20%E2%80%94%20in%20under%2060%20seconds.",
+        url: "/api/og?title=Hire%20Josh%20%E2%80%94%20Your%20AI%20Sales%20Hire&eyebrow=ROCKETEERIO&kicker=Josh%20replies%20to%20every%20Meta%20lead%20in%20under%2060%20seconds.",
         width: 1200,
         height: 630,
-        alt: "Rocketeerio — AI-Powered Facebook Lead Conversion",
+        alt: "Hire Josh — Your AI Sales Hire",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Rocketeerio — AI-Powered Facebook Lead Conversion",
+    title: "Hire Josh — Your AI Sales Hire",
     description:
-      "Auto-reply, qualify, and convert Facebook leads on autopilot. Built for businesses that live and die by paid social.",
+      "Josh replies to every Facebook and Instagram lead in under 60 seconds. He qualifies them. He pings you when one's hot.",
     images: [
-      "/api/og?title=AI-Powered%20Facebook%20Lead%20Conversion&eyebrow=ROCKETEERIO&kicker=Auto-reply%2C%20qualify%2C%20and%20close%20%E2%80%94%20in%20under%2060%20seconds.",
+      "/api/og?title=Hire%20Josh%20%E2%80%94%20Your%20AI%20Sales%20Hire&eyebrow=ROCKETEERIO&kicker=Josh%20replies%20to%20every%20Meta%20lead%20in%20under%2060%20seconds.",
     ],
   },
   robots: {
@@ -121,7 +121,7 @@ export default function RootLayout({
     url: SITE_URL,
     logo: `${SITE_URL}/logo.svg`,
     description:
-      "AI-powered Facebook lead conversion system that instantly auto-replies, qualifies leads, and alerts you when to close.",
+      "Rocketeerio is an AI manpower agency. Josh replies to Meta leads in under 60 seconds, qualifies them, and alerts you when one is hot.",
     sameAs: ["https://www.facebook.com/rocketeerio"],
     contactPoint: [
       {

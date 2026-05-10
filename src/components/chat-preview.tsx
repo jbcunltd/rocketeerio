@@ -1,4 +1,5 @@
-import { Bot, User, Zap } from "lucide-react";
+import Image from "next/image";
+import { User, Zap } from "lucide-react";
 
 export function ChatPreview() {
   return (
@@ -12,14 +13,14 @@ export function ChatPreview() {
         <div className="rounded-2xl bg-ink-50/80 p-4 sm:p-5">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <span className="grid h-9 w-9 place-items-center rounded-full bg-brand-500 text-white">
-                <Bot className="h-4.5 w-4.5" />
+              <span className="grid h-9 w-9 place-items-center rounded-full bg-brand-500 text-sm font-bold text-white">
+                J
               </span>
               <div>
                 <p className="text-sm font-semibold text-ink-900">
-                  Acme Roofing
+                  Josh working Acme Roofing
                 </p>
-                <p className="text-[11px] text-mint inline-flex items-center gap-1">
+                <p className="inline-flex items-center gap-1 text-[11px] text-mint">
                   <span className="h-1.5 w-1.5 rounded-full bg-mint" />
                   Active now · Replying instantly
                 </p>
@@ -35,8 +36,8 @@ export function ChatPreview() {
             <Bubble side="left" name="Lead">
               How much for installation? Need a quote ASAP.
             </Bubble>
-            {/* Bot reply */}
-            <Bubble side="right" name="Rocketeerio" isBot timestamp="0s">
+            {/* Josh reply */}
+            <Bubble side="right" name="Josh" isJosh timestamp="0s">
               Hi! Quotes start at $500 — depending on your roof size and pitch.
               How many units, and what city?
             </Bubble>
@@ -63,11 +64,11 @@ export function ChatPreview() {
                 Hot lead alert
               </p>
               <p className="text-xs text-ink-600">
-                Ready to buy — step in now to close.
+                Josh tagged this Cebu City lead as ready to buy.
               </p>
             </div>
           </div>
-          <span className="hidden sm:inline rounded-md bg-ink-900 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-white">
+          <span className="hidden rounded-md bg-ink-900 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-white sm:inline">
             Notified
           </span>
         </div>
@@ -80,38 +81,44 @@ function Bubble({
   side,
   name,
   children,
-  isBot,
+  isJosh,
   timestamp,
 }: {
   side: "left" | "right";
   name: string;
   children: React.ReactNode;
-  isBot?: boolean;
+  isJosh?: boolean;
   timestamp?: string;
 }) {
   const right = side === "right";
   return (
     <div className={`flex items-end gap-2 ${right ? "justify-end" : ""}`}>
       {!right && (
-        <span className="grid h-8 w-8 place-items-center rounded-full bg-white border border-ink-200 text-ink-500">
+        <span className="grid h-8 w-8 place-items-center rounded-full border border-ink-200 bg-white text-ink-500">
           <User className="h-4 w-4" />
         </span>
       )}
       <div
         className={`max-w-[78%] rounded-2xl px-3.5 py-2.5 text-[0.92rem] leading-snug shadow-sm ${
           right
-            ? "bg-brand-500 text-white rounded-br-sm"
-            : "bg-white text-ink-800 border border-ink-100 rounded-bl-sm"
+            ? "rounded-br-sm bg-brand-500 text-white"
+            : "rounded-bl-sm border border-ink-100 bg-white text-ink-800"
         }`}
       >
-        <p className={`text-[10px] mb-0.5 font-semibold uppercase tracking-wider ${right ? "text-white/80" : "text-ink-400"}`}>
+        <p className={`mb-0.5 text-[10px] font-semibold uppercase tracking-wider ${right ? "text-white/80" : "text-ink-400"}`}>
           {name}{timestamp ? ` · ${timestamp}` : ""}
         </p>
         <p>{children}</p>
       </div>
-      {right && isBot && (
-        <span className="grid h-8 w-8 place-items-center rounded-full bg-brand-500 text-white">
-          <Bot className="h-4 w-4" />
+      {right && isJosh && (
+        <span className="relative h-8 w-8 overflow-hidden rounded-full border-2 border-white bg-brand-50 shadow-sm">
+          <Image
+            src="/josh-avatar.jpg"
+            alt="Josh avatar"
+            fill
+            sizes="32px"
+            className="object-cover"
+          />
         </span>
       )}
     </div>

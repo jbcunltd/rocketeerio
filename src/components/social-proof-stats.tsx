@@ -62,7 +62,7 @@ export function SocialProofStats({
               isDark ? "text-white/70" : "text-ink-600"
             }`}
           >
-            Rocketeerio is built for one measurable job: reply quickly, qualify clearly,
+            Josh is built for one measurable job: reply quickly, qualify clearly,
             and alert you when a lead is worth your attention.
           </p>
         </div>

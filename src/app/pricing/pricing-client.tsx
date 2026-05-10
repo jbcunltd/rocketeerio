@@ -28,7 +28,7 @@ const PLANS: Plan[] = [
       "Email support",
       "Basic analytics",
     ],
-    cta: "Start Free Trial",
+    cta: "Hire Josh",
   },
   {
     name: "Pro",
@@ -45,7 +45,7 @@ const PLANS: Plan[] = [
       "Up to 5 team seats",
       "Priority support",
     ],
-    cta: "Start Free Trial",
+    cta: "Hire Josh",
     highlighted: true,
   },
   {

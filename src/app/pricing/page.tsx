@@ -49,7 +49,7 @@ const FAQ: FAQItem[] = [
   },
   {
     q: "What's covered by the money-back guarantee?",
-    a: "If Rocketeerio doesn't reply faster, qualify cleaner, or route hot leads to you within 14 days, email us and we refund 100% — no forms, no friction.",
+    a: "If Josh does not reply faster, qualify cleaner, or route hot leads to you within 14 days, email us and we refund 100% — no forms, no friction.",
   },
   {
     q: "Do you offer discounts for agencies or multi-location businesses?",
@@ -131,7 +131,7 @@ export default function PricingPage() {
             <GuaranteeCard
               Icon={RefreshCw}
               title="14-day money back"
-              body="If Rocketeerio does not reply faster, qualify cleaner, or route hot leads to you within 14 days, get every cent back. No forms, no friction."
+              body="If Josh does not reply faster, qualify cleaner, or route hot leads to you within 14 days, get every cent back. No forms, no friction."
             />
             <GuaranteeCard
               Icon={ShieldCheck}

@@ -165,7 +165,7 @@ export const BLOG_BODIES: Record<string, ReactNode> = {
       </p>
       <p>
         That&apos;s exactly the problem{" "}
-        <a href="/">Rocketeerio</a> was built to solve. It replies in under
+        <a href="/">Rocketeerio</a> was built to solve. Josh replies in under
         sixty seconds, qualifies leads automatically using the criteria you
         set, follows up across multiple touches, and only escalates the leads
         that are ready to buy. If you want to see how it would work on your
@@ -318,7 +318,7 @@ export const BLOG_BODIES: Record<string, ReactNode> = {
           <strong>Use a brand-trained AI auto-reply system</strong>. Best of
           both worlds: instant, personalized, and trained on your tone and
           offer. This is what{" "}
-          <a href="/">Rocketeerio</a> does — replies in under 60 seconds,
+          <a href="/">Rocketeerio</a> does — Josh replies in under 60 seconds,
           qualifies the lead, and only pings you when they&apos;re ready to
           close.
         </li>
@@ -484,7 +484,7 @@ export const BLOG_BODIES: Record<string, ReactNode> = {
         budget + fit are all green, escalate to a human now.&quot;
       </p>
       <p>
-        In Rocketeerio, this is the hot-lead alert: an SMS to your phone,
+        With Josh, this is the hot-lead alert: an SMS to your phone,
         a flag in your dashboard, and a tagged conversation in your CRM.
         You step in <em>only</em> when the lead is warm. You stop wasting
         evenings on people who were never going to buy.
@@ -601,7 +601,7 @@ export const BLOG_BODIES: Record<string, ReactNode> = {
       </p>
       <p>
         The fix is automation. With a system like{" "}
-        <a href="/">Rocketeerio</a> handling the under-60-second reply,
+        Josh handling the under-60-second reply,
         Lead Ads become viable for almost any business. Without it,
         landing pages are usually the safer bet.
       </p>

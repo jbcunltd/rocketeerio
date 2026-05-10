@@ -111,7 +111,7 @@ export default async function SelectFacebookPagePage({
             </h1>
             <p className="mt-5 text-base leading-7 text-white/80">
               Follow the instruction to connect your first Messenger automation.
-              Pick the Page Rocketeerio should use to qualify leads and manage
+              Pick the Page Josh should use to qualify leads and manage
               Messenger conversations.
             </p>
           </div>

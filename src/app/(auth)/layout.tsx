@@ -30,7 +30,7 @@ export default async function AuthLayout({
             </h2>
             <p className="max-w-md text-white/85">
               Connect your Facebook Pages, drop in your playbook, and let
-              Rocketeerio handle the rest — from first reply to booked call.
+              Josh handle the rest — from first reply to booked call.
             </p>
             <ul className="mt-4 space-y-2 text-sm text-white/80">
               <li>• Auto-reply in under 60 seconds</li>
