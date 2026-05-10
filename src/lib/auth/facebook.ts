@@ -1,6 +1,8 @@
 import { Facebook } from "arctic";
 
-export const FB_LOGIN_SCOPES = ["email", "public_profile"];
+// Facebook Login for Business does not support email/public_profile scopes.
+// Basic profile info (name, id, picture) is returned by default.
+export const FB_LOGIN_SCOPES: string[] = [];
 
 export const FB_PAGES_SCOPES = [
   "pages_show_list",
@@ -72,6 +74,7 @@ export async function fetchFacebookUser(
   accessToken: string,
 ): Promise<FacebookGraphUser> {
   const url = new URL("https://graph.facebook.com/v21.0/me");
+  // email may not be available with Facebook Login for Business
   url.searchParams.set("fields", "id,name,email,picture");
   url.searchParams.set("access_token", accessToken);
   const res = await fetch(url.toString(), { cache: "no-store" });
