@@ -24,9 +24,16 @@ type RawConversationRow = {
   ai_turns: number | string | null;
 };
 
+type MetaUserProfile = {
+  first_name?: string;
+  last_name?: string;
+  profile_pic?: string;
+};
+
 declare global {
   var __rocketeerioLiveInboxSql: postgres.Sql | undefined;
   var __rocketeerioLiveInboxSqlUrl: string | undefined;
+  var __rocketeerioProfileCache: Map<string, MetaUserProfile> | undefined;
 }
 
 function getLiveInboxSql() {
@@ -57,6 +64,74 @@ function getLiveInboxDatabaseUrl() {
 
 function shouldUseSsl(url: string) {
   return !/localhost|127\.0\.0\.1|::1/.test(url);
+}
+
+/**
+ * Fetch user profile (name + avatar) from Meta Graph API using the page access token.
+ * Results are cached in-memory to avoid repeated API calls for the same PSID.
+ */
+async function fetchMetaUserProfile(
+  psid: string,
+  pageAccessToken: string,
+): Promise<MetaUserProfile> {
+  // Initialize cache if needed
+  if (!globalThis.__rocketeerioProfileCache) {
+    globalThis.__rocketeerioProfileCache = new Map();
+  }
+
+  // Return cached result if available
+  const cached = globalThis.__rocketeerioProfileCache.get(psid);
+  if (cached) return cached;
+
+  // Skip non-numeric PSIDs (test/smoke data)
+  if (!/^\d+$/.test(psid)) {
+    const empty: MetaUserProfile = {};
+    globalThis.__rocketeerioProfileCache.set(psid, empty);
+    return empty;
+  }
+
+  try {
+    const url = `https://graph.facebook.com/v21.0/${psid}?fields=first_name,last_name,profile_pic&access_token=${pageAccessToken}`;
+    const res = await fetch(url, { signal: AbortSignal.timeout(5000) });
+
+    if (!res.ok) {
+      const empty: MetaUserProfile = {};
+      globalThis.__rocketeerioProfileCache.set(psid, empty);
+      return empty;
+    }
+
+    const data = await res.json();
+    const profile: MetaUserProfile = {
+      first_name: data.first_name || undefined,
+      last_name: data.last_name || undefined,
+      profile_pic: data.profile_pic || undefined,
+    };
+
+    globalThis.__rocketeerioProfileCache.set(psid, profile);
+    return profile;
+  } catch {
+    // On any error (timeout, network), return empty and cache it briefly
+    const empty: MetaUserProfile = {};
+    globalThis.__rocketeerioProfileCache.set(psid, empty);
+    return empty;
+  }
+}
+
+/**
+ * Get the page access token from the pages table for a given page_id.
+ */
+async function getPageAccessToken(
+  sql: postgres.Sql,
+  pageId: string,
+): Promise<string | null> {
+  try {
+    const rows = await sql<{ page_access_token: string | null }[]>`
+      SELECT page_access_token FROM pages WHERE page_id = ${pageId} LIMIT 1
+    `;
+    return rows[0]?.page_access_token ?? null;
+  } catch {
+    return null;
+  }
 }
 
 export async function loadLiveInboxConversations(
@@ -146,8 +221,19 @@ export async function loadLiveInboxConversations(
       LIMIT ${limit}
     `;
 
+    // Fetch the page access token to resolve lead names from Meta
+    const pageAccessToken = await getPageAccessToken(sql, pageId);
+
+    // Resolve names for all conversations in parallel
+    const profilePromises = rows.map((row) =>
+      pageAccessToken
+        ? fetchMetaUserProfile(row.sender_psid, pageAccessToken)
+        : Promise.resolve({} as MetaUserProfile),
+    );
+    const profiles = await Promise.all(profilePromises);
+
     return {
-      conversations: rows.map(mapConversationRow),
+      conversations: rows.map((row, i) => mapConversationRow(row, profiles[i])),
       unavailable: false,
     };
   } catch (error) {
@@ -156,18 +242,30 @@ export async function loadLiveInboxConversations(
   }
 }
 
-function mapConversationRow(row: RawConversationRow): LiveConversation {
+function mapConversationRow(row: RawConversationRow, profile?: MetaUserProfile): LiveConversation {
   const qualificationStatus = mapQualificationStatus(row);
   const isHot = isHotLead(row, qualificationStatus);
   const latestAt = toDate(row.latest_at);
-  const leadName = row.contact_id
-    ? `Contact #${row.contact_id}`
-    : `Messenger lead ${lastDigits(row.sender_psid)}`;
+
+  // Resolve lead name: prefer Meta profile name, then contact ID, then PSID fallback
+  let leadName: string;
+  if (profile?.first_name) {
+    leadName = profile.last_name
+      ? `${profile.first_name} ${profile.last_name}`
+      : profile.first_name;
+  } else if (row.contact_id) {
+    leadName = `Contact #${row.contact_id}`;
+  } else if (/^\d+$/.test(row.sender_psid)) {
+    leadName = `Messenger lead ${lastDigits(row.sender_psid)}`;
+  } else {
+    // Test/smoke data — show as-is but cleaned up
+    leadName = `Test: ${row.sender_psid.slice(0, 20)}`;
+  }
 
   return {
     id: row.conversation_id ? String(row.conversation_id) : `${row.sender_psid}`,
     leadName,
-    leadAvatarUrl: null,
+    leadAvatarUrl: profile?.profile_pic ?? null,
     lastMessagePreview: buildPreview(row.latest_content, row.latest_direction),
     timestampLabel: formatTimestampLabel(latestAt),
     qualificationStatus,
