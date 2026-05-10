@@ -40,8 +40,25 @@ const NAV = [
   { href: "/dashboard/settings", label: "Settings", icon: Settings, avatar: null },
 ];
 
+function SidebarBrand({ activePageName }: { activePageName?: string | null }) {
+  return (
+    <div className="flex flex-col items-start gap-1.5">
+      <Logo href="/dashboard" />
+      {activePageName ? (
+        <div className="ml-10 flex max-w-[11rem] items-center gap-1.5 text-xs font-medium text-ink-500">
+          <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-500" aria-hidden="true" />
+          <span className="truncate" title={activePageName}>
+            {activePageName}
+          </span>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 interface SidebarProps {
   user: { name?: string | null; email?: string | null; avatarUrl?: string | null };
+  activePageName?: string | null;
   onLogout: () => Promise<void>;
 }
 
@@ -163,7 +180,7 @@ function UserBlock({
   );
 }
 
-export function Sidebar({ user, onLogout }: SidebarProps) {
+export function Sidebar({ user, activePageName, onLogout }: SidebarProps) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
 
@@ -184,8 +201,8 @@ export function Sidebar({ user, onLogout }: SidebarProps) {
 
       {/* Desktop sidebar */}
       <aside className="hidden h-screen w-64 shrink-0 flex-col border-r border-ink-100 bg-white md:sticky md:top-0 md:flex">
-        <div className="flex h-16 items-center px-5">
-          <Logo href="/dashboard" />
+        <div className="flex min-h-20 items-center px-5 py-4">
+          <SidebarBrand activePageName={activePageName} />
         </div>
         <NavList pathname={pathname} />
         <SidebarUpgradePrompt />
@@ -200,8 +217,8 @@ export function Sidebar({ user, onLogout }: SidebarProps) {
             onClick={() => setOpen(false)}
           />
           <div className="absolute left-0 top-0 flex h-full w-72 flex-col bg-white shadow-xl">
-            <div className="flex h-14 items-center justify-between border-b border-ink-100 px-4">
-              <Logo href="/dashboard" />
+            <div className="flex min-h-16 items-center justify-between border-b border-ink-100 px-4 py-3">
+              <SidebarBrand activePageName={activePageName} />
               <button
                 type="button"
                 aria-label="Close menu"

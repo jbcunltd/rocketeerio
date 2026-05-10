@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { getCurrentSession } from "@/lib/auth/cookies";
 import { Sidebar } from "@/components/dashboard/sidebar";
+import { loadDashboardConnectedPages } from "@/lib/dashboard-data";
 import { logoutAction } from "../(auth)/actions";
 
 export default async function DashboardLayout({
@@ -11,6 +12,9 @@ export default async function DashboardLayout({
   const { user } = await getCurrentSession();
   if (!user) redirect("/login");
 
+  const pageLoad = await loadDashboardConnectedPages(user.id);
+  const activePage = pageLoad.pages[0] ?? null;
+
   return (
     <div className="flex flex-col min-h-screen bg-ink-50/40 md:flex-row">
       <Sidebar
@@ -19,6 +23,7 @@ export default async function DashboardLayout({
           email: user.email ?? null,
           avatarUrl: user.avatarUrl ?? null,
         }}
+        activePageName={activePage?.name ?? null}
         onLogout={logoutAction}
       />
       <main className="flex-1">
