@@ -1,12 +1,11 @@
 /*
  * Design philosophy reminder: Soft Swiss SaaS Minimalism with iOS Material controls.
  * This server page keeps the Josh Settings route quiet and data-scoped: it loads the
- * connected Facebook Page context, renders the existing Josh tabs, then lets the
- * client panel handle the tactile settings controls and handbook-proxy persistence.
+ * connected Facebook Page context, then lets the client panel handle the tactile
+ * settings controls and handbook-proxy persistence.
  */
 
 import { Settings } from "lucide-react";
-import { JoshForSalesTabs } from "@/components/dashboard/josh-for-sales-tabs";
 import { JoshSettingsPanel } from "@/components/dashboard/josh-settings-panel";
 import { getFirstConnectedFacebookPage } from "@/lib/handbook-page-context";
 
@@ -31,8 +30,6 @@ export default async function JoshSettingsPage() {
           </p>
         </div>
       </header>
-
-      <JoshForSalesTabs />
 
       <JoshSettingsPanel
         pageId={pageId}

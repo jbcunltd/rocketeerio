@@ -24,7 +24,6 @@ import {
   Users,
   type LucideIcon,
 } from "lucide-react";
-import { JoshForSalesTabs } from "@/components/dashboard/josh-for-sales-tabs";
 import type { LeadTemperature, LiveConversation } from "@/lib/josh-live-inbox-types";
 import { cn } from "@/lib/utils";
 
@@ -176,8 +175,6 @@ export function JoshLiveInbox({
           </div>
         </div>
       </header>
-
-      <JoshForSalesTabs />
 
       {dbUnavailable ? (
         <div className="rounded-2xl border border-amber/30 bg-amber/10 px-4 py-3 text-sm text-ink-700">
