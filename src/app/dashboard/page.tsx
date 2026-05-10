@@ -9,11 +9,13 @@ import {
   Users,
   Zap,
 } from "lucide-react";
-import { eq, desc } from "drizzle-orm";
-import { db } from "@/lib/db";
-import { facebookPageTable, type DbFacebookPage } from "@/lib/db/schema";
 import { getCurrentSession } from "@/lib/auth/cookies";
 import { PageSwitcher } from "@/components/dashboard/page-switcher";
+import {
+  loadDashboardConnectedPages,
+  loadDashboardKpis,
+  type DashboardConnectedPage,
+} from "@/lib/dashboard-data";
 
 export const dynamic = "force-dynamic";
 
@@ -21,21 +23,65 @@ export default async function DashboardPage() {
   const { user } = await getCurrentSession();
   if (!user) return null;
 
-  let pages: DbFacebookPage[] = [];
-  try {
-    pages = await db
-      .select()
-      .from(facebookPageTable)
-      .where(eq(facebookPageTable.userId, user.id))
-      .orderBy(desc(facebookPageTable.connectedAt));
-  } catch (err) {
-    console.error("[dashboard] db unavailable", err);
-  }
+  let pages: DashboardConnectedPage[] = [];
+  let dbUnavailable = false;
+
+  const pageLoad = await loadDashboardConnectedPages(user.id);
+  pages = pageLoad.pages;
+  dbUnavailable = pageLoad.unavailable;
 
   const firstName = (user.name ?? user.email?.split("@")[0] ?? "there").split(
     " ",
   )[0];
   const activePage = pages[0] ?? null;
+  const kpiLoad = await loadDashboardKpis(activePage?.pageId ?? null);
+  dbUnavailable = dbUnavailable || kpiLoad.unavailable;
+  const dashboardKpis = kpiLoad.kpis;
+
+  const metrics = [
+    {
+      icon: MessageCircle,
+      label: "Conversations (24h)",
+      value: dashboardKpis.conversations24h.value,
+      sub: activePage ? dashboardKpis.conversations24h.sub : "Connect a Page to start",
+      tone: "brand",
+    },
+    {
+      icon: Users,
+      label: "Total Contacts",
+      value: dashboardKpis.totalContacts.value,
+      sub: activePage ? dashboardKpis.totalContacts.sub : "Tracked after connection",
+      tone: "neutral",
+    },
+    {
+      icon: Flame,
+      label: "Hot Leads",
+      value: dashboardKpis.hotLeads.value,
+      sub: activePage ? dashboardKpis.hotLeads.sub : "Detected after connection",
+      tone: "hot",
+    },
+    {
+      icon: Users,
+      label: "Qualified Leads",
+      value: dashboardKpis.qualifiedLeads.value,
+      sub: activePage ? dashboardKpis.qualifiedLeads.sub : "Tracked after qualification",
+      tone: "qualified",
+    },
+    {
+      icon: Zap,
+      label: "Avg Response Time",
+      value: dashboardKpis.avgResponseTime.value,
+      sub: activePage ? dashboardKpis.avgResponseTime.sub : "Measured once connected",
+      tone: "brand",
+    },
+    {
+      icon: Sparkles,
+      label: "Booked Calls",
+      value: dashboardKpis.bookedCalls.value,
+      sub: activePage ? dashboardKpis.bookedCalls.sub : "Updates after booking tracking is enabled",
+      tone: "qualified",
+    },
+  ];
 
   return (
     <div className="space-y-6">
@@ -87,6 +133,12 @@ export default async function DashboardPage() {
           </Link>
         </div>
       )}
+
+      {dbUnavailable ? (
+        <div className="rounded-2xl border border-amber/30 bg-amber/10 px-4 py-3 text-sm text-ink-700">
+          Some live dashboard data could not be loaded from the database. Available metrics will continue to update when the database is reachable.
+        </div>
+      ) : null}
 
       {/* Active page context bar */}
       {activePage && (
@@ -157,62 +209,7 @@ export default async function DashboardPage() {
 
         {/* KPI Grid — all Josh's live-ready metrics */}
         <div className="grid grid-cols-2 gap-px bg-ink-100 border-t border-ink-100 lg:grid-cols-3">
-          {[
-            {
-              icon: MessageCircle,
-              label: "Conversations (24h)",
-              value: "0",
-              sub: activePage
-                ? "Waiting for first message"
-                : "Connect a Page to start",
-              tone: "brand",
-            },
-            {
-              icon: Users,
-              label: "Total Contacts",
-              value: "0",
-              sub: activePage
-                ? "Everyone who messages Josh"
-                : "Tracked after connection",
-              tone: "neutral",
-            },
-            {
-              icon: Flame,
-              label: "Hot Leads",
-              value: "0",
-              sub: activePage
-                ? "Pricing, timeline, budget, or call signals"
-                : "Detected after connection",
-              tone: "hot",
-            },
-            {
-              icon: Users,
-              label: "Qualified Leads",
-              value: "0",
-              sub: activePage
-                ? "Josh will track qualifications"
-                : "Tracked after first qualification",
-              tone: "qualified",
-            },
-            {
-              icon: Zap,
-              label: "Avg Response Time",
-              value: "0",
-              sub: activePage
-                ? "Measured from real replies"
-                : "Measured once connected",
-              tone: "brand",
-            },
-            {
-              icon: Sparkles,
-              label: "Booked Calls",
-              value: "0",
-              sub: activePage
-                ? "Updates as bookings land"
-                : "Updates after connection",
-              tone: "qualified",
-            },
-          ].map((m, i) => (
+          {metrics.map((m, i) => (
             <div
               key={m.label}
               className={`bg-white p-4 ${

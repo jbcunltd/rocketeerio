@@ -5,12 +5,10 @@
  * the middleware message tables that Josh writes to in production.
  */
 
-import { desc, eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { JoshLiveInbox } from "@/components/dashboard/josh-live-inbox";
 import { getCurrentSession } from "@/lib/auth/cookies";
-import { db } from "@/lib/db";
-import { facebookPageTable } from "@/lib/db/schema";
+import { loadDashboardConnectedPages } from "@/lib/dashboard-data";
 import { loadLiveInboxConversations } from "@/lib/josh-live-inbox-data";
 import type { LiveConversation } from "@/lib/josh-live-inbox-types";
 
@@ -26,29 +24,14 @@ export default async function JoshForSalesPage() {
   let dbUnavailable = false;
   let conversations: LiveConversation[] = [];
 
-  try {
-    const activePage = (
-      await db
-        .select({
-          pageId: facebookPageTable.pageId,
-          name: facebookPageTable.name,
-          pictureUrl: facebookPageTable.pictureUrl,
-          connectedAt: facebookPageTable.connectedAt,
-        })
-        .from(facebookPageTable)
-        .where(eq(facebookPageTable.userId, user.id))
-        .orderBy(desc(facebookPageTable.connectedAt))
-        .limit(1)
-    )[0];
+  const pageLoad = await loadDashboardConnectedPages(user.id);
+  const activePage = pageLoad.pages[0] ?? null;
+  dbUnavailable = pageLoad.unavailable;
 
-    if (activePage) {
-      pageId = activePage.pageId;
-      pageName = activePage.name;
-      pagePictureUrl = activePage.pictureUrl;
-    }
-  } catch (err) {
-    console.error("[josh inbox] connected page load failed", err);
-    dbUnavailable = true;
+  if (activePage) {
+    pageId = activePage.pageId;
+    pageName = activePage.name;
+    pagePictureUrl = activePage.pictureUrl;
   }
 
   if (pageId) {

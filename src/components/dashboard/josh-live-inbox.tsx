@@ -106,6 +106,8 @@ export function JoshLiveInbox({
 }: JoshLiveInboxProps) {
   const [activePanel, setActivePanel] = useState<InboxPanel>("list");
   const [activeFilter, setActiveFilter] = useState<InboxFilter>("all");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filtersOpen, setFiltersOpen] = useState(true);
 
   const liveStats = useMemo(() => buildLiveStats(conversations), [conversations]);
 
@@ -113,27 +115,43 @@ export function JoshLiveInbox({
     const sortedConversations = [...conversations].sort((a, b) =>
       Number(Boolean(b.isHot)) - Number(Boolean(a.isHot)),
     );
+    const normalizedQuery = searchQuery.trim().toLowerCase();
+    const searchedConversations = normalizedQuery
+      ? sortedConversations.filter((conversation) =>
+          [
+            conversation.leadName,
+            conversation.lastMessagePreview,
+            conversation.qualificationStatus,
+            conversation.leadTemperature ?? "",
+          ]
+            .join(" ")
+            .toLowerCase()
+            .includes(normalizedQuery),
+        )
+      : sortedConversations;
 
     if (activeFilter === "active") {
-      return sortedConversations.filter((conversation) =>
+      return searchedConversations.filter((conversation) =>
         ["New", "Qualifying"].includes(conversation.qualificationStatus),
       );
     }
 
     if (activeFilter === "hot") {
-      return sortedConversations.filter((conversation) => conversation.isHot);
+      return searchedConversations.filter((conversation) => conversation.isHot);
     }
 
     if (activeFilter === "qualified") {
-      return sortedConversations.filter(
+      return searchedConversations.filter(
         (conversation) => conversation.qualificationStatus === "Qualified",
       );
     }
 
-    return sortedConversations;
-  }, [activeFilter, conversations]);
+    return searchedConversations;
+  }, [activeFilter, conversations, searchQuery]);
 
   const hasConversations = visibleConversations.length > 0;
+  const hasAnyConversations = conversations.length > 0;
+  const isSearchActive = searchQuery.trim().length > 0;
 
   return (
     <div className="space-y-5">
@@ -262,8 +280,16 @@ export function JoshLiveInbox({
                 </div>
                 <button
                   type="button"
-                  aria-label="Conversation filters"
-                  className="rounded-xl border border-ink-100 p-2 text-ink-500 transition-colors hover:border-brand-100 hover:bg-brand-50 hover:text-brand-700"
+                  aria-label={filtersOpen ? "Hide conversation filters" : "Show conversation filters"}
+                  aria-expanded={filtersOpen}
+                  aria-controls="live-inbox-filters"
+                  onClick={() => setFiltersOpen((open) => !open)}
+                  className={cn(
+                    "rounded-xl border p-2 transition-colors",
+                    filtersOpen || activeFilter !== "all"
+                      ? "border-brand-100 bg-brand-50 text-brand-700"
+                      : "border-ink-100 text-ink-500 hover:border-brand-100 hover:bg-brand-50 hover:text-brand-700",
+                  )}
                 >
                   <SlidersHorizontal className="h-4 w-4" />
                 </button>
@@ -274,32 +300,36 @@ export function JoshLiveInbox({
                 <input
                   type="search"
                   placeholder="Search live conversations"
+                  value={searchQuery}
+                  onChange={(event) => setSearchQuery(event.target.value)}
                   className="w-full bg-transparent text-sm text-ink-900 outline-none placeholder:text-ink-400"
                   aria-label="Search live conversations"
                 />
               </label>
 
-              <div className="mt-3 grid grid-cols-4 gap-1 rounded-2xl bg-ink-50 p-1">
-                {filters.map((filter) => (
-                  <button
-                    key={filter.id}
-                    type="button"
-                    onClick={() => setActiveFilter(filter.id)}
-                    className={cn(
-                      "rounded-xl px-2 py-1.5 text-xs font-semibold transition-all",
-                      activeFilter === filter.id
-                        ? filter.id === "hot"
-                          ? "bg-amber/20 text-orange-700 shadow-sm"
-                          : "bg-white text-ink-900 shadow-sm"
-                        : filter.id === "hot"
-                          ? "text-orange-600 hover:bg-amber/10"
-                          : "text-ink-500 hover:text-ink-800",
-                    )}
-                  >
-                    {filter.label}
-                  </button>
-                ))}
-              </div>
+              {filtersOpen ? (
+                <div id="live-inbox-filters" className="mt-3 grid grid-cols-4 gap-1 rounded-2xl bg-ink-50 p-1">
+                  {filters.map((filter) => (
+                    <button
+                      key={filter.id}
+                      type="button"
+                      onClick={() => setActiveFilter(filter.id)}
+                      className={cn(
+                        "rounded-xl px-2 py-1.5 text-xs font-semibold transition-all",
+                        activeFilter === filter.id
+                          ? filter.id === "hot"
+                            ? "bg-amber/20 text-orange-700 shadow-sm"
+                            : "bg-white text-ink-900 shadow-sm"
+                          : filter.id === "hot"
+                            ? "text-orange-600 hover:bg-amber/10"
+                            : "text-ink-500 hover:text-ink-800",
+                      )}
+                    >
+                      {filter.label}
+                    </button>
+                  ))}
+                </div>
+              ) : null}
             </div>
 
             <div
@@ -372,10 +402,14 @@ export function JoshLiveInbox({
                     <Inbox className="h-5 w-5" />
                   </div>
                   <p className="mt-4 text-sm font-semibold text-ink-900">
-                    No live conversations yet
+                    {hasAnyConversations ? "No conversations match" : "No live conversations yet"}
                   </p>
                   <p className="mt-1.5 text-xs leading-relaxed text-ink-500">
-                    Real Messenger conversations will appear here as the webhook receives them. Hot leads will be pinned to the top automatically.
+                    {hasAnyConversations
+                      ? isSearchActive
+                        ? "Try searching another name or message, or clear the current search."
+                        : "Try a different conversation filter to see more leads."
+                      : "Real Messenger conversations will appear here as the webhook receives them. Hot leads will be pinned to the top automatically."}
                   </p>
                 </div>
               )}

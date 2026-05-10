@@ -1,7 +1,5 @@
-import { desc, eq } from "drizzle-orm";
 import { getCurrentSession } from "@/lib/auth/cookies";
-import { db } from "@/lib/db";
-import { facebookPageTable } from "@/lib/db/schema";
+import { loadDashboardConnectedPages } from "@/lib/dashboard-data";
 
 export type HandbookPageContext = {
   pageId: string | null;
@@ -21,34 +19,13 @@ export async function getFirstConnectedFacebookPage(): Promise<HandbookPageConte
     };
   }
 
-  try {
-    const activePage = (
-      await db
-        .select({
-          pageId: facebookPageTable.pageId,
-          name: facebookPageTable.name,
-          pictureUrl: facebookPageTable.pictureUrl,
-          connectedAt: facebookPageTable.connectedAt,
-        })
-        .from(facebookPageTable)
-        .where(eq(facebookPageTable.userId, user.id))
-        .orderBy(desc(facebookPageTable.connectedAt))
-        .limit(1)
-    )[0];
+  const pageLoad = await loadDashboardConnectedPages(user.id);
+  const activePage = pageLoad.pages[0] ?? null;
 
-    return {
-      pageId: activePage?.pageId ?? null,
-      pageName: activePage?.name ?? null,
-      pagePictureUrl: activePage?.pictureUrl ?? null,
-      dbUnavailable: false,
-    };
-  } catch (err) {
-    console.error("[handbook] connected page load failed", err);
-    return {
-      pageId: null,
-      pageName: null,
-      pagePictureUrl: null,
-      dbUnavailable: true,
-    };
-  }
+  return {
+    pageId: activePage?.pageId ?? null,
+    pageName: activePage?.name ?? null,
+    pagePictureUrl: activePage?.pictureUrl ?? null,
+    dbUnavailable: pageLoad.unavailable,
+  };
 }

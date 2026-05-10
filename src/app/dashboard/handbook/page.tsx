@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { BookOpen, Folder } from "lucide-react";
 import { HandbookSections } from "@/components/dashboard/handbook-sections";
 
@@ -9,7 +10,7 @@ type HandbookFolder = {
   description: string;
   itemCount: number;
   lastUpdated: string;
-  isClickable: boolean;
+  href: string;
 };
 
 const folders: HandbookFolder[] = [
@@ -19,7 +20,7 @@ const folders: HandbookFolder[] = [
     description: "Company-wide knowledge that all agents inherit: brand voice, product info, pricing, FAQs.",
     itemCount: 0,
     lastUpdated: "Never",
-    isClickable: true,
+    href: "/dashboard/handbook#general-handbook",
   },
   {
     id: "josh",
@@ -27,7 +28,7 @@ const folders: HandbookFolder[] = [
     description: "Josh's specific handbook with sales techniques and conversation flows.",
     itemCount: 0,
     lastUpdated: "Never",
-    isClickable: true,
+    href: "/dashboard/josh-for-sales/handbook",
   },
 ];
 
@@ -55,9 +56,9 @@ export default async function CompanyHandbookPage() {
 
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {folders.map((folder) => (
-            <button
+            <Link
               key={folder.id}
-              type="button"
+              href={folder.href}
               className="group rounded-3xl border border-ink-100 bg-white p-6 text-left shadow-sm transition-all hover:border-brand-200 hover:shadow-md hover:shadow-brand-500/10"
             >
               <div className="flex items-start justify-between gap-3">
@@ -78,7 +79,7 @@ export default async function CompanyHandbookPage() {
                   Open →
                 </span>
               </div>
-            </button>
+            </Link>
           ))}
 
           <div className="rounded-3xl border border-dashed border-ink-200 bg-ink-50 p-6 flex flex-col items-center justify-center text-center">
@@ -93,7 +94,7 @@ export default async function CompanyHandbookPage() {
         </div>
       </section>
 
-      <section className="space-y-4">
+      <section id="general-handbook" className="space-y-4">
         <div>
           <h2 className="text-lg font-semibold text-ink-900">General Handbook</h2>
           <p className="mt-1 text-sm text-ink-600">
