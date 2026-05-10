@@ -49,6 +49,14 @@ const filters: Array<{ id: InboxFilter; label: string }> = [
   { id: "qualified", label: "Qualified" },
 ];
 
+const profileFields: Array<{ key: "budget" | "authority" | "need" | "timeline" | "location"; label: string }> = [
+  { key: "budget", label: "Budget" },
+  { key: "authority", label: "Authority" },
+  { key: "need", label: "Need" },
+  { key: "timeline", label: "Timeline" },
+  { key: "location", label: "Location" },
+];
+
 type LiveStat = {
   label: string;
   value: string;
@@ -108,12 +116,13 @@ export function JoshLiveInbox({
   const [activeFilter, setActiveFilter] = useState<InboxFilter>("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [filtersOpen, setFiltersOpen] = useState(true);
+  const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
 
   const liveStats = useMemo(() => buildLiveStats(conversations), [conversations]);
 
   const visibleConversations = useMemo(() => {
-    const sortedConversations = [...conversations].sort((a, b) =>
-      Number(Boolean(b.isHot)) - Number(Boolean(a.isHot)),
+    const sortedConversations = [...conversations].sort(
+      (a, b) => Number(Boolean(b.isHot)) - Number(Boolean(a.isHot)),
     );
     const normalizedQuery = searchQuery.trim().toLowerCase();
     const searchedConversations = normalizedQuery
@@ -123,6 +132,9 @@ export function JoshLiveInbox({
             conversation.lastMessagePreview,
             conversation.qualificationStatus,
             conversation.leadTemperature ?? "",
+            conversation.decision?.leadStage ?? "",
+            conversation.decision?.nextAction ?? "",
+            ...(conversation.decision?.riskFlags ?? []),
           ]
             .join(" ")
             .toLowerCase()
@@ -149,9 +161,23 @@ export function JoshLiveInbox({
     return searchedConversations;
   }, [activeFilter, conversations, searchQuery]);
 
+  const activeConversation = useMemo(() => {
+    if (activeConversationId) {
+      const selected = conversations.find((conversation) => conversation.id === activeConversationId);
+      if (selected) return selected;
+    }
+
+    return visibleConversations[0] ?? null;
+  }, [activeConversationId, conversations, visibleConversations]);
+
   const hasConversations = visibleConversations.length > 0;
   const hasAnyConversations = conversations.length > 0;
   const isSearchActive = searchQuery.trim().length > 0;
+
+  function selectConversation(conversation: LiveConversation, panel: InboxPanel = "thread") {
+    setActiveConversationId(conversation.id);
+    setActivePanel(panel);
+  }
 
   return (
     <div className="space-y-5">
@@ -345,26 +371,17 @@ export function JoshLiveInbox({
                   <button
                     key={conversation.id}
                     type="button"
-                    onClick={() => setActivePanel("thread")}
+                    onClick={() => selectConversation(conversation)}
                     className={cn(
                       "flex w-full items-start gap-3 border-l-4 px-4 py-4 text-left transition-colors hover:bg-ink-50",
-                      conversation.isHot
-                        ? "border-orange-400 bg-amber/10 hover:bg-amber/15"
-                        : "border-transparent",
+                      activeConversation?.id === conversation.id
+                        ? "border-brand-500 bg-brand-50/60"
+                        : conversation.isHot
+                          ? "border-orange-400 bg-amber/10 hover:bg-amber/15"
+                          : "border-transparent",
                     )}
                   >
-                    {conversation.leadAvatarUrl ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={conversation.leadAvatarUrl}
-                        alt=""
-                        className="h-10 w-10 rounded-full object-cover"
-                      />
-                    ) : (
-                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-ink-50 text-ink-400">
-                        <UserRound className="h-4 w-4" />
-                      </div>
-                    )}
+                    <LeadAvatar conversation={conversation} className="h-10 w-10" />
                     <span className="min-w-0 flex-1">
                       <span className="flex items-center justify-between gap-3">
                         <span className="flex min-w-0 items-center gap-2">
@@ -425,13 +442,18 @@ export function JoshLiveInbox({
             <div className="flex h-full min-h-[680px] flex-col">
               <div className="border-b border-ink-100 bg-white/90 px-5 py-4 backdrop-blur">
                 <div className="flex items-center justify-between gap-4">
-                  <div className="min-w-0">
-                    <p className="text-sm font-semibold text-ink-900">
-                      Waiting for first lead
-                    </p>
-                    <p className="text-xs text-ink-500">
-                      Josh is handling incoming conversations automatically.
-                    </p>
+                  <div className="flex min-w-0 items-center gap-3">
+                    {activeConversation ? <LeadAvatar conversation={activeConversation} className="h-10 w-10" /> : null}
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-semibold text-ink-900">
+                        {activeConversation ? activeConversation.leadName : "Waiting for first lead"}
+                      </p>
+                      <p className="text-xs text-ink-500">
+                        {activeConversation
+                          ? `${activeConversation.messages.length} Messenger message${activeConversation.messages.length === 1 ? "" : "s"} · ${activeConversation.qualificationStatus}`
+                          : "Josh is handling incoming conversations automatically."}
+                      </p>
+                    </div>
                   </div>
                   <div className="hidden items-center gap-2 rounded-full bg-brand-50 px-3 py-1.5 text-xs font-semibold text-brand-700 sm:inline-flex">
                     <Bot className="h-3.5 w-3.5" />
@@ -440,43 +462,102 @@ export function JoshLiveInbox({
                 </div>
               </div>
 
-              <div className="flex flex-1 items-center justify-center p-6 md:p-10">
-                <div className="mx-auto max-w-md text-center animate-pop-in">
-                  <div className="relative mx-auto h-24 w-24">
-                    <div className="absolute inset-0 rounded-full bg-brand-100 blur-2xl" />
-                    <div className="relative flex h-24 w-24 items-center justify-center rounded-full border-4 border-white bg-brand-50 shadow-xl shadow-brand-900/10">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src="/josh-avatar.jpg?v=3"
-                        alt="Josh for Sales"
-                        className="h-full w-full rounded-full object-cover"
-                      />
-                      <span className="absolute bottom-1 right-1 flex h-6 w-6 items-center justify-center rounded-full border-4 border-white bg-mint">
-                        <span className="absolute h-4 w-4 animate-ping rounded-full bg-mint opacity-60" />
+              {activeConversation ? (
+                <div className="flex-1 space-y-4 overflow-y-auto px-5 py-6 md:px-8">
+                  {activeConversation.messages.length > 0 ? (
+                    activeConversation.messages.map((message) => (
+                      <div
+                        key={message.id}
+                        className={cn(
+                          "flex items-end gap-2",
+                          message.direction === "outbound" ? "justify-end" : "justify-start",
+                        )}
+                      >
+                        {message.direction === "inbound" ? (
+                          <LeadAvatar conversation={activeConversation} className="h-7 w-7" />
+                        ) : null}
+                        <div
+                          className={cn(
+                            "max-w-[78%] rounded-3xl px-4 py-3 text-sm leading-6 shadow-sm",
+                            message.direction === "outbound"
+                              ? "rounded-br-lg bg-brand-600 text-white shadow-brand-900/10"
+                              : "rounded-bl-lg border border-ink-100 bg-white text-ink-700",
+                          )}
+                        >
+                          <p className="whitespace-pre-wrap">{message.content}</p>
+                          <p
+                            className={cn(
+                              "mt-2 text-[10px] font-medium uppercase tracking-[0.12em]",
+                              message.direction === "outbound" ? "text-white/65" : "text-ink-400",
+                            )}
+                          >
+                            {message.direction === "outbound" ? "Josh" : activeConversation.leadName} · {message.timestampLabel}
+                          </p>
+                        </div>
+                        {message.direction === "outbound" ? (
+                          <div className="flex h-7 w-7 items-center justify-center rounded-full bg-brand-50 text-brand-700">
+                            <Bot className="h-3.5 w-3.5" />
+                          </div>
+                        ) : null}
+                      </div>
+                    ))
+                  ) : (
+                    <div className="flex h-full items-center justify-center p-6 md:p-10">
+                      <div className="mx-auto max-w-md text-center animate-pop-in">
+                        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-ink-50 text-ink-400">
+                          <MessageCircle className="h-6 w-6" />
+                        </div>
+                        <h2 className="mt-5 text-lg font-bold tracking-tight text-ink-900">
+                          No stored messages for this lead yet
+                        </h2>
+                        <p className="mt-2 text-sm leading-6 text-ink-600">
+                          The conversation exists, but the middleware did not return message bodies for this thread.
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="flex flex-1 items-center justify-center p-6 md:p-10">
+                  <div className="mx-auto max-w-md text-center animate-pop-in">
+                    <div className="relative mx-auto h-24 w-24">
+                      <div className="absolute inset-0 rounded-full bg-brand-100 blur-2xl" />
+                      <div className="relative flex h-24 w-24 items-center justify-center rounded-full border-4 border-white bg-brand-50 shadow-xl shadow-brand-900/10">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src="/josh-avatar.jpg?v=3"
+                          alt="Josh for Sales"
+                          className="h-full w-full rounded-full object-cover"
+                        />
+                        <span className="absolute bottom-1 right-1 flex h-6 w-6 items-center justify-center rounded-full border-4 border-white bg-mint">
+                          <span className="absolute h-4 w-4 animate-ping rounded-full bg-mint opacity-60" />
+                        </span>
+                      </div>
+                    </div>
+
+                    <h2 className="mt-6 text-xl font-bold tracking-tight text-ink-900">
+                      Josh is online and waiting for leads on {pageName}.
+                    </h2>
+                    <p className="mt-3 text-sm leading-6 text-ink-600">
+                      Conversations will appear here in real-time as they come in.
+                    </p>
+
+                    <div className="mt-7 inline-flex items-center gap-2 rounded-full border border-ink-100 bg-white px-4 py-2 text-xs font-semibold text-ink-500 shadow-sm">
+                      <span className="relative flex h-2 w-2">
+                        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-mint opacity-60" />
+                        <span className="relative inline-flex h-2 w-2 rounded-full bg-mint" />
                       </span>
+                      Listening for webhook events
                     </div>
                   </div>
-
-                  <h2 className="mt-6 text-xl font-bold tracking-tight text-ink-900">
-                    Josh is online and waiting for leads on {pageName}.
-                  </h2>
-                  <p className="mt-3 text-sm leading-6 text-ink-600">
-                    Conversations will appear here in real-time as they come in.
-                  </p>
-
-                  <div className="mt-7 inline-flex items-center gap-2 rounded-full border border-ink-100 bg-white px-4 py-2 text-xs font-semibold text-ink-500 shadow-sm">
-                    <span className="relative flex h-2 w-2">
-                      <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-mint opacity-60" />
-                      <span className="relative inline-flex h-2 w-2 rounded-full bg-mint" />
-                    </span>
-                    Listening for webhook events
-                  </div>
                 </div>
-              </div>
+              )}
 
               <div className="border-t border-ink-100 bg-white/80 px-5 py-4">
                 <div className="rounded-2xl border border-dashed border-ink-200 bg-white px-4 py-3 text-sm text-ink-500">
-                  The reply composer will activate when a real conversation is selected.
+                  {activeConversation
+                    ? "Josh sends replies through the middleware. Manual takeover controls can be enabled when the owner handoff flow is ready."
+                    : "The reply composer will activate when a real conversation is selected."}
                 </div>
               </div>
             </div>
@@ -488,85 +569,261 @@ export function JoshLiveInbox({
               activePanel === "profile" ? "block" : "hidden",
             )}
           >
-            <div className="border-b border-ink-100 p-5">
-              <div className="flex items-center gap-3">
-                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-ink-50 text-ink-300">
-                  <UserRound className="h-5 w-5" />
-                </div>
-                <div>
-                  <h2 className="text-sm font-semibold text-ink-900">
-                    Lead profile
-                  </h2>
-                  <p className="text-xs text-ink-500">No conversation selected</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="space-y-5 p-5">
-              <div className="rounded-2xl border border-dashed border-ink-200 bg-ink-50/70 p-4 text-sm text-ink-500">
-                Real lead details will appear here after Josh receives a Messenger conversation.
-              </div>
-
-              <div className="rounded-2xl border border-ink-100 bg-white p-4">
-                <div className="flex items-center justify-between gap-3">
-                  <div>
-                    <p className="text-xs font-semibold uppercase tracking-[0.14em] text-ink-400">
-                      Lead Temperature
-                    </p>
-                    <p className="mt-1 text-xs leading-5 text-ink-500">
-                      Based on pricing, timeline, budget, and call-request signals.
-                    </p>
-                  </div>
-                  <Flame className="h-4 w-4 text-orange-500" />
-                </div>
-                <div className="mt-4 grid grid-cols-3 gap-2">
-                  {(["Cold", "Warm", "Hot"] as LeadTemperature[]).map((temperature) => (
-                    <div
-                      key={temperature}
-                      className={cn(
-                        "rounded-xl border px-2 py-2 text-center text-[11px] font-semibold",
-                        temperatureClass(temperature),
-                      )}
-                    >
-                      {temperature === "Hot" ? (
-                        <Flame className="mx-auto mb-1 h-3.5 w-3.5" />
-                      ) : null}
-                      {temperature}
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="space-y-3">
-                <ProfilePlaceholder icon={ShieldCheck} label="Qualification score" />
-                <ProfilePlaceholder icon={FileText} label="Key info collected" />
-                <ProfilePlaceholder icon={Tags} label="Tags" />
-              </div>
-
-              <button
-                type="button"
-                disabled
-                className="w-full rounded-xl bg-ink-100 px-4 py-3 text-sm font-semibold text-ink-400"
-              >
-                Take over conversation
-              </button>
-
-              <div>
-                <label className="text-xs font-semibold uppercase tracking-[0.16em] text-ink-400">
-                  Notes
-                </label>
-                <textarea
-                  disabled
-                  placeholder="Notes become available once a real lead is selected."
-                  className="mt-2 h-28 w-full resize-none rounded-2xl border border-ink-100 bg-ink-50 px-3 py-3 text-sm text-ink-500 outline-none placeholder:text-ink-400"
-                />
-              </div>
-            </div>
+            {activeConversation ? (
+              <LeadProfilePanel conversation={activeConversation} />
+            ) : (
+              <EmptyProfilePanel />
+            )}
           </aside>
         </div>
       </section>
     </div>
   );
+}
+
+function LeadProfilePanel({ conversation }: { conversation: LiveConversation }) {
+  const decision = conversation.decision;
+  const confidence = decision?.confidence ?? null;
+  const availableFields = profileFields.filter(({ key }) => decision?.qualificationFields[key]);
+  const tags = buildProfileTags(conversation);
+
+  return (
+    <>
+      <div className="border-b border-ink-100 p-5">
+        <div className="flex items-center gap-3">
+          <LeadAvatar conversation={conversation} className="h-12 w-12" />
+          <div className="min-w-0">
+            <h2 className="truncate text-sm font-semibold text-ink-900">
+              {conversation.leadName}
+            </h2>
+            <p className="text-xs text-ink-500">
+              {decision?.leadStage ? humanize(decision.leadStage) : conversation.qualificationStatus}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div className="space-y-5 p-5">
+        {!decision ? (
+          <div className="rounded-2xl border border-dashed border-ink-200 bg-ink-50/70 p-4 text-sm leading-6 text-ink-500">
+            Structured decision data has not been recorded for this lead yet. The profile is using message-derived status until Josh writes an agent decision.
+          </div>
+        ) : null}
+
+        <div className="rounded-2xl border border-ink-100 bg-white p-4">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-ink-400">
+                Lead Temperature
+              </p>
+              <p className="mt-1 text-xs leading-5 text-ink-500">
+                Based on structured confidence, stage, owner alert, and qualification signals.
+              </p>
+            </div>
+            <Flame className="h-4 w-4 text-orange-500" />
+          </div>
+          <div className="mt-4 grid grid-cols-3 gap-2">
+            {(["Cold", "Warm", "Hot"] as LeadTemperature[]).map((temperature) => {
+              const selected = conversation.leadTemperature === temperature;
+              return (
+                <div
+                  key={temperature}
+                  className={cn(
+                    "rounded-xl border px-2 py-2 text-center text-[11px] font-semibold transition-all",
+                    selected ? temperatureClass(temperature) : "border-ink-100 bg-white text-ink-300",
+                    selected && "ring-2 ring-offset-1",
+                    selected && temperature === "Hot" && "ring-orange-100",
+                    selected && temperature === "Warm" && "ring-amber/20",
+                    selected && temperature === "Cold" && "ring-ink-100",
+                  )}
+                >
+                  {temperature === "Hot" ? (
+                    <Flame className="mx-auto mb-1 h-3.5 w-3.5" />
+                  ) : null}
+                  {temperature}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="rounded-2xl border border-ink-100 bg-white p-4">
+          <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-ink-400">
+            <ShieldCheck className="h-3.5 w-3.5" />
+            Qualification score
+          </div>
+          <div className="mt-4 flex items-end justify-between gap-3">
+            <div>
+              <p className="text-3xl font-bold tracking-tight text-ink-900">
+                {confidence !== null ? `${Math.round(confidence * 100)}%` : scoreFallback(conversation.qualificationStatus)}
+              </p>
+              <p className="mt-1 text-xs text-ink-500">
+                {confidence !== null ? "Josh structured-decision confidence" : "Derived from current conversation status"}
+              </p>
+            </div>
+            <span className={cn("rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.12em]", statusBadgeClass(conversation.qualificationStatus))}>
+              {conversation.qualificationStatus}
+            </span>
+          </div>
+          <div className="mt-4 h-2 rounded-full bg-ink-50">
+            <div
+              className="h-2 rounded-full bg-brand-600"
+              style={{ width: `${confidence !== null ? Math.round(confidence * 100) : scoreFallbackPercent(conversation.qualificationStatus)}%` }}
+            />
+          </div>
+        </div>
+
+        <div className="rounded-2xl border border-ink-100 bg-white p-4">
+          <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-ink-400">
+            <FileText className="h-3.5 w-3.5" />
+            Key info collected
+          </div>
+          <div className="mt-4 space-y-2">
+            {availableFields.length > 0 ? (
+              availableFields.map(({ key, label }) => (
+                <div key={key} className="rounded-xl bg-ink-50 px-3 py-2">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-ink-400">{label}</p>
+                  <p className="mt-0.5 text-sm font-medium leading-5 text-ink-800">{decision?.qualificationFields[key]}</p>
+                </div>
+              ))
+            ) : (
+              <p className="rounded-xl bg-ink-50 px-3 py-3 text-sm leading-6 text-ink-500">
+                Josh has not collected budget, authority, need, timeline, or location yet.
+              </p>
+            )}
+          </div>
+          {decision?.missingFields.length ? (
+            <div className="mt-3 rounded-xl border border-amber/20 bg-amber/10 px-3 py-2">
+              <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-amber">Missing</p>
+              <p className="mt-1 text-xs leading-5 text-ink-600">
+                {decision.missingFields.map(humanize).join(", ")}
+              </p>
+            </div>
+          ) : null}
+        </div>
+
+        <div className="rounded-2xl border border-ink-100 bg-white p-4">
+          <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-ink-400">
+            <Tags className="h-3.5 w-3.5" />
+            Tags
+          </div>
+          <div className="mt-4 flex flex-wrap gap-2">
+            {tags.length > 0 ? (
+              tags.map((tag) => (
+                <span key={tag} className="rounded-full border border-ink-100 bg-ink-50 px-2.5 py-1 text-[11px] font-semibold text-ink-600">
+                  {tag}
+                </span>
+              ))
+            ) : (
+              <p className="text-sm text-ink-500">No structured tags yet.</p>
+            )}
+          </div>
+        </div>
+
+        {decision?.nextAction ? (
+          <div className="rounded-2xl border border-brand-100 bg-brand-50 p-4">
+            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-brand-700">Next action</p>
+            <p className="mt-2 text-sm font-medium leading-6 text-ink-800">{humanize(decision.nextAction)}</p>
+          </div>
+        ) : null}
+
+        <button
+          type="button"
+          disabled
+          className="w-full rounded-xl bg-ink-100 px-4 py-3 text-sm font-semibold text-ink-400"
+        >
+          Take over conversation
+        </button>
+
+        <div>
+          <label className="text-xs font-semibold uppercase tracking-[0.16em] text-ink-400">
+            Notes
+          </label>
+          <textarea
+            disabled
+            placeholder="Notes become available once manual owner handoff is enabled."
+            className="mt-2 h-28 w-full resize-none rounded-2xl border border-ink-100 bg-ink-50 px-3 py-3 text-sm text-ink-500 outline-none placeholder:text-ink-400"
+          />
+        </div>
+      </div>
+    </>
+  );
+}
+
+function EmptyProfilePanel() {
+  return (
+    <>
+      <div className="border-b border-ink-100 p-5">
+        <div className="flex items-center gap-3">
+          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-ink-50 text-ink-300">
+            <UserRound className="h-5 w-5" />
+          </div>
+          <div>
+            <h2 className="text-sm font-semibold text-ink-900">
+              Lead profile
+            </h2>
+            <p className="text-xs text-ink-500">No conversation selected</p>
+          </div>
+        </div>
+      </div>
+      <div className="p-5">
+        <div className="rounded-2xl border border-dashed border-ink-200 bg-ink-50/70 p-4 text-sm text-ink-500">
+          Select a lead to view profile details from Josh&apos;s structured decisions.
+        </div>
+      </div>
+    </>
+  );
+}
+
+function LeadAvatar({ conversation, className }: { conversation: LiveConversation; className?: string }) {
+  return conversation.leadAvatarUrl ? (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={conversation.leadAvatarUrl}
+      alt=""
+      className={cn("shrink-0 rounded-full object-cover", className)}
+    />
+  ) : (
+    <div className={cn("flex shrink-0 items-center justify-center rounded-full bg-ink-50 text-ink-400", className)}>
+      <UserRound className="h-4 w-4" />
+    </div>
+  );
+}
+
+function buildProfileTags(conversation: LiveConversation) {
+  const tags = new Set<string>();
+  tags.add(conversation.qualificationStatus);
+  if (conversation.leadTemperature) tags.add(conversation.leadTemperature);
+  if (conversation.decision?.leadStage) tags.add(humanize(conversation.decision.leadStage));
+  if (conversation.decision?.ownerAlert) tags.add("Owner alert");
+  for (const flag of conversation.decision?.riskFlags ?? []) tags.add(`Risk: ${humanize(flag)}`);
+  return [...tags];
+}
+
+function scoreFallback(status: LiveConversation["qualificationStatus"]) {
+  switch (status) {
+    case "Qualified":
+      return "80%";
+    case "Qualifying":
+      return "55%";
+    case "Unqualified":
+      return "20%";
+    case "New":
+    default:
+      return "10%";
+  }
+}
+
+function scoreFallbackPercent(status: LiveConversation["qualificationStatus"]) {
+  return Number(scoreFallback(status).replace("%", ""));
+}
+
+function humanize(value: string) {
+  return value
+    .replace(/[_-]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .replace(/\b\w/g, (letter) => letter.toUpperCase());
 }
 
 function statusBadgeClass(status: LiveConversation["qualificationStatus"]) {
@@ -593,23 +850,4 @@ function temperatureClass(temperature: LeadTemperature) {
     default:
       return "border-ink-100 bg-ink-50 text-ink-500";
   }
-}
-
-function ProfilePlaceholder({
-  icon: Icon,
-  label,
-}: {
-  icon: LucideIcon;
-  label: string;
-}) {
-  return (
-    <div className="rounded-2xl border border-ink-100 bg-white p-4">
-      <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-ink-400">
-        <Icon className="h-3.5 w-3.5" />
-        {label}
-      </div>
-      <div className="mt-3 h-2 w-2/3 rounded-full bg-ink-100" />
-      <div className="mt-2 h-2 w-1/2 rounded-full bg-ink-50" />
-    </div>
-  );
 }

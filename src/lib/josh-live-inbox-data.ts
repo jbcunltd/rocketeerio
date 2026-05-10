@@ -1,5 +1,12 @@
 import postgres from "postgres";
-import type { LiveConversation, QualificationStatus } from "@/lib/josh-live-inbox-types";
+import type {
+  LiveConversation,
+  LiveConversationMessage,
+  MessageDirection,
+  QualificationStatus,
+  StructuredLeadDecision,
+  StructuredQualificationFields,
+} from "@/lib/josh-live-inbox-types";
 
 type LiveInboxLoadResult = {
   conversations: LiveConversation[];
@@ -22,6 +29,19 @@ type RawConversationRow = {
   qualification_data: unknown;
   ai_enabled: boolean | null;
   ai_turns: number | string | null;
+  messages: unknown;
+};
+
+type AgentDecisionColumn = {
+  column_name: string;
+  data_type: string;
+  udt_name: string;
+};
+
+type AgentDecisionRow = {
+  sender_psid: string;
+  decision_data: unknown;
+  decision_at: Date | string | null;
 };
 
 type MetaUserProfile = {
@@ -74,16 +94,13 @@ async function fetchMetaUserProfile(
   psid: string,
   pageAccessToken: string,
 ): Promise<MetaUserProfile> {
-  // Initialize cache if needed
   if (!globalThis.__rocketeerioProfileCache) {
     globalThis.__rocketeerioProfileCache = new Map();
   }
 
-  // Return cached result if available
   const cached = globalThis.__rocketeerioProfileCache.get(psid);
   if (cached) return cached;
 
-  // Skip non-numeric PSIDs (test/smoke data)
   if (!/^\d+$/.test(psid)) {
     const empty: MetaUserProfile = {};
     globalThis.__rocketeerioProfileCache.set(psid, empty);
@@ -125,9 +142,6 @@ async function fetchMetaUserProfile(
   }
 }
 
-/**
- * Get the page access token from the pages table for a given page_id.
- */
 async function getPageAccessToken(
   sql: postgres.Sql,
   pageId: string,
@@ -196,6 +210,22 @@ export async function loadLiveInboxConversations(
         FROM message_rows
         GROUP BY page_id, sender_psid
       ),
+      message_threads AS (
+        SELECT
+          page_id,
+          sender_psid,
+          jsonb_agg(
+            jsonb_build_object(
+              'id', id::text,
+              'direction', direction,
+              'content', content,
+              'timestamp', message_at
+            )
+            ORDER BY message_at ASC, id ASC
+          ) AS messages
+        FROM message_rows
+        GROUP BY page_id, sender_psid
+      ),
       latest_state AS (
         SELECT DISTINCT ON (page_id, psid)
           page_id,
@@ -226,11 +256,15 @@ export async function loadLiveInboxConversations(
         s.qualification_score,
         s.qualification_data,
         s.ai_enabled,
-        s.ai_turns
+        s.ai_turns,
+        COALESCE(t.messages, '[]'::jsonb) AS messages
       FROM message_rollups r
       JOIN latest_messages l
         ON l.page_id = r.page_id
        AND l.sender_psid = r.sender_psid
+      LEFT JOIN message_threads t
+        ON t.page_id = r.page_id
+       AND t.sender_psid = r.sender_psid
       LEFT JOIN latest_state s
         ON s.page_id = r.page_id
        AND s.psid = r.sender_psid
@@ -238,10 +272,11 @@ export async function loadLiveInboxConversations(
       LIMIT ${limit}
     `;
 
+    const psids = rows.map((row) => row.sender_psid);
+    const decisionsByPsid = await loadLatestAgentDecisions(sql, pageId, psids);
     let profiles: MetaUserProfile[] = rows.map(() => ({}));
 
     try {
-      // Fetch the page access token to resolve lead names from Meta.
       const pageAccessToken = await getPageAccessToken(sql, pageId);
 
       if (!pageAccessToken) {
@@ -249,8 +284,6 @@ export async function loadLiveInboxConversations(
           pageId,
         });
       } else {
-        // Resolve names for all conversations in parallel. Individual profile
-        // failures return an empty profile so the inbox can still render.
         profiles = await Promise.all(
           rows.map((row) => fetchMetaUserProfile(row.sender_psid, pageAccessToken)),
         );
@@ -263,7 +296,9 @@ export async function loadLiveInboxConversations(
     }
 
     return {
-      conversations: rows.map((row, i) => mapConversationRow(row, profiles[i])),
+      conversations: rows.map((row, i) =>
+        mapConversationRow(row, profiles[i], decisionsByPsid.get(row.sender_psid) ?? null),
+      ),
       unavailable: false,
     };
   } catch (error) {
@@ -272,12 +307,88 @@ export async function loadLiveInboxConversations(
   }
 }
 
-function mapConversationRow(row: RawConversationRow, profile?: MetaUserProfile): LiveConversation {
-  const qualificationStatus = mapQualificationStatus(row);
-  const isHot = isHotLead(row, qualificationStatus);
-  const latestAt = toDate(row.latest_at);
+async function loadLatestAgentDecisions(
+  sql: postgres.Sql,
+  pageId: string,
+  psids: string[],
+): Promise<Map<string, StructuredLeadDecision>> {
+  const decisions = new Map<string, StructuredLeadDecision>();
+  if (psids.length === 0) return decisions;
 
-  // Resolve lead name: prefer Meta profile name, then contact ID, then PSID fallback
+  try {
+    const columns = await sql<AgentDecisionColumn[]>`
+      SELECT column_name, data_type, udt_name
+      FROM information_schema.columns
+      WHERE table_schema = 'public'
+        AND table_name = 'agent_decisions'
+    `;
+
+    if (columns.length === 0) {
+      console.warn("[josh inbox] agent_decisions table not found; profile decisions unavailable");
+      return decisions;
+    }
+
+    const columnNames = new Set(columns.map((column) => column.column_name));
+    const pageColumn = pickColumn(columnNames, ["page_id", "pageId", "facebook_page_id"]);
+    const psidColumn = pickColumn(columnNames, ["sender_psid", "psid", "lead_psid", "recipient_psid", "contact_psid"]);
+    const updatedColumn = pickColumn(columnNames, ["updated_at", "created_at", "decision_at", "timestamp"]);
+    const idColumn = pickColumn(columnNames, ["id"]);
+
+    if (!psidColumn) {
+      console.warn("[josh inbox] agent_decisions table has no recognized PSID column", {
+        columns: [...columnNames],
+      });
+      return decisions;
+    }
+
+    const pagePredicate = pageColumn
+      ? `AND ${quoteIdent(pageColumn)}::text = $1`
+      : "";
+    const psidParamIndex = pageColumn ? 2 : 1;
+    const selectedTimestamp = updatedColumn ? quoteIdent(updatedColumn) : "NULL";
+    const distinctColumns = pageColumn
+      ? `${quoteIdent(pageColumn)}::text, ${quoteIdent(psidColumn)}::text`
+      : `${quoteIdent(psidColumn)}::text`;
+    const orderColumns = [
+      pageColumn ? `${quoteIdent(pageColumn)}::text` : null,
+      `${quoteIdent(psidColumn)}::text`,
+      updatedColumn ? `${quoteIdent(updatedColumn)} DESC NULLS LAST` : null,
+      idColumn ? `${quoteIdent(idColumn)} DESC` : null,
+    ].filter(Boolean).join(", ");
+    const query = `
+      SELECT DISTINCT ON (${distinctColumns})
+        ${quoteIdent(psidColumn)}::text AS sender_psid,
+        to_jsonb(agent_decisions) AS decision_data,
+        ${selectedTimestamp} AS decision_at
+      FROM agent_decisions
+      WHERE ${quoteIdent(psidColumn)}::text = ANY($${psidParamIndex}::text[])
+        ${pagePredicate}
+      ORDER BY ${orderColumns}
+    `;
+    const params = pageColumn ? [pageId, psids] : [psids];
+    const rows = await sql.unsafe<AgentDecisionRow[]>(query, params);
+
+    for (const row of rows) {
+      const decision = normalizeAgentDecision(row.decision_data, row.decision_at);
+      if (decision) decisions.set(row.sender_psid, decision);
+    }
+  } catch (error) {
+    console.error("[josh inbox] structured decision load failed", error);
+  }
+
+  return decisions;
+}
+
+function mapConversationRow(
+  row: RawConversationRow,
+  profile?: MetaUserProfile,
+  decision?: StructuredLeadDecision | null,
+): LiveConversation {
+  const qualificationStatus = mapQualificationStatus(row, decision);
+  const isHot = isHotLead(row, qualificationStatus, decision);
+  const latestAt = toDate(row.latest_at);
+  const leadTemperature = mapLeadTemperature(qualificationStatus, decision, isHot);
+
   let leadName: string;
   if (profile?.first_name) {
     leadName = profile.last_name
@@ -288,23 +399,62 @@ function mapConversationRow(row: RawConversationRow, profile?: MetaUserProfile):
   } else if (/^\d+$/.test(row.sender_psid)) {
     leadName = `Messenger lead ${lastDigits(row.sender_psid)}`;
   } else {
-    // Test/smoke data — show as-is but cleaned up
     leadName = `Test: ${row.sender_psid.slice(0, 20)}`;
   }
 
   return {
     id: row.conversation_id ? String(row.conversation_id) : `${row.sender_psid}`,
+    leadPsid: row.sender_psid,
     leadName,
     leadAvatarUrl: profile?.profile_pic ?? null,
     lastMessagePreview: buildPreview(row.latest_content, row.latest_direction),
     timestampLabel: formatTimestampLabel(latestAt),
     qualificationStatus,
     isHot,
-    leadTemperature: isHot ? "Hot" : qualificationStatus === "Qualifying" ? "Warm" : "Cold",
+    leadTemperature,
+    messages: mapThreadMessages(row.messages),
+    decision: decision ?? null,
   };
 }
 
-function mapQualificationStatus(row: RawConversationRow): QualificationStatus {
+function mapThreadMessages(value: unknown): LiveConversationMessage[] {
+  if (!Array.isArray(value)) return [];
+
+  return value
+    .map((item): LiveConversationMessage | null => {
+      if (!isRecord(item)) return null;
+      const direction = normalizeDirection(item.direction);
+      const content = asString(item.content)?.trim();
+      if (!direction || !content) return null;
+      const timestamp = toDate(item.timestamp as Date | string | null);
+
+      return {
+        id: asString(item.id) ?? `${direction}-${timestamp?.toISOString() ?? Math.random().toString(36).slice(2)}`,
+        direction,
+        content,
+        timestampLabel: formatTimestampLabel(timestamp),
+        timestampIso: timestamp?.toISOString() ?? null,
+      };
+    })
+    .filter((message): message is LiveConversationMessage => Boolean(message));
+}
+
+function normalizeDirection(value: unknown): MessageDirection | null {
+  return value === "inbound" || value === "outbound" ? value : null;
+}
+
+function mapQualificationStatus(
+  row: RawConversationRow,
+  decision?: StructuredLeadDecision | null,
+): QualificationStatus {
+  const stage = normalizeStage(decision?.leadStage);
+  const confidence = decision?.confidence ?? null;
+
+  if (stage && /qualified|ready|booked|closed/.test(stage)) return "Qualified";
+  if (stage && /unqualified|disqualified|lost/.test(stage)) return "Unqualified";
+  if (typeof confidence === "number" && confidence >= 0.75) return "Qualified";
+  if (typeof confidence === "number" && confidence >= 0.35) return "Qualifying";
+
   if (row.qualification_score === "HIGH") return "Qualified";
   if (row.qualification_score === "MEDIUM") return "Qualifying";
   if (row.qualification_score === "LOW") return "Unqualified";
@@ -315,15 +465,185 @@ function mapQualificationStatus(row: RawConversationRow): QualificationStatus {
   return "New";
 }
 
-function isHotLead(row: RawConversationRow, status: QualificationStatus) {
-  if (row.qualification_score === "HIGH" || status === "Qualified") return true;
+function isHotLead(
+  row: RawConversationRow,
+  status: QualificationStatus,
+  decision?: StructuredLeadDecision | null,
+) {
+  if (status === "Qualified") return true;
+  if (typeof decision?.confidence === "number" && decision.confidence >= 0.7) return true;
+  if (decision?.ownerAlert) return true;
 
-  const data = isRecord(row.qualification_data) ? row.qualification_data : {};
-  const serializedData = JSON.stringify(data).toLowerCase();
+  const structuredData = JSON.stringify({
+    decision,
+    qualificationData: isRecord(row.qualification_data) ? row.qualification_data : {},
+  }).toLowerCase();
   const latestContent = (row.latest_content ?? "").toLowerCase();
   const hotSignals = /\b(price|pricing|rate|rates|budget|available|availability|book|booking|reserve|reservation|schedule|visit|ocular|call|event date|wedding|debut|corporate|quote|package)\b/;
 
-  return hotSignals.test(latestContent) || hotSignals.test(serializedData);
+  return hotSignals.test(latestContent) || hotSignals.test(structuredData);
+}
+
+function mapLeadTemperature(
+  status: QualificationStatus,
+  decision: StructuredLeadDecision | null | undefined,
+  isHot: boolean,
+) {
+  if (isHot || status === "Qualified") return "Hot";
+  if (status === "Qualifying") return "Warm";
+  if (typeof decision?.confidence === "number" && decision.confidence >= 0.35) return "Warm";
+  return "Cold";
+}
+
+function normalizeAgentDecision(value: unknown, decisionAt: Date | string | null): StructuredLeadDecision | null {
+  const row = isRecord(value) ? value : null;
+  if (!row) return null;
+  const source = extractDecisionSource(row);
+  if (!source) return null;
+
+  const qualificationFields = normalizeQualificationFields(
+    firstRecord(source, ["qualification_fields", "qualificationFields", "fields", "lead_profile", "leadProfile"]),
+    source,
+  );
+  const confidence = normalizeConfidence(firstValue(source, ["confidence", "score", "qualification_score", "qualificationScore"]));
+  const decision: StructuredLeadDecision = {
+    leadStage: asString(firstValue(source, ["lead_stage", "leadStage", "stage", "status"])),
+    confidence,
+    qualificationFields,
+    missingFields: normalizeStringList(firstValue(source, ["missing_fields", "missingFields", "missing", "missing_qualification_fields"])),
+    nextAction: asString(firstValue(source, ["next_action", "nextAction", "action"])),
+    ownerAlert: normalizeBoolean(firstValue(source, ["owner_alert", "ownerAlert", "alert_owner", "escalate"])),
+    riskFlags: normalizeStringList(firstValue(source, ["risk_flags", "riskFlags", "risks", "flags"])),
+    updatedAtLabel: formatTimestampLabel(toDate(decisionAt)),
+  };
+
+  const hasUsefulData = Boolean(
+    decision.leadStage ||
+      decision.confidence !== null ||
+      Object.values(decision.qualificationFields).some(Boolean) ||
+      decision.missingFields.length > 0 ||
+      decision.nextAction ||
+      decision.ownerAlert !== null ||
+      decision.riskFlags.length > 0,
+  );
+
+  return hasUsefulData ? decision : null;
+}
+
+function extractDecisionSource(row: Record<string, unknown>) {
+  const candidates = [
+    "decision",
+    "decision_json",
+    "structured_decision",
+    "structuredDecision",
+    "output",
+    "result",
+    "payload",
+    "data",
+  ];
+
+  for (const key of candidates) {
+    const candidate = row[key];
+    if (isRecord(candidate) && looksLikeDecision(candidate)) return candidate;
+  }
+
+  if (looksLikeDecision(row)) return row;
+
+  for (const key of candidates) {
+    const candidate = row[key];
+    if (typeof candidate === "string") {
+      try {
+        const parsed: unknown = JSON.parse(candidate);
+        if (isRecord(parsed) && looksLikeDecision(parsed)) return parsed;
+      } catch {
+        // Ignore non-JSON text payloads.
+      }
+    }
+  }
+
+  return row;
+}
+
+function looksLikeDecision(value: Record<string, unknown>) {
+  return [
+    "lead_stage",
+    "leadStage",
+    "qualification_fields",
+    "qualificationFields",
+    "confidence",
+    "missing_fields",
+    "missingFields",
+    "next_action",
+    "nextAction",
+    "owner_alert",
+    "ownerAlert",
+    "risk_flags",
+    "riskFlags",
+  ].some((key) => key in value);
+}
+
+function normalizeQualificationFields(
+  nested: Record<string, unknown> | null,
+  source: Record<string, unknown>,
+): StructuredQualificationFields {
+  const read = (keys: string[]) => asString(firstValue(nested ?? source, keys));
+  return {
+    budget: read(["budget"]),
+    authority: read(["authority", "decision_maker", "decisionMaker"]),
+    need: read(["need", "use_case", "useCase", "reason"]),
+    timeline: read(["timeline", "event_date", "eventDate", "date"]),
+    location: read(["location", "venue", "city", "area"]),
+  };
+}
+
+function firstRecord(source: Record<string, unknown>, keys: string[]) {
+  const value = firstValue(source, keys);
+  return isRecord(value) ? value : null;
+}
+
+function firstValue(source: Record<string, unknown>, keys: string[]) {
+  for (const key of keys) {
+    if (key in source) return source[key];
+  }
+  return null;
+}
+
+function normalizeConfidence(value: unknown) {
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return value > 1 && value <= 100 ? value / 100 : clamp(value, 0, 1);
+  }
+  if (typeof value === "string") {
+    const parsed = Number(value.replace("%", "").trim());
+    if (Number.isFinite(parsed)) return parsed > 1 ? clamp(parsed / 100, 0, 1) : clamp(parsed, 0, 1);
+  }
+  return null;
+}
+
+function normalizeBoolean(value: unknown) {
+  if (typeof value === "boolean") return value;
+  if (typeof value === "string") {
+    const normalized = value.trim().toLowerCase();
+    if (["true", "yes", "1"].includes(normalized)) return true;
+    if (["false", "no", "0"].includes(normalized)) return false;
+  }
+  return null;
+}
+
+function normalizeStringList(value: unknown) {
+  if (Array.isArray(value)) {
+    return value.map((item) => asString(item)?.trim()).filter((item): item is string => Boolean(item));
+  }
+  if (typeof value === "string") {
+    return value
+      .split(/[,\n]/)
+      .map((item) => item.trim())
+      .filter(Boolean);
+  }
+  return [];
+}
+
+function normalizeStage(value: string | null | undefined) {
+  return value?.trim().toLowerCase().replace(/[\s-]+/g, "_") ?? null;
 }
 
 function buildPreview(content: string | null, direction: RawConversationRow["latest_direction"]) {
@@ -363,6 +683,24 @@ function lastDigits(value: string) {
 function maskPsid(value: string) {
   if (value.length <= 6) return "******";
   return `…${value.slice(-6)}`;
+}
+
+function pickColumn(columnNames: Set<string>, candidates: string[]) {
+  return candidates.find((candidate) => columnNames.has(candidate)) ?? null;
+}
+
+function quoteIdent(identifier: string) {
+  return `"${identifier.replace(/"/g, '""')}"`;
+}
+
+function asString(value: unknown) {
+  if (typeof value === "string") return value;
+  if (typeof value === "number" || typeof value === "boolean") return String(value);
+  return null;
+}
+
+function clamp(value: number, min: number, max: number) {
+  return Math.min(max, Math.max(min, value));
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
