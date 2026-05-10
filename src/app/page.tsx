@@ -112,6 +112,33 @@ const RESPONSIBILITIES = [
   "Represent your business honestly and never pretend to be human if someone asks.",
 ];
 
+const TEAMMATES = [
+  {
+    initials: "C",
+    name: "Carla",
+    role: "Customer Service AI",
+    description: "Handles post-sale support, FAQs, and order status so customers never feel ignored.",
+  },
+  {
+    initials: "R",
+    name: "Rob",
+    role: "Marketing AI",
+    description: "Creates ad copy, suggests audiences, and optimizes spend across campaigns.",
+  },
+  {
+    initials: "T",
+    name: "Toni",
+    role: "Content AI",
+    description: "Writes posts, captions, and stories that keep your pages active and consistent.",
+  },
+  {
+    initials: "B",
+    name: "Bon",
+    role: "Design AI",
+    description: "Creates graphics, thumbnails, and ad creatives that match your offer.",
+  },
+];
+
 export default function HomePage() {
   const faqSchema = {
     "@context": "https://schema.org",
@@ -516,6 +543,55 @@ export default function HomePage() {
                 No credit card · Cancel anytime · 14-day money-back guarantee
               </p>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* TEAM COMING */}
+      <section className="py-20 sm:py-28" aria-labelledby="team-coming-heading">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="mx-auto max-w-3xl text-center">
+            <Eyebrow>More AI teammates are coming</Eyebrow>
+            <h2
+              id="team-coming-heading"
+              className="mt-4 text-3xl font-bold leading-tight tracking-tight text-ink-900 sm:text-4xl lg:text-5xl"
+            >
+              Josh is the first hire. The rest of the crew is on deck.
+            </h2>
+            <p className="mt-4 text-base leading-relaxed text-ink-600 sm:text-lg">
+              Rocketeerio is building a roster of focused AI teammates for the work around every lead: support, marketing, content, and design.
+            </p>
+          </div>
+
+          <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+            {TEAMMATES.map((teammate) => (
+              <article
+                key={teammate.name}
+                className="group relative overflow-hidden rounded-3xl border border-ink-100 bg-white p-6 shadow-sm transition-all hover:-translate-y-1 hover:border-brand-200 hover:shadow-lg hover:shadow-brand-500/10"
+              >
+                <div
+                  aria-hidden
+                  className="absolute -right-12 -top-12 h-28 w-28 rounded-full bg-brand-100/70 blur-2xl transition-transform group-hover:scale-125"
+                />
+                <div className="relative flex items-start justify-between gap-4">
+                  <div className="grid h-16 w-16 place-items-center rounded-full bg-gradient-to-br from-brand-100 via-white to-brand-200 text-xl font-bold text-brand-700 ring-1 ring-brand-200 shadow-inner">
+                    {teammate.initials}
+                  </div>
+                  <span className="rounded-full bg-brand-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-brand-700 ring-1 ring-brand-100">
+                    Joining soon
+                  </span>
+                </div>
+                <div className="relative mt-6">
+                  <h3 className="text-xl font-bold text-ink-900">{teammate.name}</h3>
+                  <p className="mt-1 text-sm font-semibold text-brand-700">
+                    {teammate.role}
+                  </p>
+                  <p className="mt-3 text-sm leading-relaxed text-ink-600">
+                    {teammate.description}
+                  </p>
+                </div>
+              </article>
+            ))}
           </div>
         </div>
       </section>

@@ -4,6 +4,7 @@ import { CheckCircle2, MessageCircleHeart, PauseCircle } from "lucide-react";
 import { db } from "@/lib/db";
 import { facebookPageTable, type DbFacebookPage } from "@/lib/db/schema";
 import { getCurrentSession } from "@/lib/auth/cookies";
+import { UpgradeModal } from "@/components/dashboard/upgrade-modal";
 import { disconnectPageAction } from "../settings/actions";
 
 export const dynamic = "force-dynamic";
@@ -34,12 +35,7 @@ export default async function ConnectedPagesPage() {
             Facebook Pages currently connected to Rocketeerio.
           </p>
         </div>
-        <Link
-          href="/api/facebook/pages"
-          className="inline-flex items-center gap-2 rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm shadow-brand-500/30 hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-brand-500/40"
-        >
-          Connect another Page
-        </Link>
+        <UpgradeModal triggerLabel="Connect Another Page" />
       </header>
 
       {pages.length === 0 ? (

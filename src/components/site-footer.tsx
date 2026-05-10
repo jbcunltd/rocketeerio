@@ -96,7 +96,7 @@ export function SiteFooter() {
         <div className="mt-12 flex flex-col items-start justify-between gap-4 border-t border-ink-100 pt-6 text-xs text-ink-700 sm:flex-row sm:items-center">
           <p>
             &copy; {new Date().getFullYear()} Rocketeerio. All rights reserved.
-            Built for businesses that live and die by Facebook leads.
+            Built by Bo, Manny, Dex, and Jim. For businesses that live and die by Facebook leads.
           </p>
           <a
             href="mailto:hello@rocketeerio.com"

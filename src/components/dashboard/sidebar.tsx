@@ -14,6 +14,7 @@ import {
   X,
 } from "lucide-react";
 import { Logo } from "@/components/logo";
+import { UpgradeModal } from "@/components/dashboard/upgrade-modal";
 import { cn } from "@/lib/utils";
 
 const NAV = [
@@ -85,6 +86,29 @@ function NavList({
         );
       })}
     </nav>
+  );
+}
+
+function SidebarUpgradePrompt() {
+  return (
+    <div className="px-3 pb-4">
+      <div className="rounded-2xl border border-brand-100 bg-brand-50/60 p-3">
+        <p className="text-xs font-semibold uppercase tracking-wide text-brand-700">
+          Premium feature
+        </p>
+        <p className="mt-1 text-sm font-medium leading-snug text-ink-900">
+          Need Josh on another Page?
+        </p>
+        <p className="mt-1 text-xs leading-relaxed text-ink-600">
+          Upgrade from Free to cover more inboxes.
+        </p>
+        <UpgradeModal
+          triggerLabel="Connect Another Page"
+          triggerVariant="sidebar"
+          triggerClassName="mt-3"
+        />
+      </div>
+    </div>
   );
 }
 
@@ -164,6 +188,7 @@ export function Sidebar({ user, onLogout }: SidebarProps) {
           <Logo href="/dashboard" />
         </div>
         <NavList pathname={pathname} />
+        <SidebarUpgradePrompt />
         <UserBlock user={user} onLogout={onLogout} />
       </aside>
 
@@ -187,6 +212,7 @@ export function Sidebar({ user, onLogout }: SidebarProps) {
               </button>
             </div>
             <NavList pathname={pathname} onClick={() => setOpen(false)} />
+            <SidebarUpgradePrompt />
             <UserBlock user={user} onLogout={onLogout} />
           </div>
         </div>

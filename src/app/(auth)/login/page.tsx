@@ -57,12 +57,12 @@ export default async function LoginPage({
       <LoginForm action={loginAction} />
 
       <p className="mt-6 text-center text-sm text-ink-600">
-        Don&apos;t have an account?{" "}
+        Ready to put Josh to work?{" "}
         <Link
           href="/signup"
           className="font-semibold text-brand-600 hover:text-brand-700"
         >
-          Sign up
+          Hire Josh
         </Link>
       </p>
     </div>

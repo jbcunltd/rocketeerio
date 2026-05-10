@@ -22,9 +22,9 @@ export function MessengerChatPlugin() {
     window.fbAsyncInit = function () {
       if (window.FB) {
         window.FB.init({
-          appId: "YOUR_APP_ID", // Meta will handle this via the plugin
+          appId: "1730113521290436",
           xfbml: true,
-          version: "v18.0",
+          version: "v21.0",
         });
       }
     };
@@ -34,7 +34,7 @@ export function MessengerChatPlugin() {
     script.async = true;
     script.defer = true;
     script.crossOrigin = "anonymous";
-    script.src = "https://connect.facebook.net/en_US/sdk.js#xfbml=1&version=v18.0";
+    script.src = "https://connect.facebook.net/en_US/sdk.js#xfbml=1&version=v21.0";
     document.body.appendChild(script);
 
     return () => {
