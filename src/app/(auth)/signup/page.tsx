@@ -23,7 +23,7 @@ export default function SignupPage() {
         </p>
       </div>
 
-      <FacebookButton label="Hire Josh with Facebook" />
+      <FacebookButton label="Hire Josh for Sales with Facebook" />
 
       <div className="my-6 flex items-center gap-3">
         <div className="h-px flex-1 bg-ink-100" />

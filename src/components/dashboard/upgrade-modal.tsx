@@ -105,7 +105,7 @@ export function UpgradeModal({
                 id={titleId}
                 className="mt-4 text-2xl font-bold tracking-tight text-ink-900 sm:text-3xl"
               >
-                Hire Josh for each Page that needs lead coverage.
+                Hire Josh for Sales for each Page that needs lead coverage.
               </h2>
               <p
                 id={descriptionId}
@@ -169,7 +169,7 @@ export function UpgradeModal({
                 href="/pricing"
                 className="inline-flex items-center justify-center gap-2 rounded-xl bg-brand-600 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-brand-500/25 transition-colors hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-brand-500/40"
               >
-                Hire Josh for more Pages
+                Hire Josh for Sales for more Pages
                 <ArrowRight className="h-4 w-4" aria-hidden />
               </Link>
             </div>

@@ -33,7 +33,7 @@ const SITE_URL = "https://rocketeerio.com";
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: "Hire Josh — Your AI Sales Hire",
+    default: "Hire Josh for Sales — Your AI Sales Hire",
     template: "%s | Rocketeerio",
   },
   description:
@@ -56,7 +56,7 @@ export const metadata: Metadata = {
     type: "website",
     url: SITE_URL,
     siteName: "Rocketeerio",
-    title: "Hire Josh — Your AI Sales Hire",
+    title: "Hire Josh for Sales — Your AI Sales Hire",
     description:
       "Josh replies to every Facebook and Instagram lead in under 60 seconds. He qualifies them. He pings you when one's hot.",
     locale: "en_US",
@@ -65,13 +65,13 @@ export const metadata: Metadata = {
         url: "/api/og?title=Hire%20Josh%20%E2%80%94%20Your%20AI%20Sales%20Hire&eyebrow=ROCKETEERIO&kicker=Josh%20replies%20to%20every%20Meta%20lead%20in%20under%2060%20seconds.",
         width: 1200,
         height: 630,
-        alt: "Hire Josh — Your AI Sales Hire",
+        alt: "Hire Josh for Sales — Your AI Sales Hire",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Hire Josh — Your AI Sales Hire",
+    title: "Hire Josh for Sales — Your AI Sales Hire",
     description:
       "Josh replies to every Facebook and Instagram lead in under 60 seconds. He qualifies them. He pings you when one's hot.",
     images: [

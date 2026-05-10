@@ -211,7 +211,7 @@ export default function HomePage() {
                   href="/signup"
                   className="group inline-flex w-full items-center justify-center gap-2 rounded-xl bg-brand-600 px-6 py-3.5 text-base font-semibold text-white shadow-lg shadow-brand-500/30 transition-all hover:bg-brand-700 hover:shadow-xl hover:shadow-brand-500/40 focus:outline-none focus:ring-2 focus:ring-brand-500/40 sm:w-auto"
                 >
-                  Hire Josh
+                  Hire Josh for Sales
                   <ArrowRight className="h-4.5 w-4.5 transition-transform group-hover:translate-x-0.5" />
                 </Link>
                 <Link
@@ -523,7 +523,7 @@ export default function HomePage() {
                 Stop losing leads
               </span>
               <h2 className="mt-4 text-3xl font-bold leading-tight tracking-tight sm:text-4xl lg:text-5xl">
-                Stop losing leads. Hire Josh today.
+                Stop losing leads. Hire Josh for Sales today.
               </h2>
               <p className="mx-auto mt-4 max-w-2xl text-lg text-white/75">
                 Every minute you wait, another Facebook lead goes cold. Setup takes 10 minutes.
@@ -534,7 +534,7 @@ export default function HomePage() {
                   href="/signup"
                   className="inline-flex items-center justify-center gap-2 rounded-xl bg-brand-600 px-6 py-3.5 text-base font-semibold text-white shadow-lg shadow-brand-900/50 transition-colors hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-white/40"
                 >
-                  Hire Josh — Start Free Trial
+                  Hire Josh for Sales — Start Free Trial
                   <ArrowRight className="h-4.5 w-4.5" />
                 </Link>
               </div>

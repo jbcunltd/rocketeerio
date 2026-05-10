@@ -149,7 +149,7 @@ export default function TestimonialsPage() {
               href="/signup"
               className="inline-flex items-center gap-2 rounded-xl bg-brand-600 px-6 py-3.5 text-base font-semibold text-white shadow-lg shadow-brand-500/30 hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-brand-500/40"
             >
-              Hire Josh
+              Hire Josh for Sales
               <ArrowRight className="h-4 w-4" />
             </Link>
             <Link

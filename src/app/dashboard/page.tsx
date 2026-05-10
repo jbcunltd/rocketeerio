@@ -119,7 +119,7 @@ export default async function DashboardPage() {
       {/* No pages connected — onboarding CTA */}
       {pages.length === 0 && (
         <div className="rounded-2xl border border-dashed border-ink-200 bg-white p-6">
-          <h2 className="text-lg font-semibold text-ink-900">Hire Josh on your first Page</h2>
+          <h2 className="text-lg font-semibold text-ink-900">Hire Josh for Sales on your first Page</h2>
           <p className="mt-1.5 text-sm text-ink-600">
             You haven&apos;t connected any Facebook Pages yet. Connect a Page to
             begin qualifying Messenger leads automatically.
