@@ -27,14 +27,21 @@ async function proxyHandbookRequest(req: NextRequest, context: RouteContext) {
 
   const jar = await cookies();
   const sessionToken = jar.get(SESSION_COOKIE_NAME)?.value;
+  const backendAdminToken =
+    process.env.ROCKETEERIO_BACKEND_ADMIN_API_TOKEN?.trim() ||
+    process.env.ADMIN_API_TOKEN?.trim() ||
+    null;
   const headers = new Headers();
   headers.set("Accept", "application/json");
   headers.set("X-Rocketeerio-User-Id", user.id);
   headers.set("X-User-Id", user.id);
   headers.set("X-Rocketeerio-Session-Id", session.id);
 
+  if (backendAdminToken) {
+    headers.set("Authorization", `Bearer ${backendAdminToken}`);
+  }
+
   if (sessionToken) {
-    headers.set("Authorization", `Bearer ${sessionToken}`);
     headers.set("Cookie", `${SESSION_COOKIE_NAME}=${encodeURIComponent(sessionToken)}`);
   }
 

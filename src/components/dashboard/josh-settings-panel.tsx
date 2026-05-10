@@ -226,6 +226,23 @@ export function JoshSettingsPanel({
     return data as T;
   }, []);
 
+  const persistJoshSettings = useCallback(
+    async (payload: Record<string, unknown>) => {
+      const handbookPath = `/api/handbook/${encodeURIComponent(effectivePageId)}`;
+      const handbook = await requestJson<Record<string, unknown>>(handbookPath, { method: "GET" });
+      const flowSettings = extractFlowSettings(handbook);
+
+      await requestJson<Record<string, unknown>>(`${handbookPath}/flow`, {
+        method: "PUT",
+        body: JSON.stringify({
+          ...flowSettings,
+          joshSettings: payload,
+        }),
+      });
+    },
+    [effectivePageId, requestJson],
+  );
+
   const loadSettings = useCallback(async () => {
     if (!effectivePageId) {
       setLoading(false);
@@ -237,7 +254,7 @@ export function JoshSettingsPanel({
 
     try {
       const data = await requestJson<Record<string, unknown>>(
-        `/api/handbook/${encodeURIComponent(effectivePageId)}/settings`,
+        `/api/handbook/${encodeURIComponent(effectivePageId)}`,
         { method: "GET" },
       );
       setSettings(hydrateSettings(data));
@@ -273,13 +290,7 @@ export function JoshSettingsPanel({
 
     setSaving(true);
     try {
-      await requestJson<Record<string, unknown>>(
-        `/api/handbook/${encodeURIComponent(effectivePageId)}/settings`,
-        {
-          method: "PUT",
-          body: JSON.stringify(savePayload),
-        },
-      );
+      await persistJoshSettings(savePayload);
       showToast({ type: "success", message: "Josh settings saved successfully." });
     } catch (err) {
       const message = err instanceof Error ? err.message : "Unable to save Josh settings.";
@@ -302,19 +313,13 @@ export function JoshSettingsPanel({
 
     setResetting(true);
     try {
-      await requestJson<Record<string, unknown>>(
-        `/api/handbook/${encodeURIComponent(effectivePageId)}/settings`,
-        {
-          method: "PUT",
-          body: JSON.stringify({
-            ...savePayload,
-            resetJosh: {
-              clearConversationHistory: true,
-              requestedAt: new Date().toISOString(),
-            },
-          }),
+      await persistJoshSettings({
+        ...savePayload,
+        resetJosh: {
+          clearConversationHistory: true,
+          requestedAt: new Date().toISOString(),
         },
-      );
+      });
       setResetArmed(false);
       showToast({
         type: "success",
@@ -890,10 +895,22 @@ function hydrateSettings(root: Record<string, unknown>): JoshSettings {
 }
 
 function pickSettingsSource(root: Record<string, unknown>): Record<string, unknown> {
-  if (isRecord(root.settings)) return root.settings;
+  const topLevelSettings = isRecord(root.settings) ? root.settings : null;
+  const flowSettings = topLevelSettings && isRecord(topLevelSettings.flow) ? topLevelSettings.flow : null;
+  const dataSettings = isRecord(root.data) && isRecord(root.data.settings) ? root.data.settings : null;
+
+  if (flowSettings && isRecord(flowSettings.joshSettings)) return flowSettings.joshSettings;
+  if (topLevelSettings && isRecord(topLevelSettings.joshSettings)) return topLevelSettings.joshSettings;
   if (isRecord(root.joshSettings)) return root.joshSettings;
+  if (dataSettings && isRecord(dataSettings.joshSettings)) return dataSettings.joshSettings;
   if (isRecord(root.data) && isRecord(root.data.settings)) return root.data.settings;
+  if (topLevelSettings) return topLevelSettings;
   return root;
+}
+
+function extractFlowSettings(root: Record<string, unknown>): Record<string, unknown> {
+  const settings = isRecord(root.settings) ? root.settings : {};
+  return isRecord(settings.flow) ? settings.flow : {};
 }
 
 function normalizeSchedule(value: unknown, fallback: ScheduleDay[]): ScheduleDay[] {

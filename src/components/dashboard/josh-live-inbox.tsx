@@ -25,23 +25,11 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { JoshForSalesTabs } from "@/components/dashboard/josh-for-sales-tabs";
+import type { LeadTemperature, LiveConversation } from "@/lib/josh-live-inbox-types";
 import { cn } from "@/lib/utils";
 
 type InboxPanel = "list" | "thread" | "profile";
 type InboxFilter = "all" | "active" | "hot" | "qualified";
-type LeadTemperature = "Cold" | "Warm" | "Hot";
-
-type LiveConversation = {
-  id: string;
-  leadName: string;
-  leadAvatarUrl?: string | null;
-  lastMessagePreview: string;
-  timestampLabel: string;
-  qualificationStatus: "New" | "Qualifying" | "Qualified" | "Unqualified";
-  isHot?: boolean;
-  leadTemperature?: LeadTemperature;
-};
-
 type JoshLiveInboxProps = {
   pageName: string;
   pagePictureUrl?: string | null;
@@ -62,42 +50,54 @@ const filters: Array<{ id: InboxFilter; label: string }> = [
   { id: "qualified", label: "Qualified" },
 ];
 
-const liveStats: Array<{
+type LiveStat = {
   label: string;
   value: string;
   detail: string;
   icon: LucideIcon;
   tone: "neutral" | "brand" | "hot" | "qualified";
-}> = [
-  {
-    label: "Total Contacts",
-    value: "0",
-    detail: "Everyone who has messaged",
-    icon: Users,
-    tone: "neutral",
-  },
-  {
-    label: "Active Conversations",
-    value: "0",
-    detail: "Currently open threads",
-    icon: MessageCircle,
-    tone: "brand",
-  },
-  {
-    label: "Hot Leads",
-    value: "0",
-    detail: "Pricing, timeline, budget, or call signals",
-    icon: Flame,
-    tone: "hot",
-  },
-  {
-    label: "Qualified Leads",
-    value: "0",
-    detail: "Ready for sales follow-up",
-    icon: ShieldCheck,
-    tone: "qualified",
-  },
-];
+};
+
+function buildLiveStats(conversations: LiveConversation[]): LiveStat[] {
+  const activeCount = conversations.filter((conversation) =>
+    ["New", "Qualifying"].includes(conversation.qualificationStatus),
+  ).length;
+  const hotCount = conversations.filter((conversation) => conversation.isHot).length;
+  const qualifiedCount = conversations.filter(
+    (conversation) => conversation.qualificationStatus === "Qualified",
+  ).length;
+
+  return [
+    {
+      label: "Total Contacts",
+      value: String(conversations.length),
+      detail: "Everyone who has messaged",
+      icon: Users,
+      tone: "neutral",
+    },
+    {
+      label: "Active Conversations",
+      value: String(activeCount),
+      detail: "Currently open threads",
+      icon: MessageCircle,
+      tone: "brand",
+    },
+    {
+      label: "Hot Leads",
+      value: String(hotCount),
+      detail: "Pricing, timeline, budget, or call signals",
+      icon: Flame,
+      tone: "hot",
+    },
+    {
+      label: "Qualified Leads",
+      value: String(qualifiedCount),
+      detail: "Ready for sales follow-up",
+      icon: ShieldCheck,
+      tone: "qualified",
+    },
+  ];
+}
 
 export function JoshLiveInbox({
   pageName,
@@ -107,6 +107,8 @@ export function JoshLiveInbox({
 }: JoshLiveInboxProps) {
   const [activePanel, setActivePanel] = useState<InboxPanel>("list");
   const [activeFilter, setActiveFilter] = useState<InboxFilter>("all");
+
+  const liveStats = useMemo(() => buildLiveStats(conversations), [conversations]);
 
   const visibleConversations = useMemo(() => {
     const sortedConversations = [...conversations].sort((a, b) =>
