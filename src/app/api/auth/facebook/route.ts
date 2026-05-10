@@ -18,6 +18,11 @@ export async function GET(req: NextRequest) {
     url.searchParams.set("redirect_uri", `${origin}/api/auth/facebook/callback`);
     url.searchParams.set("state", state);
     url.searchParams.set("response_type", "code");
+    // Facebook Login for Business requires config_id
+    const configId = process.env.FB_LOGIN_CONFIG_ID;
+    if (configId) {
+      url.searchParams.set("config_id", configId);
+    }
     // Only set scope if we have scopes to request
     // Facebook Login for Business grants basic profile by default
     if (FB_LOGIN_SCOPES.length > 0) {
