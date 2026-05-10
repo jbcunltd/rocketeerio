@@ -74,6 +74,12 @@ export async function loadDashboardConnectedPages(
       .where(eq(facebookPageTable.userId, userId))
       .orderBy(desc(facebookPageTable.connectedAt));
 
+    console.info("[dashboard] facebook_pages lookup", {
+      userId,
+      count: drizzlePages.length,
+      pageIds: drizzlePages.map((page) => page.pageId),
+    });
+
     return {
       pages: drizzlePages.map((page) => ({
         id: page.id,
@@ -93,6 +99,10 @@ export async function loadDashboardConnectedPages(
     );
   }
 
+  return loadDashboardMiddlewarePages();
+}
+
+export async function loadDashboardMiddlewarePages(): Promise<DashboardPageLoadResult> {
   const sql = getDashboardSql();
   if (!sql) return { pages: [], unavailable: true };
 
@@ -110,12 +120,17 @@ export async function loadDashboardConnectedPages(
       ORDER BY updated_at DESC NULLS LAST, created_at DESC NULLS LAST, id DESC
     `;
 
+    console.info("[dashboard] middleware pages lookup", {
+      count: rows.length,
+      pageIds: rows.map((row) => row.page_id),
+    });
+
     return {
       pages: rows.map(mapMiddlewarePageRow),
       unavailable: false,
     };
   } catch (error) {
-    console.error("[dashboard] pages fallback lookup failed", error);
+    console.error("[dashboard] middleware pages lookup failed", error);
     return { pages: [], unavailable: true };
   }
 }
@@ -236,12 +251,32 @@ export async function loadDashboardKpis(
         ) AS avg_message_response_ms
     `;
 
-    const row = rows[0];
+    let row = rows[0];
     if (!row) {
       return {
         kpis: buildUnavailableKpis("No metric rows returned"),
         unavailable: true,
       };
+    }
+
+    console.info("[dashboard] KPI lookup", {
+      pageId,
+      conversations24h: row.conversations_24h,
+      totalContacts: row.total_contacts,
+      hotLeads: row.hot_leads,
+      qualifiedLeads: row.qualified_leads,
+    });
+
+    if (isZeroKpiRow(row)) {
+      const fallbackRow = await loadDashboardKpisWithoutPageFilter(sql);
+      if (fallbackRow && !isZeroKpiRow(fallbackRow)) {
+        console.warn("[dashboard] filtered KPI lookup returned all zeros; using unfiltered middleware metrics", {
+          pageId,
+          fallbackTotalContacts: fallbackRow.total_contacts,
+          fallbackHotLeads: fallbackRow.hot_leads,
+        });
+        row = fallbackRow;
+      }
     }
 
     return {
@@ -255,6 +290,130 @@ export async function loadDashboardKpis(
       unavailable: true,
     };
   }
+}
+
+async function loadDashboardKpisWithoutPageFilter(
+  sql: postgres.Sql,
+): Promise<DashboardKpiRow | null> {
+  try {
+    const rows = await sql<DashboardKpiRow[]>`
+      WITH message_rows AS (
+        SELECT
+          id,
+          page_id,
+          sender_psid,
+          direction,
+          content,
+          COALESCE(timestamp, created_at) AS message_at
+        FROM messages
+      ),
+      latest_messages AS (
+        SELECT DISTINCT ON (page_id, sender_psid)
+          page_id,
+          sender_psid,
+          content AS latest_content,
+          message_at AS latest_at
+        FROM message_rows
+        ORDER BY page_id, sender_psid, message_at DESC, id DESC
+      ),
+      latest_state AS (
+        SELECT DISTINCT ON (page_id, psid)
+          page_id,
+          psid,
+          qualification_score,
+          qualification_data,
+          first_response_ms,
+          updated_at,
+          conversation_id
+        FROM conversation_state
+        ORDER BY page_id, psid, updated_at DESC NULLS LAST, conversation_id DESC NULLS LAST
+      ),
+      response_pairs AS (
+        SELECT
+          inbound.sender_psid,
+          inbound.message_at AS inbound_at,
+          next_outbound.outbound_at
+        FROM message_rows inbound
+        LEFT JOIN LATERAL (
+          SELECT outbound.message_at AS outbound_at
+          FROM message_rows outbound
+          WHERE outbound.page_id = inbound.page_id
+            AND outbound.sender_psid = inbound.sender_psid
+            AND outbound.direction = 'outbound'
+            AND (
+              outbound.message_at > inbound.message_at
+              OR (outbound.message_at = inbound.message_at AND outbound.id > inbound.id)
+            )
+          ORDER BY outbound.message_at ASC, outbound.id ASC
+          LIMIT 1
+        ) next_outbound ON TRUE
+        WHERE inbound.direction = 'inbound'
+      )
+      SELECT
+        (
+          SELECT COUNT(DISTINCT sender_psid)::int
+          FROM message_rows
+          WHERE message_at > NOW() - INTERVAL '24 hours'
+        ) AS conversations_24h,
+        (
+          SELECT COUNT(DISTINCT sender_psid)::int
+          FROM message_rows
+        ) AS total_contacts,
+        (
+          SELECT COUNT(*)::int
+          FROM latest_state s
+          LEFT JOIN latest_messages l
+            ON l.page_id = s.page_id
+           AND l.sender_psid = s.psid
+          WHERE s.qualification_score = 'HIGH'
+             OR COALESCE(l.latest_content, '') ~* ${HOT_SIGNAL_PATTERN}
+             OR NULLIF(BTRIM(COALESCE(s.qualification_data->>'budget', '')), '') IS NOT NULL
+             OR NULLIF(BTRIM(COALESCE(s.qualification_data->>'timeline', '')), '') IS NOT NULL
+             OR COALESCE(s.qualification_data->>'need', '') ~* ${HOT_SIGNAL_PATTERN}
+             OR COALESCE(s.qualification_data->>'reason', '') ~* ${HOT_SIGNAL_PATTERN}
+        ) AS hot_leads,
+        (
+          SELECT COUNT(*)::int
+          FROM latest_state
+          WHERE qualification_score = 'HIGH'
+        ) AS qualified_leads,
+        (
+          SELECT AVG(first_response_ms)::numeric
+          FROM latest_state
+          WHERE first_response_ms IS NOT NULL
+        ) AS avg_first_response_ms,
+        (
+          SELECT AVG(EXTRACT(EPOCH FROM (outbound_at - inbound_at)) * 1000)::numeric
+          FROM response_pairs
+          WHERE outbound_at IS NOT NULL
+            AND outbound_at > inbound_at
+            AND outbound_at <= inbound_at + INTERVAL '1 hour'
+        ) AS avg_message_response_ms
+    `;
+
+    const row = rows[0] ?? null;
+    if (row) {
+      console.info("[dashboard] unfiltered KPI fallback lookup", {
+        conversations24h: row.conversations_24h,
+        totalContacts: row.total_contacts,
+        hotLeads: row.hot_leads,
+        qualifiedLeads: row.qualified_leads,
+      });
+    }
+    return row;
+  } catch (error) {
+    console.error("[dashboard] unfiltered KPI fallback failed", error);
+    return null;
+  }
+}
+
+function isZeroKpiRow(row: DashboardKpiRow) {
+  return (
+    toNumber(row.conversations_24h) === 0 &&
+    toNumber(row.total_contacts) === 0 &&
+    toNumber(row.hot_leads) === 0 &&
+    toNumber(row.qualified_leads) === 0
+  );
 }
 
 function getDashboardSql() {

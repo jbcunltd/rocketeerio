@@ -14,6 +14,7 @@ import { PageSwitcher } from "@/components/dashboard/page-switcher";
 import {
   loadDashboardConnectedPages,
   loadDashboardKpis,
+  loadDashboardMiddlewarePages,
   type DashboardConnectedPage,
 } from "@/lib/dashboard-data";
 
@@ -34,8 +35,12 @@ export default async function DashboardPage() {
     " ",
   )[0];
   const activePage = pages[0] ?? null;
-  const kpiLoad = await loadDashboardKpis(activePage?.pageId ?? null);
-  dbUnavailable = dbUnavailable || kpiLoad.unavailable;
+  const middlewarePageLoad = activePage
+    ? await loadDashboardMiddlewarePages()
+    : { pages: [], unavailable: false };
+  const activeKpiPage = middlewarePageLoad.pages[0] ?? activePage;
+  const kpiLoad = await loadDashboardKpis(activeKpiPage?.pageId ?? null);
+  dbUnavailable = dbUnavailable || middlewarePageLoad.unavailable || kpiLoad.unavailable;
   const dashboardKpis = kpiLoad.kpis;
 
   const metrics = [

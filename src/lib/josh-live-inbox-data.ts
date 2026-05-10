@@ -92,9 +92,16 @@ async function fetchMetaUserProfile(
 
   try {
     const url = `https://graph.facebook.com/v21.0/${psid}?fields=first_name,last_name,profile_pic&access_token=${pageAccessToken}`;
-    const res = await fetch(url, { signal: AbortSignal.timeout(5000) });
+    const res = await fetch(url, { signal: AbortSignal.timeout(10000) });
 
     if (!res.ok) {
+      const errorText = await res.text().catch(() => "");
+      console.warn("[josh inbox] Meta profile lookup failed", {
+        psid: maskPsid(psid),
+        status: res.status,
+        statusText: res.statusText,
+        body: errorText.slice(0, 300),
+      });
       const empty: MetaUserProfile = {};
       globalThis.__rocketeerioProfileCache.set(psid, empty);
       return empty;
@@ -109,11 +116,12 @@ async function fetchMetaUserProfile(
 
     globalThis.__rocketeerioProfileCache.set(psid, profile);
     return profile;
-  } catch {
-    // On any error (timeout, network), return empty and cache it briefly
-    const empty: MetaUserProfile = {};
-    globalThis.__rocketeerioProfileCache.set(psid, empty);
-    return empty;
+  } catch (error) {
+    console.warn("[josh inbox] Meta profile lookup error", {
+      psid: maskPsid(psid),
+      error: error instanceof Error ? error.message : String(error),
+    });
+    return {};
   }
 }
 
@@ -128,8 +136,17 @@ async function getPageAccessToken(
     const rows = await sql<{ page_access_token: string | null }[]>`
       SELECT page_access_token FROM pages WHERE page_id = ${pageId} LIMIT 1
     `;
-    return rows[0]?.page_access_token ?? null;
-  } catch {
+    const token = rows[0]?.page_access_token ?? null;
+    console.info("[josh inbox] page access token lookup", {
+      pageId,
+      found: Boolean(token),
+    });
+    return token;
+  } catch (error) {
+    console.error("[josh inbox] page access token lookup failed", {
+      pageId,
+      error: error instanceof Error ? error.message : String(error),
+    });
     return null;
   }
 }
@@ -221,16 +238,29 @@ export async function loadLiveInboxConversations(
       LIMIT ${limit}
     `;
 
-    // Fetch the page access token to resolve lead names from Meta
-    const pageAccessToken = await getPageAccessToken(sql, pageId);
+    let profiles: MetaUserProfile[] = rows.map(() => ({}));
 
-    // Resolve names for all conversations in parallel
-    const profilePromises = rows.map((row) =>
-      pageAccessToken
-        ? fetchMetaUserProfile(row.sender_psid, pageAccessToken)
-        : Promise.resolve({} as MetaUserProfile),
-    );
-    const profiles = await Promise.all(profilePromises);
+    try {
+      // Fetch the page access token to resolve lead names from Meta.
+      const pageAccessToken = await getPageAccessToken(sql, pageId);
+
+      if (!pageAccessToken) {
+        console.warn("[josh inbox] no page access token available for Meta profile lookup", {
+          pageId,
+        });
+      } else {
+        // Resolve names for all conversations in parallel. Individual profile
+        // failures return an empty profile so the inbox can still render.
+        profiles = await Promise.all(
+          rows.map((row) => fetchMetaUserProfile(row.sender_psid, pageAccessToken)),
+        );
+      }
+    } catch (error) {
+      console.error("[josh inbox] profile resolution failed; using PSID/contact fallbacks", {
+        pageId,
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
 
     return {
       conversations: rows.map((row, i) => mapConversationRow(row, profiles[i])),
@@ -328,6 +358,11 @@ function toDate(value: Date | string | null) {
 
 function lastDigits(value: string) {
   return value.slice(-6) || "unknown";
+}
+
+function maskPsid(value: string) {
+  if (value.length <= 6) return "******";
+  return `…${value.slice(-6)}`;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
