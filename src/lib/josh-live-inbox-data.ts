@@ -50,10 +50,15 @@ type MetaUserProfile = {
   profile_pic?: string;
 };
 
+type CachedMetaUserProfile = {
+  profile: MetaUserProfile;
+  expiresAt: number;
+};
+
 declare global {
   var __rocketeerioLiveInboxSql: postgres.Sql | undefined;
   var __rocketeerioLiveInboxSqlUrl: string | undefined;
-  var __rocketeerioProfileCache: Map<string, MetaUserProfile> | undefined;
+  var __rocketeerioProfileCache: Map<string, CachedMetaUserProfile> | undefined;
 }
 
 function getLiveInboxSql() {
@@ -98,18 +103,23 @@ async function fetchMetaUserProfile(
     globalThis.__rocketeerioProfileCache = new Map();
   }
 
-  const cached = globalThis.__rocketeerioProfileCache.get(psid);
-  if (cached) return cached;
+  const cacheKey = psid;
+  const now = Date.now();
+  const cached = globalThis.__rocketeerioProfileCache.get(cacheKey);
+  if (cached && cached.expiresAt > now) return cached.profile;
 
   if (!/^\d+$/.test(psid)) {
     const empty: MetaUserProfile = {};
-    globalThis.__rocketeerioProfileCache.set(psid, empty);
+    cacheMetaUserProfile(cacheKey, empty, 60 * 60 * 1000);
     return empty;
   }
 
   try {
-    const url = `https://graph.facebook.com/v21.0/${psid}?fields=first_name,last_name,profile_pic&access_token=${pageAccessToken}`;
-    const res = await fetch(url, { signal: AbortSignal.timeout(10000) });
+    const url = new URL(`https://graph.facebook.com/v21.0/${encodeURIComponent(psid)}`);
+    url.searchParams.set("fields", "first_name,last_name,profile_pic");
+    url.searchParams.set("access_token", pageAccessToken);
+
+    const res = await fetch(url, { signal: AbortSignal.timeout(15000) });
 
     if (!res.ok) {
       const errorText = await res.text().catch(() => "");
@@ -120,26 +130,43 @@ async function fetchMetaUserProfile(
         body: errorText.slice(0, 300),
       });
       const empty: MetaUserProfile = {};
-      globalThis.__rocketeerioProfileCache.set(psid, empty);
+      cacheMetaUserProfile(cacheKey, empty, 5 * 60 * 1000);
       return empty;
     }
 
     const data = await res.json();
     const profile: MetaUserProfile = {
-      first_name: data.first_name || undefined,
-      last_name: data.last_name || undefined,
-      profile_pic: data.profile_pic || undefined,
+      first_name: asString(data.first_name)?.trim() || undefined,
+      last_name: asString(data.last_name)?.trim() || undefined,
+      profile_pic: asString(data.profile_pic)?.trim() || undefined,
     };
 
-    globalThis.__rocketeerioProfileCache.set(psid, profile);
+    cacheMetaUserProfile(cacheKey, profile, 60 * 60 * 1000);
     return profile;
   } catch (error) {
     console.warn("[josh inbox] Meta profile lookup error", {
       psid: maskPsid(psid),
       error: error instanceof Error ? error.message : String(error),
     });
-    return {};
+    const empty: MetaUserProfile = {};
+    cacheMetaUserProfile(cacheKey, empty, 5 * 60 * 1000);
+    return empty;
   }
+}
+
+function cacheMetaUserProfile(
+  cacheKey: string,
+  profile: MetaUserProfile,
+  ttlMs: number,
+) {
+  if (!globalThis.__rocketeerioProfileCache) {
+    globalThis.__rocketeerioProfileCache = new Map();
+  }
+
+  globalThis.__rocketeerioProfileCache.set(cacheKey, {
+    profile,
+    expiresAt: Date.now() + ttlMs,
+  });
 }
 
 async function getPageAccessToken(
@@ -148,7 +175,10 @@ async function getPageAccessToken(
 ): Promise<string | null> {
   try {
     const rows = await sql<{ page_access_token: string | null }[]>`
-      SELECT page_access_token FROM pages WHERE page_id = ${pageId} LIMIT 1
+      SELECT NULLIF(BTRIM(page_access_token), '') AS page_access_token
+      FROM pages
+      WHERE page_id = ${pageId}
+      LIMIT 1
     `;
     const token = rows[0]?.page_access_token ?? null;
     console.info("[josh inbox] page access token lookup", {
@@ -297,7 +327,7 @@ export async function loadLiveInboxConversations(
 
     return {
       conversations: rows.map((row, i) =>
-        mapConversationRow(row, profiles[i], decisionsByPsid.get(row.sender_psid) ?? null),
+        mapConversationRow(row, profiles[i], decisionsByPsid.get(row.sender_psid) ?? null, i + 1),
       ),
       unavailable: false,
     };
@@ -383,24 +413,19 @@ function mapConversationRow(
   row: RawConversationRow,
   profile?: MetaUserProfile,
   decision?: StructuredLeadDecision | null,
+  leadNumber = 1,
 ): LiveConversation {
   const qualificationStatus = mapQualificationStatus(row, decision);
   const isHot = isHotLead(row, qualificationStatus, decision);
   const latestAt = toDate(row.latest_at);
   const leadTemperature = mapLeadTemperature(qualificationStatus, decision, isHot);
 
-  let leadName: string;
-  if (profile?.first_name) {
-    leadName = profile.last_name
-      ? `${profile.first_name} ${profile.last_name}`
-      : profile.first_name;
-  } else if (row.contact_id) {
-    leadName = `Contact #${row.contact_id}`;
-  } else if (/^\d+$/.test(row.sender_psid)) {
-    leadName = `Messenger lead ${lastDigits(row.sender_psid)}`;
-  } else {
-    leadName = `Test: ${row.sender_psid.slice(0, 20)}`;
-  }
+  const metaProfileName = buildMetaProfileName(profile);
+  const extractedMessageName = extractLeadNameFromMessages(row.messages);
+  const leadName =
+    metaProfileName && !isPsidStyleLeadName(metaProfileName, row.sender_psid)
+      ? metaProfileName
+      : extractedMessageName ?? `Lead #${leadNumber}`;
 
   return {
     id: row.conversation_id ? String(row.conversation_id) : `${row.sender_psid}`,
@@ -415,6 +440,92 @@ function mapConversationRow(
     messages: mapThreadMessages(row.messages),
     decision: decision ?? null,
   };
+}
+
+function buildMetaProfileName(profile?: MetaUserProfile) {
+  const parts = [profile?.first_name, profile?.last_name]
+    .map((part) => part?.trim())
+    .filter((part): part is string => Boolean(part));
+  return parts.length > 0 ? parts.join(" ") : null;
+}
+
+function isPsidStyleLeadName(name: string, psid: string) {
+  const normalizedName = name.trim().toLowerCase();
+  if (!normalizedName) return true;
+  if (/^(messenger lead|contact #|lead #)/i.test(normalizedName)) return true;
+
+  const digitsOnly = normalizedName.replace(/\D/g, "");
+  return digitsOnly.length >= 6 && psid.includes(digitsOnly);
+}
+
+function extractLeadNameFromMessages(value: unknown) {
+  if (!Array.isArray(value)) return null;
+
+  for (const item of value) {
+    if (!isRecord(item) || normalizeDirection(item.direction) !== "inbound") continue;
+    const content = asString(item.content)?.trim();
+    if (!content) continue;
+
+    const extracted = extractLeadNameFromText(content);
+    if (extracted) return extracted;
+  }
+
+  return null;
+}
+
+function extractLeadNameFromText(content: string) {
+  const normalized = content.replace(/\s+/g, " ").trim();
+  if (normalized.length > 240) return null;
+
+  const patterns = [
+    /\bmy name is\s+([a-z][a-z.'-]*(?:\s+[a-z][a-z.'-]*){0,3})\b/i,
+    /\bi am\s+([a-z][a-z.'-]*(?:\s+[a-z][a-z.'-]*){0,3})\b/i,
+    /\bi'm\s+([a-z][a-z.'-]*(?:\s+[a-z][a-z.'-]*){0,3})\b/i,
+    /\bthis is\s+([a-z][a-z.'-]*(?:\s+[a-z][a-z.'-]*){0,3})\b/i,
+  ];
+
+  for (const pattern of patterns) {
+    const match = normalized.match(pattern);
+    const candidate = cleanLeadNameCandidate(match?.[1]);
+    if (candidate) return candidate;
+  }
+
+  return null;
+}
+
+function cleanLeadNameCandidate(value: string | undefined) {
+  if (!value) return null;
+
+  const candidate = value
+    .replace(/[,.!?;:].*$/, "")
+    .replace(/\b(and|from|of|for|with|asking|looking|interested|inquiring)\b.*$/i, "")
+    .trim();
+
+  if (!isPlausibleLeadName(candidate)) return null;
+  return candidate
+    .split(/\s+/)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
+    .join(" ");
+}
+
+function isPlausibleLeadName(value: string) {
+  if (value.length < 2 || value.length > 60) return false;
+  if (/\d/.test(value)) return false;
+  if (!/^[a-z][a-z.'-]*(?:\s+[a-z][a-z.'-]*){0,3}$/i.test(value)) return false;
+
+  const blocked = new Set([
+    "available",
+    "book",
+    "booking",
+    "interested",
+    "inquiring",
+    "looking",
+    "price",
+    "pricing",
+    "reservation",
+    "schedule",
+  ]);
+  return !blocked.has(value.toLowerCase());
 }
 
 function mapThreadMessages(value: unknown): LiveConversationMessage[] {
@@ -676,9 +787,6 @@ function toDate(value: Date | string | null) {
   return Number.isNaN(date.getTime()) ? null : date;
 }
 
-function lastDigits(value: string) {
-  return value.slice(-6) || "unknown";
-}
 
 function maskPsid(value: string) {
   if (value.length <= 6) return "******";

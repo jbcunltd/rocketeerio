@@ -47,13 +47,26 @@ type MiddlewarePageRow = {
   updated_at: Date | string;
 };
 
-type DashboardKpiRow = {
+type DashboardConversationMetricRow = {
+  sender_psid: string;
+  total_messages: number | string | null;
+  inbound_messages: number | string | null;
+  outbound_messages: number | string | null;
+  latest_content: string | null;
+  latest_at: Date | string | null;
+  qualification_score: "HIGH" | "MEDIUM" | "LOW" | "UNKNOWN" | null;
+  qualification_data: unknown;
+  first_response_ms: number | string | null;
+};
+
+type DashboardMetricSummaryRow = {
   conversations_24h: number | string | null;
-  total_contacts: number | string | null;
-  hot_leads: number | string | null;
-  qualified_leads: number | string | null;
   avg_first_response_ms: number | string | null;
   avg_message_response_ms: number | string | null;
+};
+
+type MiddlewarePageIdRow = {
+  page_id: string;
 };
 
 declare global {
@@ -63,6 +76,9 @@ declare global {
 
 const HOT_SIGNAL_PATTERN =
   "(price|pricing|rate|rates|budget|available|availability|book|booking|reserve|reservation|schedule|visit|ocular|call|event date|wedding|debut|corporate|quote|package)";
+const HOT_SIGNAL_REGEX = new RegExp(`\\b${HOT_SIGNAL_PATTERN}\\b`, "i");
+const BOOKING_SIGNAL_REGEX =
+  /\b(booked|booking confirmed|scheduled|appointment|call booked|reserve|reservation)\b/i;
 
 export async function loadDashboardConnectedPages(
   userId: string,
@@ -154,133 +170,31 @@ export async function loadDashboardKpis(
   }
 
   try {
-    const rows = await sql<DashboardKpiRow[]>`
-      WITH message_rows AS (
-        SELECT
-          id,
-          page_id,
-          sender_psid,
-          direction,
-          content,
-          COALESCE(timestamp, created_at) AS message_at
-        FROM messages
-        WHERE page_id = ${pageId}
-      ),
-      latest_messages AS (
-        SELECT DISTINCT ON (page_id, sender_psid)
-          page_id,
-          sender_psid,
-          content AS latest_content,
-          message_at AS latest_at
-        FROM message_rows
-        ORDER BY page_id, sender_psid, message_at DESC, id DESC
-      ),
-      latest_state AS (
-        SELECT DISTINCT ON (page_id, psid)
-          page_id,
-          psid,
-          qualification_score,
-          qualification_data,
-          first_response_ms,
-          updated_at,
-          conversation_id
-        FROM conversation_state
-        WHERE page_id = ${pageId}
-        ORDER BY page_id, psid, updated_at DESC NULLS LAST, conversation_id DESC NULLS LAST
-      ),
-      response_pairs AS (
-        SELECT
-          inbound.sender_psid,
-          inbound.message_at AS inbound_at,
-          next_outbound.outbound_at
-        FROM message_rows inbound
-        LEFT JOIN LATERAL (
-          SELECT outbound.message_at AS outbound_at
-          FROM message_rows outbound
-          WHERE outbound.page_id = inbound.page_id
-            AND outbound.sender_psid = inbound.sender_psid
-            AND outbound.direction = 'outbound'
-            AND (
-              outbound.message_at > inbound.message_at
-              OR (outbound.message_at = inbound.message_at AND outbound.id > inbound.id)
-            )
-          ORDER BY outbound.message_at ASC, outbound.id ASC
-          LIMIT 1
-        ) next_outbound ON TRUE
-        WHERE inbound.direction = 'inbound'
-      )
-      SELECT
-        (
-          SELECT COUNT(DISTINCT sender_psid)::int
-          FROM message_rows
-          WHERE message_at > NOW() - INTERVAL '24 hours'
-        ) AS conversations_24h,
-        (
-          SELECT COUNT(DISTINCT sender_psid)::int
-          FROM message_rows
-        ) AS total_contacts,
-        (
-          SELECT COUNT(*)::int
-          FROM latest_state s
-          LEFT JOIN latest_messages l
-            ON l.page_id = s.page_id
-           AND l.sender_psid = s.psid
-          WHERE s.qualification_score = 'HIGH'
-             OR COALESCE(l.latest_content, '') ~* ${HOT_SIGNAL_PATTERN}
-             OR NULLIF(BTRIM(COALESCE(s.qualification_data->>'budget', '')), '') IS NOT NULL
-             OR NULLIF(BTRIM(COALESCE(s.qualification_data->>'timeline', '')), '') IS NOT NULL
-             OR COALESCE(s.qualification_data->>'need', '') ~* ${HOT_SIGNAL_PATTERN}
-             OR COALESCE(s.qualification_data->>'reason', '') ~* ${HOT_SIGNAL_PATTERN}
-        ) AS hot_leads,
-        (
-          SELECT COUNT(*)::int
-          FROM latest_state
-          WHERE qualification_score = 'HIGH'
-        ) AS qualified_leads,
-        (
-          SELECT AVG(first_response_ms)::numeric
-          FROM latest_state
-          WHERE first_response_ms IS NOT NULL
-        ) AS avg_first_response_ms,
-        (
-          SELECT AVG(EXTRACT(EPOCH FROM (outbound_at - inbound_at)) * 1000)::numeric
-          FROM response_pairs
-          WHERE outbound_at IS NOT NULL
-            AND outbound_at > inbound_at
-            AND outbound_at <= inbound_at + INTERVAL '1 hour'
-        ) AS avg_message_response_ms
-    `;
-
-    let row = rows[0];
-    if (!row) {
+    const metricPageId = await resolveDashboardKpiPageId(sql, pageId);
+    if (!metricPageId) {
       return {
-        kpis: buildUnavailableKpis("No metric rows returned"),
+        kpis: buildUnavailableKpis("No middleware Page found"),
         unavailable: true,
       };
     }
 
-    console.info("[dashboard] KPI lookup", {
-      pageId,
-      conversations24h: row.conversations_24h,
-      totalContacts: row.total_contacts,
-      hotLeads: row.hot_leads,
-      qualifiedLeads: row.qualified_leads,
+    const [conversationRows, summaryRows] = await Promise.all([
+      loadDashboardConversationMetricRows(sql, metricPageId),
+      loadDashboardMetricSummary(sql, metricPageId),
+    ]);
+    const summary = summaryRows[0] ?? null;
+
+    console.info("[dashboard] middleware KPI lookup", {
+      requestedPageId: pageId,
+      metricPageId,
+      conversations24h: summary?.conversations_24h ?? 0,
+      totalContacts: conversationRows.length,
+      hotLeads: countDashboardHotLeads(conversationRows),
+      qualifiedLeads: countDashboardQualifiedLeads(conversationRows),
     });
 
-    if (isZeroKpiRow(row)) {
-      const fallbackRow = await loadDashboardKpisWithoutPageFilter(sql);
-      if (fallbackRow && !isZeroKpiRow(fallbackRow)) {
-        console.warn("[dashboard] filtered KPI lookup returned all zeros; using unfiltered middleware metrics", {
-          pageId,
-          fallbackTotalContacts: fallbackRow.total_contacts,
-          fallbackHotLeads: fallbackRow.hot_leads,
-        });
-        row = fallbackRow;
-      }
-    }
-
     return {
-      kpis: mapDashboardKpiRow(row),
+      kpis: mapDashboardConversationKpis(conversationRows, summary),
       unavailable: false,
     };
   } catch (error) {
@@ -292,128 +206,175 @@ export async function loadDashboardKpis(
   }
 }
 
-async function loadDashboardKpisWithoutPageFilter(
+async function resolveDashboardKpiPageId(
   sql: postgres.Sql,
-): Promise<DashboardKpiRow | null> {
-  try {
-    const rows = await sql<DashboardKpiRow[]>`
-      WITH message_rows AS (
-        SELECT
-          id,
-          page_id,
-          sender_psid,
-          direction,
-          content,
-          COALESCE(timestamp, created_at) AS message_at
-        FROM messages
-      ),
-      latest_messages AS (
-        SELECT DISTINCT ON (page_id, sender_psid)
-          page_id,
-          sender_psid,
-          content AS latest_content,
-          message_at AS latest_at
-        FROM message_rows
-        ORDER BY page_id, sender_psid, message_at DESC, id DESC
-      ),
-      latest_state AS (
-        SELECT DISTINCT ON (page_id, psid)
-          page_id,
-          psid,
-          qualification_score,
-          qualification_data,
-          first_response_ms,
-          updated_at,
-          conversation_id
-        FROM conversation_state
-        ORDER BY page_id, psid, updated_at DESC NULLS LAST, conversation_id DESC NULLS LAST
-      ),
-      response_pairs AS (
-        SELECT
-          inbound.sender_psid,
-          inbound.message_at AS inbound_at,
-          next_outbound.outbound_at
-        FROM message_rows inbound
-        LEFT JOIN LATERAL (
-          SELECT outbound.message_at AS outbound_at
-          FROM message_rows outbound
-          WHERE outbound.page_id = inbound.page_id
-            AND outbound.sender_psid = inbound.sender_psid
-            AND outbound.direction = 'outbound'
-            AND (
-              outbound.message_at > inbound.message_at
-              OR (outbound.message_at = inbound.message_at AND outbound.id > inbound.id)
-            )
-          ORDER BY outbound.message_at ASC, outbound.id ASC
-          LIMIT 1
-        ) next_outbound ON TRUE
-        WHERE inbound.direction = 'inbound'
-      )
-      SELECT
-        (
-          SELECT COUNT(DISTINCT sender_psid)::int
-          FROM message_rows
-          WHERE message_at > NOW() - INTERVAL '24 hours'
-        ) AS conversations_24h,
-        (
-          SELECT COUNT(DISTINCT sender_psid)::int
-          FROM message_rows
-        ) AS total_contacts,
-        (
-          SELECT COUNT(*)::int
-          FROM latest_state s
-          LEFT JOIN latest_messages l
-            ON l.page_id = s.page_id
-           AND l.sender_psid = s.psid
-          WHERE s.qualification_score = 'HIGH'
-             OR COALESCE(l.latest_content, '') ~* ${HOT_SIGNAL_PATTERN}
-             OR NULLIF(BTRIM(COALESCE(s.qualification_data->>'budget', '')), '') IS NOT NULL
-             OR NULLIF(BTRIM(COALESCE(s.qualification_data->>'timeline', '')), '') IS NOT NULL
-             OR COALESCE(s.qualification_data->>'need', '') ~* ${HOT_SIGNAL_PATTERN}
-             OR COALESCE(s.qualification_data->>'reason', '') ~* ${HOT_SIGNAL_PATTERN}
-        ) AS hot_leads,
-        (
-          SELECT COUNT(*)::int
-          FROM latest_state
-          WHERE qualification_score = 'HIGH'
-        ) AS qualified_leads,
-        (
-          SELECT AVG(first_response_ms)::numeric
-          FROM latest_state
-          WHERE first_response_ms IS NOT NULL
-        ) AS avg_first_response_ms,
-        (
-          SELECT AVG(EXTRACT(EPOCH FROM (outbound_at - inbound_at)) * 1000)::numeric
-          FROM response_pairs
-          WHERE outbound_at IS NOT NULL
-            AND outbound_at > inbound_at
-            AND outbound_at <= inbound_at + INTERVAL '1 hour'
-        ) AS avg_message_response_ms
-    `;
+  requestedPageId: string,
+): Promise<string | null> {
+  const matchingRows = await sql<MiddlewarePageIdRow[]>`
+    SELECT page_id
+    FROM pages
+    WHERE page_id = ${requestedPageId}
+    LIMIT 1
+  `;
 
-    const row = rows[0] ?? null;
-    if (row) {
-      console.info("[dashboard] unfiltered KPI fallback lookup", {
-        conversations24h: row.conversations_24h,
-        totalContacts: row.total_contacts,
-        hotLeads: row.hot_leads,
-        qualifiedLeads: row.qualified_leads,
-      });
-    }
-    return row;
-  } catch (error) {
-    console.error("[dashboard] unfiltered KPI fallback failed", error);
-    return null;
+  const matchingPageId = matchingRows[0]?.page_id ?? null;
+  if (matchingPageId) return matchingPageId;
+
+  const fallbackRows = await sql<MiddlewarePageIdRow[]>`
+    SELECT page_id
+    FROM pages
+    WHERE NULLIF(BTRIM(page_id), '') IS NOT NULL
+    ORDER BY updated_at DESC NULLS LAST, created_at DESC NULLS LAST, id DESC
+    LIMIT 1
+  `;
+  const fallbackPageId = fallbackRows[0]?.page_id ?? null;
+
+  if (fallbackPageId) {
+    console.warn("[dashboard] requested Page was not found in middleware pages table; using latest middleware Page for KPIs", {
+      requestedPageId,
+      fallbackPageId,
+    });
   }
+
+  return fallbackPageId ?? requestedPageId;
 }
 
-function isZeroKpiRow(row: DashboardKpiRow) {
-  return (
-    toNumber(row.conversations_24h) === 0 &&
-    toNumber(row.total_contacts) === 0 &&
-    toNumber(row.hot_leads) === 0 &&
-    toNumber(row.qualified_leads) === 0
-  );
+async function loadDashboardConversationMetricRows(
+  sql: postgres.Sql,
+  pageId: string,
+): Promise<DashboardConversationMetricRow[]> {
+  return sql<DashboardConversationMetricRow[]>`
+    WITH message_rows AS (
+      SELECT
+        id,
+        page_id,
+        sender_psid,
+        direction,
+        content,
+        COALESCE(timestamp, created_at) AS message_at
+      FROM messages
+      WHERE page_id = ${pageId}
+        AND NULLIF(BTRIM(COALESCE(content, '')), '') IS NOT NULL
+    ),
+    latest_messages AS (
+      SELECT DISTINCT ON (page_id, sender_psid)
+        page_id,
+        sender_psid,
+        content AS latest_content,
+        message_at AS latest_at
+      FROM message_rows
+      ORDER BY page_id, sender_psid, message_at DESC, id DESC
+    ),
+    message_rollups AS (
+      SELECT
+        page_id,
+        sender_psid,
+        COUNT(*)::int AS total_messages,
+        COUNT(*) FILTER (WHERE direction = 'inbound')::int AS inbound_messages,
+        COUNT(*) FILTER (WHERE direction = 'outbound')::int AS outbound_messages
+      FROM message_rows
+      GROUP BY page_id, sender_psid
+    ),
+    latest_state AS (
+      SELECT DISTINCT ON (page_id, psid)
+        page_id,
+        psid,
+        qualification_score,
+        qualification_data,
+        first_response_ms,
+        updated_at,
+        conversation_id
+      FROM conversation_state
+      WHERE page_id = ${pageId}
+      ORDER BY page_id, psid, updated_at DESC NULLS LAST, conversation_id DESC NULLS LAST
+    )
+    SELECT
+      r.sender_psid,
+      r.total_messages,
+      r.inbound_messages,
+      r.outbound_messages,
+      l.latest_content,
+      l.latest_at,
+      s.qualification_score,
+      s.qualification_data,
+      s.first_response_ms
+    FROM message_rollups r
+    JOIN latest_messages l
+      ON l.page_id = r.page_id
+     AND l.sender_psid = r.sender_psid
+    LEFT JOIN latest_state s
+      ON s.page_id = r.page_id
+     AND s.psid = r.sender_psid
+    ORDER BY l.latest_at DESC
+  `;
+}
+
+async function loadDashboardMetricSummary(
+  sql: postgres.Sql,
+  pageId: string,
+): Promise<DashboardMetricSummaryRow[]> {
+  return sql<DashboardMetricSummaryRow[]>`
+    WITH message_rows AS (
+      SELECT
+        id,
+        page_id,
+        sender_psid,
+        direction,
+        COALESCE(timestamp, created_at) AS message_at
+      FROM messages
+      WHERE page_id = ${pageId}
+    ),
+    latest_state AS (
+      SELECT DISTINCT ON (page_id, psid)
+        page_id,
+        psid,
+        first_response_ms,
+        updated_at,
+        conversation_id
+      FROM conversation_state
+      WHERE page_id = ${pageId}
+      ORDER BY page_id, psid, updated_at DESC NULLS LAST, conversation_id DESC NULLS LAST
+    ),
+    response_pairs AS (
+      SELECT
+        inbound.sender_psid,
+        inbound.message_at AS inbound_at,
+        next_outbound.outbound_at
+      FROM message_rows inbound
+      LEFT JOIN LATERAL (
+        SELECT outbound.message_at AS outbound_at
+        FROM message_rows outbound
+        WHERE outbound.page_id = inbound.page_id
+          AND outbound.sender_psid = inbound.sender_psid
+          AND outbound.direction = 'outbound'
+          AND (
+            outbound.message_at > inbound.message_at
+            OR (outbound.message_at = inbound.message_at AND outbound.id > inbound.id)
+          )
+        ORDER BY outbound.message_at ASC, outbound.id ASC
+        LIMIT 1
+      ) next_outbound ON TRUE
+      WHERE inbound.direction = 'inbound'
+    )
+    SELECT
+      (
+        SELECT COUNT(DISTINCT sender_psid)::int
+        FROM message_rows
+        WHERE message_at > NOW() - INTERVAL '24 hours'
+      ) AS conversations_24h,
+      (
+        SELECT AVG(first_response_ms)::numeric
+        FROM latest_state
+        WHERE first_response_ms IS NOT NULL
+      ) AS avg_first_response_ms,
+      (
+        SELECT AVG(EXTRACT(EPOCH FROM (outbound_at - inbound_at)) * 1000)::numeric
+        FROM response_pairs
+        WHERE outbound_at IS NOT NULL
+          AND outbound_at > inbound_at
+          AND outbound_at <= inbound_at + INTERVAL '1 hour'
+      ) AS avg_message_response_ms
+  `;
 }
 
 function getDashboardSql() {
@@ -463,14 +424,18 @@ function mapMiddlewarePageRow(row: MiddlewarePageRow): DashboardConnectedPage {
   };
 }
 
-function mapDashboardKpiRow(row: DashboardKpiRow): DashboardKpis {
-  const conversations24h = toNumber(row.conversations_24h);
-  const totalContacts = toNumber(row.total_contacts);
-  const hotLeads = toNumber(row.hot_leads);
-  const qualifiedLeads = toNumber(row.qualified_leads);
+function mapDashboardConversationKpis(
+  rows: DashboardConversationMetricRow[],
+  summary: DashboardMetricSummaryRow | null,
+): DashboardKpis {
+  const conversations24h = toNumber(summary?.conversations_24h ?? null);
+  const totalContacts = rows.length;
+  const hotLeads = countDashboardHotLeads(rows);
+  const qualifiedLeads = countDashboardQualifiedLeads(rows);
+  const bookedCalls = countDashboardBookedCalls(rows);
   const responseMs =
-    toNullableNumber(row.avg_first_response_ms) ??
-    toNullableNumber(row.avg_message_response_ms);
+    toNullableNumber(summary?.avg_first_response_ms ?? null) ??
+    toNullableNumber(summary?.avg_message_response_ms ?? null);
 
   return {
     conversations24h: {
@@ -500,10 +465,46 @@ function mapDashboardKpiRow(row: DashboardKpiRow): DashboardKpis {
       sub: responseMs === null ? "No replies measured yet" : "Average first reply time",
     },
     bookedCalls: {
-      value: "—",
-      sub: "Booking tracking coming soon",
+      value: formatCount(bookedCalls),
+      sub: bookedCalls === 1 ? "1 booking signal detected" : "Booking signals in conversations",
     },
   };
+}
+
+function countDashboardHotLeads(rows: DashboardConversationMetricRow[]) {
+  return rows.filter(isDashboardHotLead).length;
+}
+
+function countDashboardQualifiedLeads(rows: DashboardConversationMetricRow[]) {
+  return rows.filter(isDashboardQualifiedLead).length;
+}
+
+function countDashboardBookedCalls(rows: DashboardConversationMetricRow[]) {
+  return rows.filter((row) => BOOKING_SIGNAL_REGEX.test(searchableDashboardLeadText(row))).length;
+}
+
+function isDashboardQualifiedLead(row: DashboardConversationMetricRow) {
+  return row.qualification_score === "HIGH";
+}
+
+function isDashboardHotLead(row: DashboardConversationMetricRow) {
+  if (isDashboardQualifiedLead(row)) return true;
+  return HOT_SIGNAL_REGEX.test(searchableDashboardLeadText(row));
+}
+
+function searchableDashboardLeadText(row: DashboardConversationMetricRow) {
+  return `${row.latest_content ?? ""} ${stringifyDashboardData(row.qualification_data)}`;
+}
+
+function stringifyDashboardData(value: unknown) {
+  if (typeof value === "string") return value;
+  if (value === null || value === undefined) return "";
+
+  try {
+    return JSON.stringify(value);
+  } catch {
+    return "";
+  }
 }
 
 function buildUnavailableKpis(sub: string): DashboardKpis {
