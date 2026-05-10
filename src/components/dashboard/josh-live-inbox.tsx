@@ -463,7 +463,7 @@ export function JoshLiveInbox({
               </div>
 
               {activeConversation ? (
-                <div className="flex-1 space-y-4 overflow-y-auto px-5 py-6 md:px-8">
+                <div className="max-h-[calc(100vh-300px)] min-h-0 flex-1 space-y-4 overflow-y-auto px-5 py-6 md:px-8">
                   {activeConversation.messages.length > 0 ? (
                     activeConversation.messages.map((message) => (
                       <div

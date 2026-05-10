@@ -38,6 +38,18 @@ export default async function DashboardPage() {
   dbUnavailable = dbUnavailable || kpiLoad.unavailable;
   const dashboardKpis = kpiLoad.kpis;
 
+  const conversationCountLabel = dashboardKpis.totalContacts.value;
+  const recentConversationLabel = dashboardKpis.conversations24h.value;
+  const activitySummary = activePage
+    ? `${conversationCountLabel} active conversation${
+        conversationCountLabel === "1" ? "" : "s"
+      } • ${
+        recentConversationLabel === "—"
+          ? "Live activity unavailable"
+          : `${recentConversationLabel} active in the last 24h`
+      }`
+    : "No activity yet — connect a Page to get started.";
+
   const metrics = [
     {
       icon: MessageCircle,
@@ -252,12 +264,12 @@ export default async function DashboardPage() {
         <div className="border-t border-ink-100 px-6 py-4">
           <div className="rounded-lg border border-dashed border-ink-200 px-4 py-3">
             {activePage ? (
-              <p className="text-sm text-ink-500 italic">
-                Josh is online and ready. Waiting for the first lead on{" "}
-                <span className="font-medium text-ink-700">
+              <p className="text-sm text-ink-600">
+                Josh is online and actively qualifying leads on{" "}
+                <span className="font-medium text-ink-800">
                   {activePage.name}
                 </span>
-                …
+                .
               </p>
             ) : (
               <p className="text-sm text-ink-500 italic">
@@ -279,10 +291,13 @@ export default async function DashboardPage() {
         <p className="mt-1 text-sm text-ink-600">
           Real-time conversations from your connected Pages will appear here.
         </p>
-        <div className="mt-5 flex h-32 items-center justify-center rounded-lg border border-dashed border-ink-200 text-sm text-ink-500">
-          {activePage
-            ? "Waiting for first conversation…"
-            : "No activity yet — connect a Page to get started."}
+        <div className="mt-5 rounded-lg border border-ink-100 bg-ink-50 px-4 py-4 text-sm text-ink-700">
+          <p className="font-medium text-ink-900">{activitySummary}</p>
+          {activePage ? (
+            <p className="mt-1 text-xs text-ink-500">
+              Based on Josh&apos;s current dashboard metrics for {activePage.name}.
+            </p>
+          ) : null}
         </div>
       </div>
     </div>
