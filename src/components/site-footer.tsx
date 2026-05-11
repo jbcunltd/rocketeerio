@@ -6,8 +6,8 @@ import { BLOG_POSTS } from "@/lib/site";
 const COL_PRODUCT = [
   { label: "How it works", href: "/#how-it-works" },
   { label: "Features", href: "/#features" },
-  { label: "Pricing", href: "/pricing" },
-  { label: "Early Access", href: "/testimonials" },
+  { label: "Pricing", href: "/#pricing" },
+  { label: "FAQ", href: "/#faq" },
 ];
 
 const COL_COMPANY = [
@@ -39,8 +39,8 @@ export function SiteFooter() {
           <div className="lg:col-span-4">
             <Logo />
             <p className="mt-4 max-w-sm text-sm leading-relaxed text-ink-700">
-              Rocketeerio is your AI manpower agency for Facebook lead conversion.
-              Reply quickly, qualify automatically, and stay covered 24/7 — now in early access.
+              Rocketeerio is an AI lead qualification platform for Facebook-first small businesses.
+              Connect your Page, let Josh reply 24/7, and step in when leads are ready to buy.
             </p>
 
             <form
@@ -63,7 +63,7 @@ export function SiteFooter() {
               </button>
             </form>
             <p className="mt-2 text-xs text-ink-600">
-              Free PDF: 7 reasons your Facebook leads aren&apos;t converting.
+              Free PDF: why Messenger leads go cold and how to respond faster.
             </p>
 
             <div className="mt-6 grid grid-cols-2 gap-y-2 gap-x-4 text-xs text-ink-700">

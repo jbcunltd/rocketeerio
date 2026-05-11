@@ -139,7 +139,7 @@ export function PricingClient() {
                 </p>
 
                 <Link
-                  href="/signup"
+                  href="/api/auth/facebook"
                   className={`mt-6 inline-flex w-full items-center justify-center gap-2 rounded-xl px-5 py-3 text-sm font-semibold transition-colors ${
                     plan.highlighted
                       ? "bg-brand-600 text-white shadow-lg shadow-brand-500/30 hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-brand-500/40"
@@ -150,7 +150,7 @@ export function PricingClient() {
                   <ArrowRight className="h-4 w-4" />
                 </Link>
                 <p className="mt-2 text-center text-[11px] text-ink-600">
-                  No credit card · Cancel anytime · 14-day money back
+                  Facebook Login signup · Cancel anytime · Free tier available
                 </p>
 
                 <ul className="mt-7 space-y-3">

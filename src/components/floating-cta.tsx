@@ -24,7 +24,7 @@ export function FloatingCTA() {
       aria-hidden={!show}
     >
       <Link
-        href="/signup"
+        href="/api/auth/facebook"
         className="group inline-flex items-center gap-2 rounded-full bg-brand-600 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-brand-500/35 hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-brand-500/40"
       >
         Hire Josh for Sales

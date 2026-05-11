@@ -75,12 +75,12 @@ export function EmailCaptureForm({
         >
           The guide is on its way. While you wait, you can{" "}
           <a
-            href="/signup"
+            href="/api/auth/facebook"
             className={`underline ${
               isDark ? "text-white" : "text-brand-600 hover:text-brand-700"
             }`}
           >
-            start your free trial
+            start with Facebook Login
           </a>
           .
         </p>

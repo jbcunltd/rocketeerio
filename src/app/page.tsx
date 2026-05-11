@@ -1,143 +1,258 @@
 import Image from "next/image";
-import Link from "next/link";
+import type { LucideIcon } from "lucide-react";
 import {
   ArrowRight,
   Bell,
-  BriefcaseBusiness,
   CheckCircle2,
   Clock3,
+  Facebook,
   Filter,
-  Hammer,
-  Home as HomeIcon,
-  MessageSquare,
+  Languages,
+  LineChart,
+  MessageCircle,
+  MousePointerClick,
   PlayCircle,
   Rocket,
-  ShieldCheck,
   Sparkles,
+  Store,
   Target,
-  Truck,
+  Users,
   Zap,
 } from "lucide-react";
 import { ChatPreview } from "@/components/chat-preview";
-import { SectionHeading, Eyebrow } from "@/components/section-heading";
 import { FAQAccordion, type FAQItem } from "@/components/faq-accordion";
 import { TrustBadges } from "@/components/trust-badges";
 
+const FACEBOOK_AUTH_HREF = "/api/auth/facebook";
+
 const FAQ: FAQItem[] = [
   {
-    q: "How fast does Josh reply to a Facebook lead?",
-    a: "Josh replies in under 60 seconds. The moment a lead messages your Facebook Page, Instagram account, or fills out a Lead Ad form, he sends a personalized reply, asks your qualifying questions, and keeps the conversation moving — even if it is 2am.",
+    q: "What happens after I click Get Started with Facebook?",
+    a: "You will connect the Facebook Page where your leads message you. Rocketeerio then uses that connection to help Josh respond to Messenger conversations, qualify leads, and prepare hot-lead summaries for you.",
   },
   {
-    q: "Will Josh sound like a robot or like my business?",
-    a: "Josh is trained on your business, your tone, your offer, your pricing rules, and your follow-up standards. He should sound direct, helpful, and on-brand — and he will never pretend to be human if someone asks.",
+    q: "Is there really a free tier?",
+    a: "Yes. The free tier is designed so small business owners can connect a Facebook Page, test Josh with a limited number of leads, and understand the workflow before upgrading to a paid plan.",
   },
   {
-    q: "Do I need to be technical to hire Josh?",
-    a: "No. You connect your Facebook Page, answer a few setup questions about your business, and train Josh on how you qualify a lead. Setup takes about 10 minutes — no developers, no Zapier spaghetti.",
+    q: "Will Josh reply in a way that fits my business?",
+    a: "Josh is trained on your offer, service area, pricing rules, qualifying questions, and tone. You can keep him professional, friendly, direct, or conversational depending on how your business normally sells.",
   },
   {
-    q: "What channels does Josh work in?",
-    a: "Josh works where your Meta leads show up: Facebook Messenger, Instagram DMs, and Facebook Lead Ads. If a lead starts the conversation on Meta, Josh can reply, qualify, and alert you when they are hot.",
+    q: "Can I take over the conversation anytime?",
+    a: "Yes. Josh is meant to qualify and prepare the conversation, not trap you outside your own inbox. When a lead is ready, you can step in with the context Josh collected.",
   },
   {
-    q: "How does the hot-lead alert work?",
-    a: "When a lead hits your qualifying criteria — budget, timeline, location, and intent — Josh pings your phone, summarizes the conversation, and tells you it is time to step in and close.",
+    q: "Does this work for businesses in the Philippines?",
+    a: "Yes. Rocketeerio is positioned for Facebook-first businesses in the Philippines that receive inquiries through Messenger, especially businesses running Meta ads and replying manually today.",
   },
   {
-    q: "What's the money-back guarantee?",
-    a: "14 days, no questions asked. If Josh does not reply faster, qualify cleaner, or keep hot leads from going cold, email us and we refund 100%.",
+    q: "Do I need developers or complicated setup?",
+    a: "No. The main setup step is connecting your Facebook Page, then answering a few questions about how you qualify leads. Josh is built for owners and operators, not engineering teams.",
+  },
+];
+
+const HOW_IT_WORKS = [
+  {
+    n: "01",
+    icon: Facebook,
+    title: "Connect your Facebook Page",
+    body: "Use Facebook Login to connect the Page where leads already message you after seeing your ads, posts, or Marketplace listings.",
+  },
+  {
+    n: "02",
+    icon: MessageCircle,
+    title: "Josh replies and qualifies",
+    body: "Josh answers fast, asks your qualifying questions, and keeps the lead engaged while you are serving customers or off the clock.",
+  },
+  {
+    n: "03",
+    icon: Bell,
+    title: "You get hot-lead handoffs",
+    body: "When a lead shows intent, Josh summarizes budget, timeline, need, and next step so you know exactly when to jump in.",
   },
 ];
 
 const FEATURES = [
   {
-    icon: Zap,
-    title: "60-second first replies",
-    desc: "Josh replies to every new Meta lead in under 60 seconds, before that lead starts buying from someone else.",
+    icon: Clock3,
+    title: "24/7 Messenger coverage",
+    desc: "Josh keeps the inbox staffed after store hours, during weekends, and while your team is busy closing current customers.",
   },
   {
     icon: Filter,
-    title: "Qualification that protects your time",
-    desc: "Budget, timeline, location, intent. Josh asks the questions you would ask so only serious leads reach your desk.",
-  },
-  {
-    icon: Bell,
-    title: "Hot-lead alerts when it matters",
-    desc: "When a lead is ready to buy, Josh pings you with the context you need to step in and close.",
-  },
-  {
-    icon: MessageSquare,
-    title: "Messenger + Instagram coverage",
-    desc: "Josh works the Facebook and Instagram inboxes where your paid Meta leads already start conversations.",
+    title: "Lead qualification scripts",
+    desc: "Ask about budget, location, urgency, preferred schedule, vehicle model, property type, or any detail your sales process needs.",
   },
   {
     icon: Sparkles,
-    title: "Trained on your way of selling",
-    desc: "Train Josh on your offer, pricing, service area, availability, and standards so he works the inbox your way.",
+    title: "AI replies trained on your offer",
+    desc: "Josh uses your business details so replies feel useful, specific, and consistent with the way you want customers handled.",
   },
   {
-    icon: ShieldCheck,
-    title: "Honest early access",
-    desc: "No fake stats and no fake testimonials. Josh is in early access, backed by a 14-day money-back guarantee.",
+    icon: Bell,
+    title: "Hot-lead notifications",
+    desc: "You do not need to dig through cold chats. Josh flags serious buyers and sends a plain-English summary for faster follow-up.",
+  },
+  {
+    icon: Languages,
+    title: "Local-friendly conversations",
+    desc: "Built for the practical way Filipino customers inquire on Facebook: quick questions, mixed English and Tagalog, and mobile-first chat.",
+  },
+  {
+    icon: LineChart,
+    title: "Conversion-focused dashboard",
+    desc: "Track connected Pages, lead activity, Josh settings, and the conversations that are most likely to become revenue.",
   },
 ];
 
-const VERTICALS = [
+const PROOF_POINTS = [
+  "For Facebook-first small businesses in the Philippines",
+  "Free tier available before you scale",
+  "Designed for Messenger leads from Meta ads",
+];
+
+const PRICING = [
   {
-    icon: Hammer,
-    title: "Contractors",
-    body:
-      "Quote requests come in at 9pm. Whoever replies first books the job. Josh replies in seconds — even when you are on a roof, in a truck, or asleep.",
+    name: "Free",
+    price: "$0",
+    cadence: "to start",
+    description: "Best for testing Josh on a connected Facebook Page before committing.",
+    features: ["Connect a Facebook Page", "Limited AI lead replies", "Basic qualification flow", "Upgrade only when ready"],
+    badge: "Start here",
   },
   {
-    icon: HomeIcon,
-    title: "Real estate",
-    body:
-      "Buyers DM about listings on weekends. Reply Monday and the showing is already booked with another agent. Josh keeps your lead warm until you can take over.",
+    name: "Starter",
+    price: "$49",
+    cadence: "/month",
+    description: "Best for owner-operated businesses that get regular Messenger inquiries.",
+    features: ["More monthly lead conversations", "Custom qualifying questions", "Hot-lead summaries", "Messenger-first sales workflow"],
+    badge: "For small teams",
+    featured: true,
   },
   {
-    icon: Truck,
-    title: "Auto & dealerships",
-    body:
-      '"Is it still available?" If you take six hours to answer, they have already test-driven a different car at another lot. Josh answers before the lead goes cold.',
+    name: "Growth",
+    price: "$99",
+    cadence: "/month",
+    description: "Best for advertisers with steady Meta spend and multiple daily leads.",
+    features: ["Higher lead volume", "Priority setup support", "Advanced Josh tuning", "Owner-ready handoff workflow"],
+    badge: "For scaling ads",
   },
 ];
 
-const RESPONSIBILITIES = [
-  "Reply to every Facebook and Instagram lead in under 60 seconds.",
-  "Ask your qualifying questions about budget, timeline, location, and intent.",
-  "Follow up without forgetting, drifting, or leaving the inbox unattended.",
-  "Escalate hot leads with a plain-English summary so you know when to step in.",
-  "Represent your business honestly and never pretend to be human if someone asks.",
+const AUDIENCES = [
+  { icon: Store, label: "Local services", copy: "clinics, salons, repair shops, contractors" },
+  { icon: Users, label: "High-touch sellers", copy: "real estate, auto, insurance, education" },
+  { icon: Target, label: "Meta advertisers", copy: "teams paying for leads that land in Messenger" },
 ];
 
-const TEAMMATES = [
-  {
-    initials: "C",
-    name: "Carla",
-    role: "Customer Service AI",
-    description: "Handles post-sale support, FAQs, and order status so customers never feel ignored.",
-  },
-  {
-    initials: "R",
-    name: "Rob",
-    role: "Marketing AI",
-    description: "Creates ad copy, suggests audiences, and optimizes spend across campaigns.",
-  },
-  {
-    initials: "T",
-    name: "Toni",
-    role: "Content AI",
-    description: "Writes posts, captions, and stories that keep your pages active and consistent.",
-  },
-  {
-    initials: "B",
-    name: "Bon",
-    role: "Design AI",
-    description: "Creates graphics, thumbnails, and ad creatives that match your offer.",
-  },
-];
+function PrimaryCTA({ label = "Hire Josh for Sales" }: { label?: string }) {
+  return (
+    <a
+      href={FACEBOOK_AUTH_HREF}
+      className="group inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-brand-600 px-6 py-4 text-base font-bold text-white shadow-xl shadow-brand-500/30 transition-all hover:-translate-y-0.5 hover:bg-brand-700 hover:shadow-2xl hover:shadow-brand-500/40 focus:outline-none focus:ring-2 focus:ring-brand-500/40 sm:w-auto"
+    >
+      <Facebook className="h-5 w-5" aria-hidden />
+      {label}
+      <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" aria-hidden />
+    </a>
+  );
+}
+
+function SecondaryCTA({ href, label }: { href: string; label: string }) {
+  return (
+    <a
+      href={href}
+      className="inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-ink-200 bg-white/90 px-6 py-4 text-base font-bold text-ink-900 shadow-sm transition-all hover:-translate-y-0.5 hover:border-brand-300 hover:bg-brand-50 focus:outline-none focus:ring-2 focus:ring-brand-500/30 sm:w-auto"
+    >
+      <PlayCircle className="h-5 w-5 text-brand-600" aria-hidden />
+      {label}
+    </a>
+  );
+}
+
+function ProofItem({ children }: { children: string }) {
+  return (
+    <div className="flex items-center justify-center gap-2 rounded-full border border-ink-100 bg-white px-4 py-2 text-sm font-semibold text-ink-700 shadow-sm">
+      <CheckCircle2 className="h-4 w-4 flex-none text-mint" aria-hidden />
+      <span>{children}</span>
+    </div>
+  );
+}
+
+function IconBadge({ Icon }: { Icon: LucideIcon }) {
+  return (
+    <span className="grid h-12 w-12 place-items-center rounded-2xl bg-brand-50 text-brand-600 ring-1 ring-brand-100">
+      <Icon className="h-6 w-6" aria-hidden />
+    </span>
+  );
+}
+
+function FeatureCard({ Icon, title, desc }: { Icon: LucideIcon; title: string; desc: string }) {
+  return (
+    <article className="group rounded-[1.75rem] border border-ink-100 bg-white p-7 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-brand-200 hover:shadow-xl hover:shadow-brand-900/10">
+      <IconBadge Icon={Icon} />
+      <h3 className="mt-5 text-xl font-bold tracking-tight text-ink-900">{title}</h3>
+      <p className="mt-3 leading-relaxed text-ink-600">{desc}</p>
+    </article>
+  );
+}
+
+function StepCard({ n, Icon, title, body, featured }: { n: string; Icon: LucideIcon; title: string; body: string; featured?: boolean }) {
+  return (
+    <article
+      className={`relative overflow-hidden rounded-[2rem] border p-7 ${
+        featured
+          ? "border-brand-300 bg-brand-500 text-white shadow-2xl shadow-brand-950/30"
+          : "border-white/10 bg-white/[0.06] text-white shadow-xl shadow-black/10"
+      }`}
+    >
+      <div className="flex items-center justify-between gap-4">
+        <span className={featured ? "text-sm font-black text-white/70" : "text-sm font-black text-brand-200"}>{n}</span>
+        <span className={featured ? "grid h-12 w-12 place-items-center rounded-2xl bg-white/15" : "grid h-12 w-12 place-items-center rounded-2xl bg-white/10 text-brand-200"}>
+          <Icon className="h-6 w-6" aria-hidden />
+        </span>
+      </div>
+      <h3 className="mt-8 text-2xl font-black tracking-tight">{title}</h3>
+      <p className={featured ? "mt-3 leading-relaxed text-white/85" : "mt-3 leading-relaxed text-white/70"}>{body}</p>
+    </article>
+  );
+}
+
+function PricingCard({ plan }: { plan: (typeof PRICING)[number] }) {
+  return (
+    <article
+      className={`relative flex h-full flex-col rounded-[2rem] border p-7 shadow-sm ${
+        plan.featured
+          ? "border-brand-300 bg-white shadow-2xl shadow-brand-900/15 ring-4 ring-brand-100"
+          : "border-ink-100 bg-white/85"
+      }`}
+    >
+      <div className="flex items-center justify-between gap-3">
+        <h3 className="text-2xl font-black tracking-tight text-ink-900">{plan.name}</h3>
+        <span className="rounded-full bg-brand-50 px-3 py-1 text-xs font-black uppercase tracking-[0.16em] text-brand-700">
+          {plan.badge}
+        </span>
+      </div>
+      <div className="mt-6 flex items-end gap-1">
+        <span className="text-5xl font-black tracking-tight text-ink-900">{plan.price}</span>
+        <span className="pb-2 text-sm font-bold text-ink-500">{plan.cadence}</span>
+      </div>
+      <p className="mt-4 min-h-16 leading-relaxed text-ink-600">{plan.description}</p>
+      <ul className="mt-6 space-y-3 text-sm font-medium text-ink-700">
+        {plan.features.map((feature) => (
+          <li key={feature} className="flex gap-2">
+            <CheckCircle2 className="mt-0.5 h-4 w-4 flex-none text-brand-600" aria-hidden />
+            <span>{feature}</span>
+          </li>
+        ))}
+      </ul>
+      <div className="mt-8">
+        <PrimaryCTA label={plan.name === "Free" ? "Start free with Facebook" : "Get Started with Facebook"} />
+      </div>
+    </article>
+  );
+}
 
 export default function HomePage() {
   const faqSchema = {
@@ -155,440 +270,151 @@ export default function HomePage() {
     "@type": "Product",
     name: "Josh by Rocketeerio",
     description:
-      "AI sales staff for Facebook and Instagram leads. Josh replies in under 60 seconds, qualifies leads, and pings you when one is hot.",
+      "AI lead qualification platform for small businesses. Business owners connect their Facebook Page and Josh qualifies incoming Messenger leads 24/7.",
     brand: { "@type": "Brand", name: "Rocketeerio" },
     offers: {
       "@type": "AggregateOffer",
       priceCurrency: "USD",
       lowPrice: "0",
-      highPrice: "199",
+      highPrice: "99",
       offerCount: 3,
     },
   };
 
   return (
     <>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
-      />
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(productSchema) }}
-      />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(productSchema) }} />
 
-      {/* HERO */}
-      <section className="relative overflow-hidden">
-        <div aria-hidden className="absolute inset-0 bg-grid opacity-60" />
-        <div aria-hidden className="absolute inset-x-0 top-0 h-[680px] bg-radial-fade" />
-        <div
-          aria-hidden
-          className="absolute -top-24 -right-24 h-[420px] w-[420px] rounded-full bg-brand-200/40 blur-3xl animate-blob"
-        />
+      <section className="relative isolate overflow-hidden bg-[linear-gradient(135deg,#f7fbff_0%,#ffffff_42%,#eef7ff_100%)]">
+        <div aria-hidden className="absolute inset-0 bg-grid opacity-70" />
+        <div aria-hidden className="absolute left-1/2 top-0 h-[540px] w-[840px] -translate-x-1/2 rounded-full bg-brand-200/45 blur-3xl" />
+        <div aria-hidden className="absolute -right-24 top-24 h-80 w-80 rounded-full bg-mint/20 blur-3xl animate-blob" />
 
-        <div className="relative mx-auto max-w-7xl px-4 pb-12 pt-10 sm:px-6 sm:pb-16 sm:pt-16 lg:px-8 lg:pb-24 lg:pt-20">
-          <div className="grid items-start gap-7 lg:grid-cols-12 lg:gap-x-12 lg:gap-y-8">
+        <div className="relative mx-auto max-w-7xl px-4 pb-16 pt-10 sm:px-6 sm:pb-20 sm:pt-16 lg:px-8 lg:pb-28 lg:pt-20">
+          <div className="grid items-center gap-10 lg:grid-cols-12 lg:gap-14">
             <div className="lg:col-span-7">
-              <Eyebrow>AI manpower for Meta leads</Eyebrow>
-
-              <h1 className="mt-5 text-[2rem] font-bold leading-[1.08] tracking-tight text-ink-900 text-balance break-words sm:text-5xl sm:leading-[1.05] lg:text-[3.75rem]">
-                Every Facebook lead you don&apos;t reply to is buying from someone else.
-              </h1>
-
-              <p className="mt-5 max-w-2xl text-base leading-relaxed text-ink-700 sm:text-lg">
-                Josh replies to every lead in under 60 seconds. He qualifies them.
-                He pings you when one&apos;s hot. Hire him for less than minimum wage.
-              </p>
-            </div>
-
-            <div id="josh-demo" className="scroll-mt-24 lg:col-span-5 lg:row-span-2">
-              <ChatPreview />
-            </div>
-
-            <div className="lg:col-span-7">
-              <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center">
-                <Link
-                  href="/signup"
-                  className="group inline-flex w-full items-center justify-center gap-2 rounded-xl bg-brand-600 px-6 py-3.5 text-base font-semibold text-white shadow-lg shadow-brand-500/30 transition-all hover:bg-brand-700 hover:shadow-xl hover:shadow-brand-500/40 focus:outline-none focus:ring-2 focus:ring-brand-500/40 sm:w-auto"
-                >
-                  Hire Josh for Sales
-                  <ArrowRight className="h-4.5 w-4.5 transition-transform group-hover:translate-x-0.5" />
-                </Link>
-                <Link
-                  href="#josh-demo"
-                  className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-ink-300 bg-white px-6 py-3.5 text-base font-semibold text-ink-900 transition-colors hover:border-brand-500 hover:bg-ink-50 sm:w-auto"
-                >
-                  <PlayCircle className="h-5 w-5 text-brand-600" aria-hidden />
-                  Watch Josh work
-                </Link>
+              <div className="inline-flex items-center gap-2 rounded-full border border-brand-200 bg-white/80 px-3 py-1.5 text-xs font-black uppercase tracking-[0.18em] text-brand-700 shadow-sm">
+                <Rocket className="h-3.5 w-3.5" aria-hidden />
+                AI sales agent for Messenger leads
               </div>
 
-              <p className="mt-3 text-sm font-semibold text-ink-700">
-                14-day money-back guarantee · No questions asked
+              <h1 className="mt-6 max-w-4xl text-[2.65rem] font-black leading-[0.98] tracking-[-0.055em] text-ink-900 text-balance sm:text-6xl lg:text-[5.35rem]">
+                Turn Facebook messages into qualified leads, even while you sleep.
+              </h1>
+
+              <p className="mt-6 max-w-2xl text-lg leading-8 text-ink-700 sm:text-xl">
+                Rocketeerio gives your business an AI sales agent named Josh. Connect your Facebook Page, and Josh replies to incoming Messenger leads 24/7, asks qualifying questions, and alerts you when a customer is ready to buy.
               </p>
-              <div className="mt-5">
+
+              <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+                <PrimaryCTA />
+                <SecondaryCTA href="#how-it-works" label="See how it works" />
+              </div>
+
+              <div className="mt-5 flex flex-wrap gap-2 text-sm font-semibold text-ink-700">
+                {PROOF_POINTS.map((point) => (
+                  <ProofItem key={point}>{point}</ProofItem>
+                ))}
+              </div>
+
+              <div className="mt-7">
                 <TrustBadges variant="light" />
               </div>
             </div>
-          </div>
-        </div>
-      </section>
 
-      {/* INSTANT PROOF STRIP */}
-      <section className="border-y border-ink-100 bg-ink-50/40 py-7" aria-label="Instant proof">
-        <div className="mx-auto grid max-w-7xl gap-4 px-4 text-center sm:px-6 md:grid-cols-3 lg:px-8">
-          <ProofItem icon={Clock3} text="60-second first-reply guarantee" />
-          <ProofItem icon={CheckCircle2} text="In early access · No fake stats, no fake testimonials" />
-          <ProofItem icon={ShieldCheck} text="14-day money-back guarantee · No questions asked" />
-        </div>
-      </section>
-
-      {/* MEET JOSH */}
-      <section className="py-16 sm:py-24">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="grid items-center gap-10 lg:grid-cols-12 lg:gap-14">
-            <div className="lg:col-span-5">
-              <div className="relative overflow-hidden rounded-[2rem] border border-ink-100 bg-ink-50 shadow-xl shadow-brand-900/10">
-                <Image
-                  src="/josh-cover.jpg"
-                  alt="Josh, Rocketeerio's AI sales staff"
-                  width={900}
-                  height={1100}
-                  className="h-[420px] w-full object-cover sm:h-[520px]"
-                  priority
-                />
-                <div className="absolute inset-x-5 bottom-5 rounded-2xl border border-white/30 bg-white/90 p-4 shadow-lg backdrop-blur">
-                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-brand-700">
-                    Available now
-                  </p>
-                  <p className="mt-1 text-lg font-bold text-ink-900">
-                    Josh is ready to work your inbox.
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="lg:col-span-7">
-              <Eyebrow>YOUR FIRST HIRE</Eyebrow>
-              <h2 className="mt-4 text-3xl font-bold leading-tight tracking-tight text-ink-900 sm:text-4xl lg:text-5xl">
-                Meet Josh. AI sales staff. Real teammate.
-              </h2>
-              <div className="mt-6 space-y-4 text-lg leading-relaxed text-ink-700">
-                <p>
-                  Hi. I&apos;m Josh — Rocketeerio&apos;s first hire. I work the inbox so
-                  you don&apos;t have to. I reply to every lead in under 60 seconds. I
-                  ask the questions you&apos;d ask. I never miss a message, never
-                  forget a follow-up, and I&apos;ll never pretend to be human if
-                  someone asks.
-                </p>
-                <p>
-                  When a lead&apos;s ready to buy, I tap you on the shoulder. I&apos;m not
-                  a chatbot. I&apos;m an AI sales teammate trained on your business.
-                  Hire me, train me on your way of doing things, and I&apos;ll work
-                  your Facebook inbox like it&apos;s the only job I have. Because it
-                  is.
-                </p>
-              </div>
-              <p className="mt-5 text-base font-semibold text-ink-900">
-                — Josh, AI Sales Staff · Rocketeerio
-              </p>
-
-              <div className="mt-8 rounded-2xl border border-ink-100 bg-white p-6 shadow-sm">
-                <div className="flex items-center gap-3">
-                  <span className="grid h-11 w-11 place-items-center rounded-xl bg-brand-50 text-brand-600">
-                    <BriefcaseBusiness className="h-5 w-5" />
-                  </span>
-                  <div>
-                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-brand-700">
-                      Job description
-                    </p>
-                    <h3 className="text-lg font-bold text-ink-900">
-                      Josh&apos;s responsibilities
-                    </h3>
-                  </div>
-                </div>
-                <ul className="mt-5 grid gap-3 text-sm leading-relaxed text-ink-700 sm:grid-cols-2">
-                  {RESPONSIBILITIES.map((item) => (
-                    <li key={item} className="flex gap-2">
-                      <CheckCircle2 className="mt-0.5 h-4 w-4 flex-none text-brand-600" />
-                      <span>{item}</span>
-                    </li>
-                  ))}
-                </ul>
+            <div id="josh-demo" className="scroll-mt-24 lg:col-span-5">
+              <div className="relative">
+                <div aria-hidden className="absolute -inset-5 rounded-[2.5rem] bg-gradient-to-br from-brand-400/25 via-white to-mint/20 blur-2xl" />
+                <ChatPreview />
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* PROBLEM / SOLUTION */}
-      <section className="bg-ink-50/60 py-16 sm:py-24">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="grid items-start gap-12 lg:grid-cols-12 lg:gap-16">
-            <div className="lg:col-span-5">
-              <Eyebrow>The real cost of slow replies</Eyebrow>
-              <h2 className="mt-4 text-3xl font-bold leading-tight tracking-tight text-ink-900 sm:text-4xl lg:text-[2.75rem]">
-                You&apos;re not losing leads because of bad ads.{' '}
-                <span className="text-brand-500">
-                  You&apos;re losing them because nobody replied in time.
-                </span>
-              </h2>
-              <p className="mt-5 text-lg leading-relaxed text-ink-600">
-                Every Facebook lead that messages your page is comparing you to
-                two or three other businesses at the same time. Whoever replies
-                first usually wins the sale — and every unanswered minute makes
-                your lead colder.
-              </p>
-            </div>
-
-            <div className="lg:col-span-7">
-              <div className="grid gap-4 sm:grid-cols-3">
-                <StatCard
-                  number="<60s"
-                  text="Josh replies before your lead starts shopping harder."
-                />
-                <StatCard
-                  number="24/7"
-                  text="Your inbox stays staffed after hours, weekends, and holidays."
-                  highlight
-                />
-                <StatCard
-                  number="$0"
-                  text="The return on every Facebook lead nobody answered."
-                />
-              </div>
-
-              <div className="mt-6 rounded-2xl border border-ink-100 bg-white p-6 shadow-sm">
-                <div className="flex items-start gap-4">
-                  <span className="grid h-12 w-12 flex-none place-items-center rounded-xl bg-brand-50 text-brand-600">
-                    <Target className="h-6 w-6" />
-                  </span>
-                  <div>
-                    <h3 className="text-lg font-bold text-ink-900">
-                      Josh is not here to chat for the sake of chatting.
-                    </h3>
-                    <p className="mt-2 leading-relaxed text-ink-600">
-                      Josh replies, qualifies, follows up, and alerts you when a
-                      lead is ready to buy. You step in only when the conversation
-                      is worth your time.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
+      <section className="border-y border-ink-100 bg-white py-8" aria-label="Conversion proof points">
+        <div className="mx-auto grid max-w-7xl gap-4 px-4 sm:px-6 md:grid-cols-3 lg:px-8">
+          <div className="rounded-3xl bg-ink-50 p-6 text-center">
+            <p className="text-3xl font-black tracking-tight text-ink-900">24/7</p>
+            <p className="mt-1 text-sm font-semibold text-ink-600">Messenger coverage without hiring night shift staff.</p>
+          </div>
+          <div className="rounded-3xl bg-brand-600 p-6 text-center text-white shadow-xl shadow-brand-500/25">
+            <p className="text-3xl font-black tracking-tight">Free</p>
+            <p className="mt-1 text-sm font-semibold text-white/85">Tier available so owners can try Josh first.</p>
+          </div>
+          <div className="rounded-3xl bg-ink-50 p-6 text-center">
+            <p className="text-3xl font-black tracking-tight text-ink-900">FB-first</p>
+            <p className="mt-1 text-sm font-semibold text-ink-600">Built for leads that start in Facebook Messenger.</p>
           </div>
         </div>
       </section>
 
-      {/* HOW IT WORKS */}
-      <section
-        id="how-it-works"
-        className="relative overflow-hidden bg-ink-900 py-20 text-white sm:py-28"
-      >
-        <div
-          aria-hidden
-          className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_rgba(0,132,255,0.18),_transparent_60%)]"
-        />
-        <div
-          aria-hidden
-          className="absolute -bottom-24 -left-24 h-96 w-96 rounded-full bg-brand-500/15 blur-3xl"
-        />
+      <section id="how-it-works" className="relative overflow-hidden bg-ink-900 py-20 text-white sm:py-28">
+        <div aria-hidden className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,_rgba(0,132,255,0.28),_transparent_55%)]" />
+        <div aria-hidden className="absolute bottom-0 right-0 h-[420px] w-[420px] rounded-full bg-mint/10 blur-3xl" />
         <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="max-w-3xl">
-            <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-brand-200">
-              <Rocket className="h-3.5 w-3.5" />
-              How Josh works
-            </span>
-            <h2 className="mt-4 text-3xl font-bold leading-tight tracking-tight sm:text-4xl lg:text-5xl">
-              Three steps. Zero missed leads.
-            </h2>
-            <p className="mt-4 max-w-xl text-lg text-white/70">
-              Lead comes in. Josh qualifies. You close. That&apos;s the whole system.
+          <div className="grid gap-10 lg:grid-cols-12 lg:items-end">
+            <div className="lg:col-span-7">
+              <p className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1 text-xs font-black uppercase tracking-[0.18em] text-brand-200">
+                <MousePointerClick className="h-3.5 w-3.5" aria-hidden />
+                How it works
+              </p>
+              <h2 className="mt-5 text-4xl font-black tracking-[-0.045em] sm:text-5xl lg:text-6xl">
+                Connect Facebook once. Let Josh qualify leads every day.
+              </h2>
+            </div>
+            <p className="lg:col-span-5 text-lg leading-8 text-white/70">
+              The funnel is intentionally simple for busy owners. Josh works inside the lead channel you already use and hands you the conversations that deserve attention.
             </p>
           </div>
 
           <div className="mt-12 grid gap-6 lg:grid-cols-3">
-            <Step
-              n="01"
-              icon={MessageSquare}
-              title="A lead messages your Page"
-              body="From Facebook Lead Ads, Messenger, or Instagram DMs. Josh sees the lead the second it arrives."
-            />
-            <Step
-              n="02"
-              icon={Sparkles}
-              title="Josh replies & qualifies"
-              body="Josh responds in your brand voice, asks the right qualifying questions, and keeps the lead engaged 24/7."
-              accent
-            />
-            <Step
-              n="03"
-              icon={Zap}
-              title="Josh sends a hot-lead alert"
-              body="When a lead is ready to buy, your phone pings. You step in to close — no inbox digging required."
-            />
-          </div>
-        </div>
-      </section>
-
-      {/* FEATURES */}
-      <section id="features" className="py-20 sm:py-28">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <SectionHeading
-            eyebrow="Built to stop lead loss"
-            title={
-              <>
-                Your Facebook inbox gets staffed.{' '}
-                <span className="text-brand-500">Your leads stop going cold.</span>
-              </>
-            }
-            description="Every feature is built around Josh's job: reply fast, qualify clearly, follow up consistently, and alert you when a lead is ready to buy."
-          />
-
-          <div className="mt-14 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {FEATURES.map((f) => (
-              <FeatureCard
-                key={f.title}
-                Icon={f.icon}
-                title={f.title}
-                desc={f.desc}
-              />
+            {HOW_IT_WORKS.map((step, index) => (
+              <StepCard key={step.title} n={step.n} Icon={step.icon} title={step.title} body={step.body} featured={index === 1} />
             ))}
           </div>
         </div>
       </section>
 
-      {/* WHO IT'S FOR */}
-      <section className="border-y border-ink-100 bg-ink-50/60 py-20 sm:py-28">
+      <section id="features" className="bg-white py-20 sm:py-28">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <SectionHeading
-            eyebrow="Built for"
-            title={
-              <>
-                Built for businesses that{' '}
-                <span className="text-brand-500">live and die</span> by Facebook leads.
-              </>
-            }
-            description="If you run paid Facebook or Instagram ads and your customers message before they buy, Josh can work the inbox where your money is currently leaking."
-          />
-
-          <div className="mt-14 grid gap-6 lg:grid-cols-3">
-            {VERTICALS.map((v) => (
-              <div
-                key={v.title}
-                className="rounded-2xl border border-ink-100 bg-white p-7 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md"
-              >
-                <span className="grid h-12 w-12 place-items-center rounded-xl bg-brand-50 text-brand-600">
-                  <v.icon className="h-6 w-6" />
-                </span>
-                <h3 className="mt-5 text-xl font-bold text-ink-900">
-                  {v.title}
-                </h3>
-                <p className="mt-3 leading-relaxed text-ink-600">{v.body}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* EARLY ACCESS HONESTY */}
-      <section className="py-20 sm:py-28">
-        <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
-          <div className="rounded-3xl border border-ink-100 bg-white p-8 text-center shadow-sm sm:p-12">
-            <SectionHeading
-              eyebrow="Early access"
-              title="No fake stats. No fake testimonials."
-              description="Rocketeerio is publishing honest early-access positioning while Josh gets put to work. Customer names, numbers, and case studies will only appear when they are real, permissioned, and measured."
-              align="center"
-            />
-          </div>
-        </div>
-      </section>
-
-      {/* CTA BLOCK */}
-      <section id="cta" className="py-20 sm:py-28">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="relative overflow-hidden rounded-3xl bg-ink-900 px-6 py-14 text-center text-white shadow-2xl sm:px-12 sm:py-20">
-            <div
-              aria-hidden
-              className="absolute -top-32 -right-20 h-96 w-96 rounded-full bg-brand-500/30 blur-3xl"
-            />
-            <div
-              aria-hidden
-              className="absolute -bottom-32 -left-20 h-96 w-96 rounded-full bg-brand-500/20 blur-3xl"
-            />
-
-            <div className="relative mx-auto max-w-3xl">
-              <span className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-brand-200">
-                Stop losing leads
-              </span>
-              <h2 className="mt-4 text-3xl font-bold leading-tight tracking-tight sm:text-4xl lg:text-5xl">
-                Stop losing leads. Hire Josh for Sales today.
-              </h2>
-              <p className="mx-auto mt-4 max-w-2xl text-lg text-white/75">
-                Every minute you wait, another Facebook lead goes cold. Setup takes 10 minutes.
-              </p>
-
-              <div className="mt-8">
-                <Link
-                  href="/signup"
-                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-brand-600 px-6 py-3.5 text-base font-semibold text-white shadow-lg shadow-brand-900/50 transition-colors hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-white/40"
-                >
-                  Hire Josh for Sales — Start Free Trial
-                  <ArrowRight className="h-4.5 w-4.5" />
-                </Link>
-              </div>
-
-              <p className="mt-5 text-sm font-semibold text-white/85">
-                No credit card · Cancel anytime · 14-day money-back guarantee
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* TEAM COMING */}
-      <section className="py-20 sm:py-28" aria-labelledby="team-coming-heading">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="mx-auto max-w-3xl text-center">
-            <Eyebrow>More AI teammates are coming</Eyebrow>
-            <h2
-              id="team-coming-heading"
-              className="mt-4 text-3xl font-bold leading-tight tracking-tight text-ink-900 sm:text-4xl lg:text-5xl"
-            >
-              Josh is the first hire. The rest of the crew is on deck.
+          <div className="max-w-3xl">
+            <p className="text-sm font-black uppercase tracking-[0.2em] text-brand-700">Feature breakdown</p>
+            <h2 className="mt-4 text-4xl font-black tracking-[-0.045em] text-ink-900 sm:text-5xl">
+              Everything Josh does is built to convert Messenger inquiries faster.
             </h2>
-            <p className="mt-4 text-base leading-relaxed text-ink-600 sm:text-lg">
-              Rocketeerio is building a roster of focused AI teammates for the work around every lead: support, marketing, content, and design.
+            <p className="mt-5 text-lg leading-8 text-ink-600">
+              Rocketeerio is not a generic chat widget. It is a lead qualification workflow for owners who already get Facebook messages and need a dependable first responder.
             </p>
           </div>
 
-          <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-            {TEAMMATES.map((teammate) => (
-              <article
-                key={teammate.name}
-                className="group relative overflow-hidden rounded-3xl border border-ink-100 bg-white p-6 shadow-sm transition-all hover:-translate-y-1 hover:border-brand-200 hover:shadow-lg hover:shadow-brand-500/10"
-              >
-                <div
-                  aria-hidden
-                  className="absolute -right-12 -top-12 h-28 w-28 rounded-full bg-brand-100/70 blur-2xl transition-transform group-hover:scale-125"
-                />
-                <div className="relative flex items-start justify-between gap-4">
-                  <div className="grid h-16 w-16 place-items-center rounded-full bg-gradient-to-br from-brand-100 via-white to-brand-200 text-xl font-bold text-brand-700 ring-1 ring-brand-200 shadow-inner">
-                    {teammate.initials}
-                  </div>
-                  <span className="rounded-full bg-brand-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-brand-700 ring-1 ring-brand-100">
-                    Joining soon
-                  </span>
-                </div>
-                <div className="relative mt-6">
-                  <h3 className="text-xl font-bold text-ink-900">{teammate.name}</h3>
-                  <p className="mt-1 text-sm font-semibold text-brand-700">
-                    {teammate.role}
-                  </p>
-                  <p className="mt-3 text-sm leading-relaxed text-ink-600">
-                    {teammate.description}
-                  </p>
+          <div className="mt-14 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {FEATURES.map((feature) => (
+              <FeatureCard key={feature.title} Icon={feature.icon} title={feature.title} desc={feature.desc} />
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="border-y border-ink-100 bg-ink-50/70 py-20 sm:py-28">
+        <div className="mx-auto grid max-w-7xl gap-10 px-4 sm:px-6 lg:grid-cols-12 lg:px-8">
+          <div className="lg:col-span-5">
+            <p className="text-sm font-black uppercase tracking-[0.2em] text-brand-700">Built for Philippine SMBs</p>
+            <h2 className="mt-4 text-4xl font-black tracking-[-0.045em] text-ink-900 sm:text-5xl">
+              If your customers DM before they buy, Josh can protect the sale.
+            </h2>
+            <p className="mt-5 text-lg leading-8 text-ink-600">
+              Filipino customers often ask quick questions on mobile before visiting, booking, or paying. Josh makes sure those first questions get answered while the lead is still interested.
+            </p>
+          </div>
+          <div className="grid gap-5 lg:col-span-7">
+            {AUDIENCES.map((audience) => (
+              <article key={audience.label} className="flex gap-5 rounded-[1.75rem] border border-ink-100 bg-white p-6 shadow-sm">
+                <IconBadge Icon={audience.icon} />
+                <div>
+                  <h3 className="text-xl font-black tracking-tight text-ink-900">{audience.label}</h3>
+                  <p className="mt-2 leading-relaxed text-ink-600">{audience.copy}</p>
                 </div>
               </article>
             ))}
@@ -596,142 +422,117 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* FAQ */}
-      <section className="border-t border-ink-100 bg-ink-50/60 py-20 sm:py-28">
-        <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
-          <SectionHeading
-            eyebrow="FAQ"
-            title="Questions, answered."
-            description="Everything you need to know before hiring Josh."
-          />
-          <div className="mt-12">
-            <FAQAccordion items={FAQ} />
+      <section className="py-20 sm:py-28" aria-label="Meet Josh">
+        <div className="mx-auto grid max-w-7xl gap-12 px-4 sm:px-6 lg:grid-cols-12 lg:items-center lg:px-8">
+          <div className="lg:col-span-5">
+            <div className="relative overflow-hidden rounded-[2.25rem] border border-ink-100 bg-ink-50 shadow-2xl shadow-brand-900/10">
+              <Image
+                src="/josh-cover.jpg"
+                alt="Josh, Rocketeerio's AI sales agent for Messenger leads"
+                width={900}
+                height={1100}
+                className="h-[430px] w-full object-cover sm:h-[540px]"
+                priority
+              />
+              <div className="absolute inset-x-5 bottom-5 rounded-3xl border border-white/40 bg-white/90 p-5 shadow-xl backdrop-blur">
+                <p className="text-xs font-black uppercase tracking-[0.2em] text-brand-700">Your AI sales agent</p>
+                <p className="mt-1 text-xl font-black text-ink-900">Josh is ready to work the inbox.</p>
+              </div>
+            </div>
+          </div>
+          <div className="lg:col-span-7">
+            <p className="text-sm font-black uppercase tracking-[0.2em] text-brand-700">Meet Josh</p>
+            <h2 className="mt-4 text-4xl font-black tracking-[-0.045em] text-ink-900 sm:text-5xl">
+              A professional first responder for every Facebook lead.
+            </h2>
+            <div className="mt-6 space-y-4 text-lg leading-8 text-ink-700">
+              <p>
+                Josh is trained to greet new leads, ask the questions your sales process needs, and keep the conversation moving until a real buying signal appears.
+              </p>
+              <p>
+                He does not replace the owner. He protects your time by making sure you only jump into the conversations that are worth your attention.
+              </p>
+            </div>
+            <div className="mt-8 rounded-[1.75rem] border border-brand-100 bg-brand-50 p-6">
+              <p className="text-sm font-black uppercase tracking-[0.18em] text-brand-700">Josh is responsible for</p>
+              <ul className="mt-4 grid gap-3 text-sm font-semibold text-ink-700 sm:grid-cols-2">
+                {[
+                  "Fast first replies",
+                  "Qualification questions",
+                  "Follow-up prompts",
+                  "Hot-lead summaries",
+                ].map((item) => (
+                  <li key={item} className="flex gap-2">
+                    <CheckCircle2 className="mt-0.5 h-4 w-4 flex-none text-brand-600" aria-hidden />
+                    <span>{item}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="pricing" className="bg-[linear-gradient(180deg,#f4f8ff_0%,#ffffff_100%)] py-20 sm:py-28">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="mx-auto max-w-3xl text-center">
+            <p className="text-sm font-black uppercase tracking-[0.2em] text-brand-700">Pricing</p>
+            <h2 className="mt-4 text-4xl font-black tracking-[-0.045em] text-ink-900 sm:text-5xl">
+              Start free, then scale when Josh is helping you win more leads.
+            </h2>
+            <p className="mt-5 text-lg leading-8 text-ink-600">
+              Every plan starts with the same primary step: connect Facebook and let Josh begin qualifying Messenger conversations.
+            </p>
           </div>
 
-          <p className="mt-10 text-center text-sm text-ink-500">
-            Still have questions?{' '}
-            <a
-              href="mailto:hello@rocketeerio.com"
-              className="font-semibold text-brand-600 hover:text-brand-700"
-            >
-              Email us — Josh will not pretend to be human, but the team replies fast.
-            </a>
-          </p>
+          <div className="mt-14 grid gap-6 lg:grid-cols-3">
+            {PRICING.map((plan) => (
+              <PricingCard key={plan.name} plan={plan} />
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section id="faq" className="py-20 sm:py-28">
+        <div className="mx-auto grid max-w-7xl gap-10 px-4 sm:px-6 lg:grid-cols-12 lg:px-8">
+          <div className="lg:col-span-5">
+            <p className="text-sm font-black uppercase tracking-[0.2em] text-brand-700">FAQ</p>
+            <h2 className="mt-4 text-4xl font-black tracking-[-0.045em] text-ink-900 sm:text-5xl">
+              Clear answers before you connect your Page.
+            </h2>
+            <p className="mt-5 text-lg leading-8 text-ink-600">
+              Rocketeerio is built for owners who want less manual inbox work and a practical path from Facebook inquiry to qualified customer.
+            </p>
+            <div className="mt-8 hidden lg:block">
+              <PrimaryCTA label="Get Started with Facebook" />
+            </div>
+          </div>
+          <div className="lg:col-span-7">
+            <FAQAccordion items={FAQ} />
+          </div>
+        </div>
+      </section>
+
+      <section id="cta" className="px-4 pb-20 sm:px-6 sm:pb-28 lg:px-8">
+        <div className="mx-auto max-w-7xl overflow-hidden rounded-[2.5rem] bg-ink-900 px-6 py-14 text-center text-white shadow-2xl shadow-ink-900/30 sm:px-12 sm:py-20">
+          <div className="mx-auto max-w-3xl">
+            <p className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-black uppercase tracking-[0.18em] text-brand-200">
+              <Zap className="h-3.5 w-3.5" aria-hidden />
+              Stop letting warm leads go cold
+            </p>
+            <h2 className="mt-5 text-4xl font-black tracking-[-0.045em] sm:text-5xl">
+              Hire Josh today and give every Messenger lead a fast first reply.
+            </h2>
+            <p className="mx-auto mt-5 max-w-2xl text-lg leading-8 text-white/72">
+              Connect your Facebook Page, test the free tier, and see how an AI sales agent can qualify leads before you step in.
+            </p>
+            <div className="mt-8 flex justify-center">
+              <PrimaryCTA label="Hire Josh for Sales" />
+            </div>
+            <p className="mt-5 text-sm font-semibold text-white/75">Facebook Login signup · Free tier available · Built for Messenger leads</p>
+          </div>
         </div>
       </section>
     </>
-  );
-}
-
-function ProofItem({
-  icon: Icon,
-  text,
-}: {
-  icon: React.ComponentType<{ className?: string }>;
-  text: string;
-}) {
-  return (
-    <div className="flex items-center justify-center gap-2 text-sm font-semibold text-ink-800">
-      <Icon className="h-4 w-4 flex-none text-brand-600" aria-hidden />
-      <span>{text}</span>
-    </div>
-  );
-}
-
-function StatCard({
-  number,
-  text,
-  highlight,
-}: {
-  number: string;
-  text: string;
-  highlight?: boolean;
-}) {
-  return (
-    <div
-      className={`rounded-2xl border p-6 ${
-        highlight
-          ? "border-brand-500 bg-brand-500 text-white shadow-lg shadow-brand-500/30"
-          : "border-ink-100 bg-white"
-      }`}
-    >
-      <p
-        className={`text-3xl font-bold tracking-tight sm:text-4xl ${
-          highlight ? "text-white" : "text-brand-600"
-        }`}
-      >
-        {number}
-      </p>
-      <p
-        className={`mt-2 text-sm leading-relaxed ${
-          highlight ? "text-white/90" : "text-ink-600"
-        }`}
-      >
-        {text}
-      </p>
-    </div>
-  );
-}
-
-function Step({
-  n,
-  icon: Icon,
-  title,
-  body,
-  accent,
-}: {
-  n: string;
-  icon: React.ComponentType<{ className?: string }>;
-  title: string;
-  body: string;
-  accent?: boolean;
-}) {
-  return (
-    <div
-      className={`relative rounded-2xl border p-7 transition-transform hover:-translate-y-1 ${
-        accent
-          ? "border-brand-500/40 bg-gradient-to-br from-brand-500/15 to-transparent"
-          : "border-white/10 bg-white/[0.04]"
-      }`}
-    >
-      <div className="flex items-center justify-between">
-        <span
-          className={`text-xs font-bold tracking-widest ${
-            accent ? "text-brand-300" : "text-white/40"
-          }`}
-        >
-          STEP {n}
-        </span>
-        <span
-          className={`grid h-11 w-11 place-items-center rounded-xl ${
-            accent ? "bg-brand-500 text-white" : "bg-white/10 text-brand-200"
-          }`}
-        >
-          <Icon className="h-5 w-5" />
-        </span>
-      </div>
-      <h3 className="mt-5 text-xl font-bold text-white">{title}</h3>
-      <p className="mt-2 leading-relaxed text-white/70">{body}</p>
-    </div>
-  );
-}
-
-function FeatureCard({
-  Icon,
-  title,
-  desc,
-}: {
-  Icon: React.ComponentType<{ className?: string }>;
-  title: string;
-  desc: string;
-}) {
-  return (
-    <div className="group rounded-2xl border border-ink-100 bg-white p-7 transition-all hover:border-brand-200 hover:shadow-lg hover:shadow-brand-500/5">
-      <span className="inline-grid h-12 w-12 place-items-center rounded-xl bg-brand-50 text-brand-600 transition-colors group-hover:bg-brand-500 group-hover:text-white">
-        <Icon className="h-6 w-6" />
-      </span>
-      <h3 className="mt-5 text-lg font-bold text-ink-900">{title}</h3>
-      <p className="mt-2 leading-relaxed text-ink-600">{desc}</p>
-    </div>
   );
 }

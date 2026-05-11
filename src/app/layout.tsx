@@ -33,17 +33,19 @@ const SITE_URL = "https://rocketeerio.com";
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: "Hire Josh for Sales — Your AI Sales Hire",
+    default: "Rocketeerio — AI Lead Qualification for Facebook Messenger",
     template: "%s | Rocketeerio",
   },
   description:
-    "Josh replies to every Facebook and Instagram lead in under 60 seconds. He qualifies them. He pings you when one's hot.",
+    "Connect your Facebook Page and let Josh, Rocketeerio's AI sales agent, qualify Messenger leads 24/7 before handing hot prospects to you.",
   keywords: [
     "facebook leads not converting",
     "auto reply facebook leads",
     "facebook lead follow up automation",
     "messenger lead qualification",
     "facebook lead automation",
+    "AI sales agent Philippines",
+    "Facebook Messenger lead qualification",
     "AI lead conversion",
   ],
   authors: [{ name: "Rocketeerio" }],
@@ -56,24 +58,24 @@ export const metadata: Metadata = {
     type: "website",
     url: SITE_URL,
     siteName: "Rocketeerio",
-    title: "Hire Josh for Sales — Your AI Sales Hire",
+    title: "Rocketeerio — AI Lead Qualification for Facebook Messenger",
     description:
-      "Josh replies to every Facebook and Instagram lead in under 60 seconds. He qualifies them. He pings you when one's hot.",
+      "Connect your Facebook Page and let Josh, Rocketeerio's AI sales agent, qualify Messenger leads 24/7 before handing hot prospects to you.",
     locale: "en_US",
     images: [
       {
         url: "/api/og?title=Hire%20Josh%20%E2%80%94%20Your%20AI%20Sales%20Hire&eyebrow=ROCKETEERIO&kicker=Josh%20replies%20to%20every%20Meta%20lead%20in%20under%2060%20seconds.",
         width: 1200,
         height: 630,
-        alt: "Hire Josh for Sales — Your AI Sales Hire",
+        alt: "Rocketeerio AI lead qualification platform for Facebook Messenger",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Hire Josh for Sales — Your AI Sales Hire",
+    title: "Rocketeerio — AI Lead Qualification for Facebook Messenger",
     description:
-      "Josh replies to every Facebook and Instagram lead in under 60 seconds. He qualifies them. He pings you when one's hot.",
+      "Connect your Facebook Page and let Josh, Rocketeerio's AI sales agent, qualify Messenger leads 24/7 before handing hot prospects to you.",
     images: [
       "/api/og?title=Hire%20Josh%20%E2%80%94%20Your%20AI%20Sales%20Hire&eyebrow=ROCKETEERIO&kicker=Josh%20replies%20to%20every%20Meta%20lead%20in%20under%2060%20seconds.",
     ],
@@ -121,14 +123,14 @@ export default function RootLayout({
     url: SITE_URL,
     logo: `${SITE_URL}/logo.svg`,
     description:
-      "Rocketeerio is an AI manpower agency. Josh replies to Meta leads in under 60 seconds, qualifies them, and alerts you when one is hot.",
+      "Rocketeerio is an AI lead qualification platform for small businesses. Josh connects to Facebook Messenger, replies to incoming leads, qualifies prospects, and alerts owners when a lead is ready to buy.",
     sameAs: ["https://www.facebook.com/rocketeerio"],
     contactPoint: [
       {
         "@type": "ContactPoint",
         email: "hello@rocketeerio.com",
         contactType: "customer support",
-        availableLanguage: ["English"],
+        availableLanguage: ["English", "Tagalog"],
       },
     ],
   };
