@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 
+export const dynamic = "force-dynamic";
+
 export const metadata = {
   title: "Page not found",
   robots: { index: false, follow: false },
