@@ -239,6 +239,11 @@ export function JoshSettingsPanel({
           joshSettings: payload,
         }),
       });
+
+      await requestJson<Record<string, unknown>>(`${handbookPath}/behavior`, {
+        method: "PUT",
+        body: JSON.stringify(payload),
+      });
     },
     [effectivePageId, requestJson],
   );
@@ -571,7 +576,7 @@ export function JoshSettingsPanel({
                   <input
                     type="number"
                     min="1"
-                    max="99"
+                    max="999"
                     value={settings.responseBehavior.maxMessagesPerConversation}
                     onChange={(event) =>
                       updateResponseBehavior(
@@ -899,7 +904,7 @@ function hydrateSettings(root: Record<string, unknown>): JoshSettings {
       maxMessagesPerConversation: clampNumber(
         responseBehavior?.maxMessagesPerConversation ?? responseBehavior?.maxMessages,
         1,
-        99,
+        999,
         defaults.responseBehavior.maxMessagesPerConversation,
       ),
       responseLengthPreference: normalizeResponseLength(
@@ -912,9 +917,11 @@ function hydrateSettings(root: Record<string, unknown>): JoshSettings {
 
 function pickSettingsSource(root: Record<string, unknown>): Record<string, unknown> {
   const topLevelSettings = isRecord(root.settings) ? root.settings : null;
+  const behaviorSettings = topLevelSettings && isRecord(topLevelSettings.behavior) ? topLevelSettings.behavior : null;
   const flowSettings = topLevelSettings && isRecord(topLevelSettings.flow) ? topLevelSettings.flow : null;
   const dataSettings = isRecord(root.data) && isRecord(root.data.settings) ? root.data.settings : null;
 
+  if (behaviorSettings) return behaviorSettings;
   if (flowSettings && isRecord(flowSettings.joshSettings)) return flowSettings.joshSettings;
   if (topLevelSettings && isRecord(topLevelSettings.joshSettings)) return topLevelSettings.joshSettings;
   if (isRecord(root.joshSettings)) return root.joshSettings;
