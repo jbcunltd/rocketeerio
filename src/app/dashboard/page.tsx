@@ -19,9 +19,15 @@ import {
 
 export const dynamic = "force-dynamic";
 
-export default async function DashboardPage() {
+export default async function DashboardPage(props: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
   const { user } = await getCurrentSession();
   if (!user) return null;
+
+  const searchParams = await props.searchParams;
+  const selectedPageId =
+    typeof searchParams.pageId === "string" ? searchParams.pageId : null;
 
   let pages: DashboardConnectedPage[] = [];
   let dbUnavailable = false;
@@ -33,7 +39,15 @@ export default async function DashboardPage() {
   const firstName = (user.name ?? user.email?.split("@")[0] ?? "there").split(
     " ",
   )[0];
-  const activePage = pages[0] ?? null;
+  const activePage =
+    (selectedPageId
+      ? pages.find((page) => page.pageId === selectedPageId)
+      : null) ??
+    pages[0] ??
+    null;
+  const joshInboxHref = activePage
+    ? `/dashboard/josh-for-sales?pageId=${encodeURIComponent(activePage.pageId)}`
+    : "/dashboard/josh-for-sales";
   const kpiLoad = await loadDashboardKpis(activePage?.pageId ?? null);
   dbUnavailable = dbUnavailable || kpiLoad.unavailable;
   const dashboardKpis = kpiLoad.kpis;
@@ -189,7 +203,7 @@ export default async function DashboardPage() {
 
       {/* Josh for Sales — Hero Agent Card with all KPIs */}
       <Link
-        href="/dashboard/josh-for-sales"
+        href={joshInboxHref}
         className="group block rounded-2xl border border-ink-100 bg-white shadow-sm transition-all hover:shadow-md hover:border-brand-200"
       >
         {/* Agent header */}

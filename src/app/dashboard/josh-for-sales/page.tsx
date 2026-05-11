@@ -56,6 +56,7 @@ export default async function JoshForSalesPage(props: {
 
   return (
     <JoshLiveInbox
+      pageId={pageId}
       pageName={pageName}
       pagePictureUrl={pagePictureUrl}
       conversations={conversations}

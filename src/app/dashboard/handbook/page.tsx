@@ -32,7 +32,13 @@ const folders: HandbookFolder[] = [
   },
 ];
 
-export default async function CompanyHandbookPage() {
+export default async function CompanyHandbookPage(props: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const searchParams = await props.searchParams;
+  const selectedPageId =
+    typeof searchParams.pageId === "string" ? searchParams.pageId : null;
+
   return (
     <div className="space-y-8">
       <header>
@@ -55,10 +61,16 @@ export default async function CompanyHandbookPage() {
         </div>
 
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {folders.map((folder) => (
+          {folders.map((folder) => {
+            const href =
+              folder.id === "josh" && selectedPageId
+                ? `${folder.href}?pageId=${encodeURIComponent(selectedPageId)}`
+                : folder.href;
+
+            return (
             <Link
               key={folder.id}
-              href={folder.href}
+              href={href}
               className="group rounded-3xl border border-ink-100 bg-white p-6 text-left shadow-sm transition-all hover:border-brand-200 hover:shadow-md hover:shadow-brand-500/10"
             >
               <div className="flex items-start justify-between gap-3">
@@ -80,7 +92,8 @@ export default async function CompanyHandbookPage() {
                 </span>
               </div>
             </Link>
-          ))}
+            );
+          })}
 
           <div className="rounded-3xl border border-dashed border-ink-200 bg-ink-50 p-6 flex flex-col items-center justify-center text-center">
             <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white text-ink-400">

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { BookOpen, Inbox, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -28,6 +28,8 @@ const tabs = [
 
 export function JoshForSalesTabs() {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const selectedPageId = searchParams.get("pageId");
 
   return (
     <nav
@@ -40,10 +42,14 @@ export function JoshForSalesTabs() {
           ? pathname === tab.href
           : pathname.startsWith(tab.href);
 
+        const href = selectedPageId
+          ? `${tab.href}?pageId=${encodeURIComponent(selectedPageId)}`
+          : tab.href;
+
         return (
           <Link
             key={tab.href}
-            href={tab.href}
+            href={href}
             className={cn(
               "inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition-all",
               active

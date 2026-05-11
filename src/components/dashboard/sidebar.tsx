@@ -16,6 +16,7 @@ import {
 import { Logo } from "@/components/logo";
 import { UpgradeModal } from "@/components/dashboard/upgrade-modal";
 import { SidebarPageSwitcher } from "@/components/dashboard/sidebar-page-switcher";
+import { usePageSelection } from "@/lib/page-selection-context";
 import { cn } from "@/lib/utils";
 
 const NAV = [
@@ -42,9 +43,12 @@ const NAV = [
 ];
 
 function SidebarBrand({ pages }: { pages: DashboardPage[] }) {
+  const { selectedPageId } = usePageSelection();
+  const dashboardHref = buildPageAwareHref("/dashboard", selectedPageId);
+
   return (
     <div className="flex flex-col items-start gap-3">
-      <Logo href="/dashboard" />
+      <Logo href={dashboardHref} />
       {pages.length > 0 && <SidebarPageSwitcher pages={pages} />}
     </div>
   );
@@ -65,6 +69,12 @@ interface SidebarProps {
   onLogout: () => Promise<void>;
 }
 
+function buildPageAwareHref(href: string, selectedPageId: string | null) {
+  if (!selectedPageId) return href;
+  if (!href.startsWith("/dashboard") || href === "/dashboard/pages") return href;
+  return `${href}?pageId=${encodeURIComponent(selectedPageId)}`;
+}
+
 function NavList({
   pathname,
   onClick,
@@ -72,16 +82,19 @@ function NavList({
   pathname: string;
   onClick?: () => void;
 }) {
+  const { selectedPageId } = usePageSelection();
+
   return (
     <nav className="flex-1 space-y-1 px-3 py-4">
       {NAV.map((item) => {
         const active =
           pathname === item.href ||
           (item.href !== "/dashboard" && pathname.startsWith(item.href));
+        const href = buildPageAwareHref(item.href, selectedPageId);
         return (
           <Link
             key={item.href}
-            href={item.href}
+            href={href}
             onClick={onClick}
             className={cn(
               "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
@@ -185,13 +198,15 @@ function UserBlock({
 
 export function Sidebar({ user, pages, onLogout }: SidebarProps) {
   const pathname = usePathname();
+  const { selectedPageId } = usePageSelection();
+  const dashboardHref = buildPageAwareHref("/dashboard", selectedPageId);
   const [open, setOpen] = useState(false);
 
   return (
     <>
       {/* Mobile top bar */}
       <div className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-ink-100 bg-white px-4 md:hidden">
-        <Logo href="/dashboard" />
+        <Logo href={dashboardHref} />
         <button
           type="button"
           aria-label="Open menu"

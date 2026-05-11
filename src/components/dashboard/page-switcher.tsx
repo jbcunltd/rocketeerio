@@ -1,7 +1,9 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
-import { ChevronDown, Check } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Check, ChevronDown, Plus } from "lucide-react";
+import Link from "next/link";
+import { usePageSelection } from "@/lib/page-selection-context";
 
 interface PageItem {
   id: number;
@@ -13,8 +15,13 @@ interface PageItem {
 
 export function PageSwitcher({ pages }: { pages: PageItem[] }) {
   const [open, setOpen] = useState(false);
-  const [selected, setSelected] = useState<PageItem>(pages[0]);
+  const { selectedPageId, selectPage } = usePageSelection();
   const ref = useRef<HTMLDivElement>(null);
+
+  const selected = useMemo(
+    () => pages.find((page) => page.pageId === selectedPageId) ?? pages[0],
+    [pages, selectedPageId],
+  );
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -26,7 +33,7 @@ export function PageSwitcher({ pages }: { pages: PageItem[] }) {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  if (pages.length <= 1) {
+  if (pages.length <= 1 || !selected) {
     return null;
   }
 
@@ -62,7 +69,7 @@ export function PageSwitcher({ pages }: { pages: PageItem[] }) {
               key={page.id}
               type="button"
               onClick={() => {
-                setSelected(page);
+                selectPage(page.pageId);
                 setOpen(false);
               }}
               className="flex w-full items-center gap-3 px-3 py-2.5 text-left hover:bg-ink-50 transition-colors"
@@ -86,11 +93,24 @@ export function PageSwitcher({ pages }: { pages: PageItem[] }) {
                   {page.name}
                 </p>
               </div>
-              {selected.id === page.id && (
+              {selected.pageId === page.pageId && (
                 <Check className="h-4 w-4 text-brand-600 shrink-0" />
               )}
             </button>
           ))}
+
+          {/* Divider */}
+          <div className="my-1 border-t border-ink-100" />
+
+          {/* Add Another Page link */}
+          <Link
+            href="/api/facebook/pages"
+            onClick={() => setOpen(false)}
+            className="flex items-center gap-3 px-3 py-2.5 text-left text-sm font-medium text-ink-600 transition-colors hover:bg-ink-50 hover:text-ink-900"
+          >
+            <Plus className="h-4 w-4" />
+            Add Another Page
+          </Link>
         </div>
       )}
     </div>

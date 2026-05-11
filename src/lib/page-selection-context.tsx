@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useState, useCallback } from "react";
+import React, { createContext, useCallback, useContext, useEffect, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 
 export type PageSelectionContextType = {
@@ -22,6 +22,10 @@ export function PageSelectionProvider({
   const [selectedPageId, setSelectedPageId] = useState<string | null>(
     searchParams.get("pageId"),
   );
+
+  useEffect(() => {
+    setSelectedPageId(searchParams.get("pageId"));
+  }, [searchParams]);
 
   const selectPage = useCallback(
     (pageId: string) => {

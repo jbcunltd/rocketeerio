@@ -33,6 +33,7 @@ import { cn } from "@/lib/utils";
 type InboxPanel = "list" | "thread" | "profile";
 type InboxFilter = "all" | "active" | "hot" | "qualified";
 type JoshLiveInboxProps = {
+  pageId?: string | null;
   pageName: string;
   pagePictureUrl?: string | null;
   conversations?: LiveConversation[];
@@ -40,6 +41,9 @@ type JoshLiveInboxProps = {
 };
 
 type JoshLiveInboxPollResponse = {
+  pageId?: string | null;
+  pageName: string;
+  pagePictureUrl: string | null;
   conversations: LiveConversation[];
   dbUnavailable: boolean;
 };
@@ -286,6 +290,7 @@ function buildLiveStats(conversations: LiveConversation[]): LiveStat[] {
 }
 
 export function JoshLiveInbox({
+  pageId = null,
   pageName,
   pagePictureUrl,
   conversations = [],
@@ -296,9 +301,19 @@ export function JoshLiveInbox({
   const [searchQuery, setSearchQuery] = useState("");
   const [filtersOpen, setFiltersOpen] = useState(true);
   const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
+  const [livePageName, setLivePageName] = useState(pageName);
+  const [livePagePictureUrl, setLivePagePictureUrl] = useState<string | null>(pagePictureUrl ?? null);
   const [liveConversations, setLiveConversations] = useState(conversations);
   const [liveDbUnavailable, setLiveDbUnavailable] = useState(dbUnavailable);
   const latestMessageSignatureRef = useRef(getLatestMessageSignature(conversations));
+
+  useEffect(() => {
+    setLivePageName(pageName);
+  }, [pageName]);
+
+  useEffect(() => {
+    setLivePagePictureUrl(pagePictureUrl ?? null);
+  }, [pagePictureUrl]);
 
   useEffect(() => {
     setLiveConversations((currentConversations) =>
@@ -322,6 +337,7 @@ export function JoshLiveInbox({
 
   const searchParams = useSearchParams();
   const selectedPageId = searchParams.get("pageId");
+  const pollingPageId = selectedPageId ?? pageId;
 
   useEffect(() => {
     let cancelled = false;
@@ -333,8 +349,8 @@ export function JoshLiveInbox({
 
       try {
         const url = new URL("/api/dashboard/josh-live-inbox", window.location.origin);
-        if (selectedPageId) {
-          url.searchParams.set("pageId", selectedPageId);
+        if (pollingPageId) {
+          url.searchParams.set("pageId", pollingPageId);
         }
         const response = await fetch(url.toString(), {
           cache: "no-store",
@@ -345,6 +361,12 @@ export function JoshLiveInbox({
         const data = (await response.json()) as JoshLiveInboxPollResponse;
         if (cancelled) return;
 
+        setLivePageName((currentPageName) =>
+          currentPageName === data.pageName ? currentPageName : data.pageName,
+        );
+        setLivePagePictureUrl((currentPagePictureUrl) =>
+          currentPagePictureUrl === data.pagePictureUrl ? currentPagePictureUrl : data.pagePictureUrl,
+        );
         setLiveDbUnavailable((currentDbUnavailable) =>
           currentDbUnavailable === data.dbUnavailable ? currentDbUnavailable : data.dbUnavailable,
         );
@@ -360,13 +382,14 @@ export function JoshLiveInbox({
       }
     }
 
+    void refreshLiveInbox();
     const pollingInterval = window.setInterval(refreshLiveInbox, 5000);
 
     return () => {
       cancelled = true;
       window.clearInterval(pollingInterval);
     };
-  }, [selectedPageId]);
+  }, [pollingPageId]);
 
   const liveStats = useMemo(() => buildLiveStats(liveConversations), [liveConversations]);
 
@@ -456,10 +479,10 @@ export function JoshLiveInbox({
         </div>
 
         <div className="flex items-center gap-3 rounded-2xl border border-ink-100 bg-white px-4 py-3 shadow-sm">
-          {pagePictureUrl ? (
+          {livePagePictureUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
-              src={pagePictureUrl}
+              src={livePagePictureUrl}
               alt=""
               className="h-10 w-10 rounded-full object-cover ring-2 ring-white"
             />
@@ -470,7 +493,7 @@ export function JoshLiveInbox({
           )}
           <div className="min-w-0">
             <p className="truncate text-sm font-semibold text-ink-900">
-              {pageName}
+              {livePageName}
             </p>
             <p className="text-xs text-ink-500">Connected Page · Live-ready</p>
           </div>
@@ -784,7 +807,7 @@ export function JoshLiveInbox({
                     </div>
 
                     <h2 className="mt-6 text-xl font-bold tracking-tight text-ink-900">
-                      Josh is online and waiting for leads on {pageName}.
+                      Josh is online and waiting for leads on {livePageName}.
                     </h2>
                     <p className="mt-3 text-sm leading-6 text-ink-600">
                       Conversations will appear here in real-time as they come in.

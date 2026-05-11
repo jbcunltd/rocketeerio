@@ -7,6 +7,7 @@ import type { LiveConversation } from "@/lib/josh-live-inbox-types";
 export const dynamic = "force-dynamic";
 
 type JoshLiveInboxResponse = {
+  pageId: string | null;
   pageName: string;
   pagePictureUrl: string | null;
   conversations: LiveConversation[];
@@ -53,6 +54,7 @@ export async function GET(request: NextRequest) {
   }
 
   const payload: JoshLiveInboxResponse = {
+    pageId,
     pageName,
     pagePictureUrl,
     conversations,
