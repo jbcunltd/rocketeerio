@@ -22,7 +22,7 @@ import {
   Wifi,
   type LucideIcon,
 } from "lucide-react";
-import { disconnectPageAction } from "@/app/dashboard/settings/actions";
+import { disconnectPageAction } from "@/app/dashboard/pages/actions";
 import { cn } from "@/lib/utils";
 
 type AgentMode = "live" | "testing" | "paused";

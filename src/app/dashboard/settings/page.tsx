@@ -1,17 +1,9 @@
 import Link from "next/link";
 import { eq } from "drizzle-orm";
-import { AlertTriangle, CheckCircle2, Facebook } from "lucide-react";
+import { AlertTriangle, CheckCircle2, CreditCard, Facebook } from "lucide-react";
 import { db } from "@/lib/db";
-import {
-  facebookPageTable,
-  facebookUserTokenTable,
-} from "@/lib/db/schema";
-import { fetchUserPages } from "@/lib/auth/facebook";
+import { facebookUserTokenTable } from "@/lib/db/schema";
 import { getCurrentSession } from "@/lib/auth/cookies";
-import {
-  PageSelector,
-  type AvailablePage,
-} from "@/components/dashboard/page-selector";
 import { disconnectFacebookAction } from "./actions";
 
 export const dynamic = "force-dynamic";
@@ -38,7 +30,6 @@ export default async function SettingsPage({
   const justAuthorized = sp.fb === "authorized" || sp.fb === "connected";
 
   let tokenRow: typeof facebookUserTokenTable.$inferSelect | undefined;
-  let connectedSet = new Set<string>();
   try {
     tokenRow = (
       await db
@@ -47,33 +38,8 @@ export default async function SettingsPage({
         .where(eq(facebookUserTokenTable.userId, user.id))
         .limit(1)
     )[0];
-
-    const connectedRows = await db
-      .select({ pageId: facebookPageTable.pageId })
-      .from(facebookPageTable)
-      .where(eq(facebookPageTable.userId, user.id));
-    connectedSet = new Set(connectedRows.map((r) => r.pageId));
   } catch (err) {
     console.error("[settings] db unavailable", err);
-  }
-
-  let availablePages: AvailablePage[] = [];
-  let fetchError: string | null = null;
-  if (tokenRow) {
-    try {
-      const pages = await fetchUserPages(tokenRow.accessToken);
-      availablePages = pages.map((p) => ({
-        id: p.id,
-        name: p.name,
-        category: p.category ?? null,
-        pictureUrl: p.picture?.data?.url ?? null,
-        alreadyConnected: connectedSet.has(p.id),
-      }));
-    } catch (err) {
-      console.error("[settings] fetchUserPages", err);
-      fetchError =
-        "We couldn't load your Facebook Pages. Your token may have expired — please re-authorize.";
-    }
   }
 
   return (
@@ -83,7 +49,7 @@ export default async function SettingsPage({
           Settings
         </h1>
         <p className="text-sm text-ink-600">
-          Manage your Facebook integration and account preferences.
+          Manage account-level preferences and integrations.
         </p>
       </header>
 
@@ -96,10 +62,7 @@ export default async function SettingsPage({
       {justAuthorized && !errorMsg && (
         <div className="flex items-start gap-3 rounded-lg border border-brand-100 bg-brand-50 px-4 py-3 text-sm text-brand-700">
           <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />
-          <p>
-            Facebook authorized. Pick the Pages you&apos;d like to connect
-            below.
-          </p>
+          <p>Facebook authorization updated successfully.</p>
         </div>
       )}
 
@@ -108,11 +71,11 @@ export default async function SettingsPage({
           <div>
             <h2 className="flex items-center gap-2 text-lg font-semibold text-ink-900">
               <Facebook className="h-5 w-5 text-[#1877F2]" />
-              Facebook integration
+              Facebook authorization
             </h2>
             <p className="mt-1 text-sm text-ink-600">
-              Authorize Rocketeerio to manage your Facebook Pages and Messenger
-              inbox.
+              Authorize or refresh Rocketeerio&apos;s account-level Facebook access.
+              Page selection and page disconnects now live in Connected Pages.
             </p>
           </div>
           {!tokenRow ? (
@@ -135,43 +98,23 @@ export default async function SettingsPage({
                   type="submit"
                   className="rounded-lg px-3 py-2 text-sm font-medium text-ink-500 hover:bg-ink-50 hover:text-ink-900"
                 >
-                  Disconnect
+                  Disconnect Facebook
                 </button>
               </form>
             </div>
           )}
         </div>
 
-        <div className="mt-6">
-          {!tokenRow && (
-            <p className="text-sm text-ink-600">
-              You haven&apos;t authorized Facebook yet. Click{" "}
-              <strong>Connect Facebook</strong> to grant Rocketeerio access to
-              your Pages and Messenger inbox.
-            </p>
-          )}
-
-          {tokenRow && fetchError && (
-            <p className="rounded-lg border border-rose/40 bg-rose/5 px-3 py-2 text-sm text-rose">
-              {fetchError}
-            </p>
-          )}
-
-          {tokenRow && !fetchError && (
-            <div className="space-y-4">
-              <div>
-                <h3 className="text-sm font-semibold text-ink-900">
-                  Select Pages to connect
-                </h3>
-                <p className="text-xs text-ink-500">
-                  Choose any Pages you&apos;d like Josh to qualify
-                  Messenger leads for.
-                </p>
-              </div>
-              <PageSelector pages={availablePages} />
-            </div>
-          )}
-        </div>
+        <p className="mt-5 text-sm text-ink-600">
+          To connect, review, or disconnect individual Facebook Pages, visit{" "}
+          <Link
+            href="/dashboard/pages"
+            className="font-medium text-brand-600 hover:text-brand-700"
+          >
+            Connected Pages
+          </Link>
+          .
+        </p>
       </div>
 
       <div className="rounded-2xl border border-ink-100 bg-white p-6 shadow-sm">
@@ -197,14 +140,19 @@ export default async function SettingsPage({
             </div>
           )}
         </dl>
-        <p className="mt-4 text-xs text-ink-500">
-          <Link
-            href="/dashboard/pages"
-            className="text-brand-600 hover:text-brand-700"
-          >
-            View your Connected Pages →
-          </Link>
+      </div>
+
+      <div className="rounded-2xl border border-ink-100 bg-white p-6 shadow-sm">
+        <h2 className="flex items-center gap-2 text-lg font-semibold text-ink-900">
+          <CreditCard className="h-5 w-5 text-brand-500" />
+          Billing
+        </h2>
+        <p className="mt-1 text-sm text-ink-600">
+          Billing management will be added here later.
         </p>
+        <div className="mt-5 rounded-lg border border-dashed border-ink-200 bg-ink-50/60 px-4 py-3 text-sm text-ink-500">
+          Placeholder for subscription, invoices, and payment method settings.
+        </div>
       </div>
     </div>
   );

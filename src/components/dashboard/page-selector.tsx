@@ -6,7 +6,7 @@ import { Loader2 } from "lucide-react";
 import {
   connectSelectedPagesAction,
   type ConnectPagesState,
-} from "@/app/dashboard/settings/actions";
+} from "@/app/dashboard/pages/actions";
 
 export interface AvailablePage {
   id: string;
