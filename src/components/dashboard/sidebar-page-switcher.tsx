@@ -63,7 +63,7 @@ export function SidebarPageSwitcher({ pages }: { pages: PageItem[] }) {
       </button>
 
       {open && (
-        <div className="absolute left-0 right-0 top-full z-50 mt-1 rounded-xl border border-ink-100 bg-white py-1 shadow-lg">
+        <div className="absolute left-0 right-0 top-full z-50 mt-1 rounded-xl border border-ink-100 bg-white py-1 shadow-lg max-h-[60vh] overflow-y-auto">
           {pages.map((page) => (
             <button
               key={page.id}
@@ -72,7 +72,7 @@ export function SidebarPageSwitcher({ pages }: { pages: PageItem[] }) {
                 selectPage(page.pageId);
                 setOpen(false);
               }}
-              className="flex w-full items-center gap-3 px-3 py-2.5 text-left transition-colors hover:bg-ink-50"
+              className="flex w-full items-center gap-3 px-3 py-2.5 text-left transition-colors hover:bg-ink-50 active:bg-ink-100"
             >
               {page.pictureUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
@@ -81,10 +81,10 @@ export function SidebarPageSwitcher({ pages }: { pages: PageItem[] }) {
                   alt=""
                   width={28}
                   height={28}
-                  className="h-7 w-7 rounded-full object-cover"
+                  className="h-7 w-7 rounded-full object-cover shrink-0"
                 />
               ) : (
-                <span className="flex h-7 w-7 items-center justify-center rounded-full bg-brand-100 text-xs font-bold text-brand-700">
+                <span className="flex h-7 w-7 items-center justify-center rounded-full bg-brand-100 text-xs font-bold text-brand-700 shrink-0">
                   {page.name[0]}
                 </span>
               )}
@@ -109,10 +109,10 @@ export function SidebarPageSwitcher({ pages }: { pages: PageItem[] }) {
           <a
             href="/dashboard/pages"
             onClick={() => setOpen(false)}
-            className="flex items-center gap-3 px-3 py-2.5 text-left text-sm font-medium text-ink-600 transition-colors hover:bg-ink-50 hover:text-ink-900"
+            className="flex items-center gap-3 px-3 py-2.5 text-left text-sm font-medium text-ink-600 transition-colors hover:bg-ink-50 hover:text-ink-900 active:bg-ink-100"
           >
-            <Plus className="h-4 w-4" />
-            Connect Page
+            <Plus className="h-4 w-4 shrink-0" />
+            <span>Connect Page</span>
           </a>
         </div>
       )}
