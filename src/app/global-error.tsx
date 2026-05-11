@@ -15,22 +15,21 @@ export default function GlobalError({
   }, [error]);
 
   return (
-    <html lang="en">
-      <body
-        style={{
-          fontFamily:
-            "Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
-          margin: 0,
-          minHeight: "100vh",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          background: "#F8FAFC",
-          color: "#0B1220",
-          padding: "1.5rem",
-        }}
-      >
-        <div
+    <div
+      style={{
+        fontFamily:
+          "Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
+        margin: 0,
+        minHeight: "100vh",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        background: "#F8FAFC",
+        color: "#0B1220",
+        padding: "1.5rem",
+      }}
+    >
+      <div
           style={{
             maxWidth: 560,
             width: "100%",
@@ -123,7 +122,6 @@ export default function GlobalError({
             </p>
           )}
         </div>
-      </body>
-    </html>
-  );
-}
+      </div>
+    );
+  }
