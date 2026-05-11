@@ -584,9 +584,16 @@ export function JoshSettingsPanel({
                 </label>
 
                 <div className="rounded-2xl border border-ink-100 bg-white p-4 shadow-sm">
-                  <p className="text-sm font-bold text-ink-900">Response length preference</p>
-                  <p className="mt-1 text-xs leading-5 text-ink-500">Set the default answer density for Josh&apos;s replies.</p>
-                  <div className="mt-4 grid rounded-full border border-ink-100 bg-ink-50 p-1 sm:grid-cols-3">
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                    <div>
+                      <p className="text-sm font-bold text-ink-900">Response length preference</p>
+                      <p className="mt-1 text-xs leading-5 text-ink-500">Set the default answer density for Josh&apos;s replies.</p>
+                    </div>
+                    <span className="rounded-full bg-ink-50 px-3 py-1 text-xs font-bold text-ink-500">
+                      {responseLengths.find((option) => option.value === settings.responseBehavior.responseLengthPreference)?.label ?? "Balanced"}
+                    </span>
+                  </div>
+                  <div className="mt-4 grid gap-2 rounded-2xl border border-ink-100 bg-ink-50 p-1.5 sm:grid-cols-3">
                     {responseLengths.map((option) => {
                       const selected = settings.responseBehavior.responseLengthPreference === option.value;
                       return (
@@ -595,14 +602,23 @@ export function JoshSettingsPanel({
                           type="button"
                           onClick={() => updateResponseBehavior("responseLengthPreference", option.value)}
                           className={cn(
-                            "rounded-full px-4 py-2.5 text-center text-sm font-bold transition-all duration-200",
+                            "rounded-xl border px-3 py-3 text-left transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-brand-500/10",
                             selected
-                              ? "bg-brand-600 text-white shadow-sm shadow-brand-500/25"
-                              : "text-ink-500 hover:bg-white hover:text-ink-900",
+                              ? "border-brand-200 bg-white text-ink-900 shadow-sm ring-1 ring-brand-100"
+                              : "border-transparent bg-transparent text-ink-500 hover:bg-white/80 hover:text-ink-900",
                           )}
+                          aria-pressed={selected}
                         >
-                          <span className="block">{option.label}</span>
-                          <span className={cn("block text-[10px] font-semibold", selected ? "text-white/75" : "text-ink-400")}>
+                          <span className="flex items-center justify-between gap-2">
+                            <span className="text-sm font-bold">{option.label}</span>
+                            <span
+                              className={cn(
+                                "h-2.5 w-2.5 rounded-full transition",
+                                selected ? "bg-brand-500 shadow-[0_0_0_4px_rgba(0,132,255,0.12)]" : "bg-ink-200",
+                              )}
+                            />
+                          </span>
+                          <span className="mt-1 block text-[11px] font-semibold leading-4 text-ink-400">
                             {option.helper}
                           </span>
                         </button>

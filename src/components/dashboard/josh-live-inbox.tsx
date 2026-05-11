@@ -7,9 +7,11 @@
  * reinforce a professional live-operations workspace grounded in real activity.
  */
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Bot,
+  Check,
+  CheckCheck,
   Contact,
   FileText,
   Flame,
@@ -24,7 +26,7 @@ import {
   Users,
   type LucideIcon,
 } from "lucide-react";
-import type { LeadTemperature, LiveConversation } from "@/lib/josh-live-inbox-types";
+import type { LeadTemperature, LiveConversation, LiveConversationMessage, MessageDirection } from "@/lib/josh-live-inbox-types";
 import { cn } from "@/lib/utils";
 
 type InboxPanel = "list" | "thread" | "profile";
@@ -70,11 +72,175 @@ type LiveStat = {
   tone: "neutral" | "brand" | "hot" | "qualified";
 };
 
+type ThreadDateItem = {
+  type: "date";
+  id: string;
+  label: string;
+};
+
+type ThreadMessageGroup = {
+  type: "group";
+  id: string;
+  direction: MessageDirection;
+  messages: LiveConversationMessage[];
+};
+
+type ThreadItem = ThreadDateItem | ThreadMessageGroup;
+
+type BubblePosition = "solo" | "first" | "middle" | "last";
+
 function areConversationsEqual(
   currentConversations: LiveConversation[],
   nextConversations: LiveConversation[],
 ) {
   return JSON.stringify(currentConversations) === JSON.stringify(nextConversations);
+}
+
+
+function getConversationSortTime(conversation: LiveConversation) {
+  const lastMessage = conversation.messages.at(-1);
+  const candidate = lastMessage?.timestampIso;
+  const time = candidate ? Date.parse(candidate) : 0;
+  return Number.isFinite(time) ? time : 0;
+}
+
+function getLatestMessageSignature(conversations: LiveConversation[]) {
+  let latest: { signature: string; time: number } | null = null;
+
+  for (const conversation of conversations) {
+    const message = conversation.messages.at(-1);
+    if (!message) continue;
+    const time = message.timestampIso ? Date.parse(message.timestampIso) : 0;
+    const safeTime = Number.isFinite(time) ? time : 0;
+    const signature = `${conversation.id}:${message.id}:${message.direction}:${message.timestampIso ?? message.timestampLabel}`;
+
+    if (!latest || safeTime >= latest.time) latest = { signature, time: safeTime };
+  }
+
+  return latest?.signature ?? null;
+}
+
+function playNewMessageSound() {
+  try {
+    const AudioContextConstructor = window.AudioContext || (window as typeof window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+    if (!AudioContextConstructor) return;
+
+    const audioContext = new AudioContextConstructor();
+    const oscillator = audioContext.createOscillator();
+    const gain = audioContext.createGain();
+
+    oscillator.type = "sine";
+    oscillator.frequency.setValueAtTime(740, audioContext.currentTime);
+    oscillator.frequency.exponentialRampToValueAtTime(980, audioContext.currentTime + 0.08);
+    gain.gain.setValueAtTime(0.0001, audioContext.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.055, audioContext.currentTime + 0.015);
+    gain.gain.exponentialRampToValueAtTime(0.0001, audioContext.currentTime + 0.18);
+
+    oscillator.connect(gain);
+    gain.connect(audioContext.destination);
+    oscillator.start();
+    oscillator.stop(audioContext.currentTime + 0.2);
+    window.setTimeout(() => void audioContext.close().catch(() => undefined), 260);
+  } catch {
+    // Browsers can block audio until user interaction; notification sound is progressive enhancement.
+  }
+}
+
+function buildThreadItems(messages: LiveConversationMessage[]): ThreadItem[] {
+  const items: ThreadItem[] = [];
+  let activeGroup: ThreadMessageGroup | null = null;
+  let currentDateLabel: string | null = null;
+
+  for (const message of messages) {
+    const dateLabel = getMessageDateLabel(message);
+    if (dateLabel !== currentDateLabel) {
+      activeGroup = null;
+      currentDateLabel = dateLabel;
+      items.push({ type: "date", id: `date-${dateLabel}-${message.id}`, label: dateLabel });
+    }
+
+    if (!activeGroup || activeGroup.direction !== message.direction) {
+      activeGroup = {
+        type: "group",
+        id: `group-${message.id}`,
+        direction: message.direction,
+        messages: [message],
+      };
+      items.push(activeGroup);
+    } else {
+      activeGroup.messages.push(message);
+    }
+  }
+
+  return items;
+}
+
+function getMessageDateLabel(message: LiveConversationMessage) {
+  if (!message.timestampIso) return "Recent";
+  const date = new Date(message.timestampIso);
+  if (Number.isNaN(date.getTime())) return "Recent";
+
+  const today = new Date();
+  const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime();
+  const startOfMessageDay = new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
+  const dayDelta = Math.round((startOfToday - startOfMessageDay) / 86_400_000);
+
+  if (dayDelta === 0) return "Today";
+  if (dayDelta === 1) return "Yesterday";
+  if (dayDelta > 1 && dayDelta < 7) return date.toLocaleDateString(undefined, { weekday: "long" });
+  return date.toLocaleDateString(undefined, { month: "short", day: "numeric", year: date.getFullYear() === today.getFullYear() ? undefined : "numeric" });
+}
+
+function shouldShowJoshTyping(conversation: LiveConversation) {
+  const lastMessage = conversation.messages.at(-1);
+  if (!lastMessage || lastMessage.direction !== "inbound") return false;
+  if (!lastMessage.timestampIso) return ["New", "Qualifying"].includes(conversation.qualificationStatus);
+
+  const lastMessageTime = Date.parse(lastMessage.timestampIso);
+  if (!Number.isFinite(lastMessageTime)) return true;
+  return Date.now() - lastMessageTime < 3 * 60 * 1000;
+}
+
+function getBubblePosition(index: number, total: number): BubblePosition {
+  if (total === 1) return "solo";
+  if (index === 0) return "first";
+  if (index === total - 1) return "last";
+  return "middle";
+}
+
+function bubbleRadiusClass(direction: MessageDirection, position: BubblePosition) {
+  if (direction === "outbound") {
+    switch (position) {
+      case "solo":
+      case "first":
+        return "rounded-[20px_20px_6px_20px]";
+      case "middle":
+        return "rounded-[20px_6px_6px_20px]";
+      case "last":
+        return "rounded-[20px_6px_20px_20px]";
+    }
+  }
+
+  switch (position) {
+    case "solo":
+    case "first":
+      return "rounded-[20px_20px_20px_6px]";
+    case "middle":
+      return "rounded-[6px_20px_20px_6px]";
+    case "last":
+      return "rounded-[6px_20px_20px_20px]";
+  }
+}
+
+function isLastOutboundMessage(conversation: LiveConversation, messageId: string) {
+  const lastOutbound = [...conversation.messages].reverse().find((message) => message.direction === "outbound");
+  return lastOutbound?.id === messageId;
+}
+
+function hasInboundAfterMessage(conversation: LiveConversation, message: LiveConversationMessage) {
+  const messageIndex = conversation.messages.findIndex((candidate) => candidate.id === message.id);
+  if (messageIndex === -1) return false;
+  return conversation.messages.slice(messageIndex + 1).some((candidate) => candidate.direction === "inbound");
 }
 
 function buildLiveStats(conversations: LiveConversation[]): LiveStat[] {
@@ -131,6 +297,7 @@ export function JoshLiveInbox({
   const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
   const [liveConversations, setLiveConversations] = useState(conversations);
   const [liveDbUnavailable, setLiveDbUnavailable] = useState(dbUnavailable);
+  const latestMessageSignatureRef = useRef(getLatestMessageSignature(conversations));
 
   useEffect(() => {
     setLiveConversations((currentConversations) =>
@@ -143,6 +310,14 @@ export function JoshLiveInbox({
       currentDbUnavailable === dbUnavailable ? currentDbUnavailable : dbUnavailable,
     );
   }, [dbUnavailable]);
+
+  useEffect(() => {
+    const nextSignature = getLatestMessageSignature(liveConversations);
+    if (latestMessageSignatureRef.current && nextSignature && nextSignature !== latestMessageSignatureRef.current) {
+      playNewMessageSound();
+    }
+    latestMessageSignatureRef.current = nextSignature;
+  }, [liveConversations]);
 
   useEffect(() => {
     let cancelled = false;
@@ -188,9 +363,11 @@ export function JoshLiveInbox({
   const liveStats = useMemo(() => buildLiveStats(liveConversations), [liveConversations]);
 
   const visibleConversations = useMemo(() => {
-    const sortedConversations = [...liveConversations].sort(
-      (a, b) => Number(Boolean(b.isHot)) - Number(Boolean(a.isHot)),
-    );
+    const sortedConversations = [...liveConversations].sort((a, b) => {
+      const hotDelta = Number(Boolean(b.isHot)) - Number(Boolean(a.isHot));
+      if (hotDelta !== 0) return hotDelta;
+      return getConversationSortTime(b) - getConversationSortTime(a);
+    });
     const normalizedQuery = searchQuery.trim().toLowerCase();
     const searchedConversations = normalizedQuery
       ? sortedConversations.filter((conversation) =>
@@ -237,6 +414,11 @@ export function JoshLiveInbox({
     return visibleConversations[0] ?? null;
   }, [activeConversationId, liveConversations, visibleConversations]);
 
+  const activeThreadItems = useMemo(
+    () => (activeConversation ? buildThreadItems(activeConversation.messages) : []),
+    [activeConversation],
+  );
+  const joshIsTyping = activeConversation ? shouldShowJoshTyping(activeConversation) : false;
   const hasConversations = visibleConversations.length > 0;
   const hasAnyConversations = liveConversations.length > 0;
   const isSearchActive = searchQuery.trim().length > 0;
@@ -434,52 +616,65 @@ export function JoshLiveInbox({
               )}
             >
               {hasConversations ? (
-                visibleConversations.map((conversation) => (
-                  <button
-                    key={conversation.id}
-                    type="button"
-                    onClick={() => selectConversation(conversation)}
-                    className={cn(
-                      "flex w-full items-start gap-3 border-l-4 px-4 py-4 text-left transition-colors hover:bg-ink-50",
-                      activeConversation?.id === conversation.id
-                        ? "border-brand-500 bg-brand-50/60"
-                        : conversation.isHot
-                          ? "border-orange-400 bg-amber/10 hover:bg-amber/15"
-                          : "border-transparent",
-                    )}
-                  >
-                    <LeadAvatar conversation={conversation} className="h-10 w-10" />
-                    <span className="min-w-0 flex-1">
-                      <span className="flex items-center justify-between gap-3">
-                        <span className="flex min-w-0 items-center gap-2">
-                          <span className="truncate text-sm font-semibold text-ink-900">
-                            {conversation.leadName}
+                visibleConversations.map((conversation) => {
+                  const selected = activeConversation?.id === conversation.id;
+                  const latestMessage = conversation.messages.at(-1);
+                  const unreadStyle = latestMessage?.direction === "inbound";
+
+                  return (
+                    <button
+                      key={conversation.id}
+                      type="button"
+                      onClick={() => selectConversation(conversation)}
+                      className={cn(
+                        "group flex w-full items-start gap-3 px-3 py-3 text-left transition-all hover:bg-ink-50",
+                        selected ? "bg-brand-50/80" : conversation.isHot ? "bg-amber/10 hover:bg-amber/15" : "bg-white",
+                      )}
+                    >
+                      <span className="relative shrink-0">
+                        <LeadAvatar conversation={conversation} className="h-11 w-11 ring-2 ring-white shadow-sm" />
+                        {unreadStyle ? <span className="absolute -right-0.5 -top-0.5 h-3 w-3 rounded-full border-2 border-white bg-brand-500" /> : null}
+                      </span>
+                      <span className={cn("min-w-0 flex-1 rounded-2xl px-2 py-1 transition", selected && "bg-white shadow-sm ring-1 ring-brand-100")}>
+                        <span className="flex items-center justify-between gap-3">
+                          <span className="flex min-w-0 items-center gap-2">
+                            <span className={cn("truncate text-sm text-ink-900", unreadStyle ? "font-extrabold" : "font-semibold")}>
+                              {conversation.leadName}
+                            </span>
+                            {conversation.isHot ? (
+                              <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-amber/20 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.1em] text-orange-700">
+                                <Flame className="h-3 w-3" />
+                                Hot
+                              </span>
+                            ) : null}
                           </span>
-                          {conversation.isHot ? (
-                            <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-amber/20 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.1em] text-orange-700">
-                              <Flame className="h-3 w-3" />
-                              Hot
+                          <span className={cn("shrink-0 text-[11px]", unreadStyle ? "font-bold text-brand-600" : "text-ink-400")}>
+                            {conversation.timestampLabel}
+                          </span>
+                        </span>
+                        <span className={cn("mt-1 flex items-center gap-1.5 text-xs leading-5", unreadStyle ? "font-semibold text-ink-700" : "text-ink-500")}>
+                          {latestMessage?.direction === "outbound" ? <CheckCheck className="h-3.5 w-3.5 shrink-0 text-brand-500" /> : null}
+                          <span className="line-clamp-2">{conversation.lastMessagePreview}</span>
+                        </span>
+                        <span className="mt-2 flex flex-wrap items-center gap-1.5">
+                          <span
+                            className={cn(
+                              "inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em]",
+                              statusBadgeClass(conversation.qualificationStatus),
+                            )}
+                          >
+                            {conversation.qualificationStatus}
+                          </span>
+                          {conversation.leadTemperature ? (
+                            <span className={cn("inline-flex rounded-full border px-2 py-0.5 text-[10px] font-semibold", temperatureClass(conversation.leadTemperature))}>
+                              {conversation.leadTemperature}
                             </span>
                           ) : null}
                         </span>
-                        <span className="shrink-0 text-[11px] text-ink-400">
-                          {conversation.timestampLabel}
-                        </span>
                       </span>
-                      <span className="mt-1 line-clamp-2 text-xs leading-5 text-ink-500">
-                        {conversation.lastMessagePreview}
-                      </span>
-                      <span
-                        className={cn(
-                          "mt-2 inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em]",
-                          statusBadgeClass(conversation.qualificationStatus),
-                        )}
-                      >
-                        {conversation.qualificationStatus}
-                      </span>
-                    </span>
-                  </button>
-                ))
+                    </button>
+                  );
+                })
               ) : (
                 <div className="animate-fade-in">
                   <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-ink-50 text-ink-400">
@@ -532,42 +727,20 @@ export function JoshLiveInbox({
               {activeConversation ? (
                 <div className="max-h-[calc(100vh-300px)] min-h-0 flex-1 space-y-4 overflow-y-auto px-5 py-6 md:px-8">
                   {activeConversation.messages.length > 0 ? (
-                    activeConversation.messages.map((message) => (
-                      <div
-                        key={message.id}
-                        className={cn(
-                          "flex items-end gap-2",
-                          message.direction === "outbound" ? "justify-end" : "justify-start",
-                        )}
-                      >
-                        {message.direction === "inbound" ? (
-                          <LeadAvatar conversation={activeConversation} className="h-7 w-7" />
-                        ) : null}
-                        <div
-                          className={cn(
-                            "max-w-[78%] rounded-3xl px-4 py-3 text-sm leading-6 shadow-sm",
-                            message.direction === "outbound"
-                              ? "rounded-br-lg bg-brand-600 text-white shadow-brand-900/10"
-                              : "rounded-bl-lg border border-ink-100 bg-white text-ink-700",
-                          )}
-                        >
-                          <p className="whitespace-pre-wrap">{message.content}</p>
-                          <p
-                            className={cn(
-                              "mt-2 text-[10px] font-medium uppercase tracking-[0.12em]",
-                              message.direction === "outbound" ? "text-white/65" : "text-ink-400",
-                            )}
-                          >
-                            {message.direction === "outbound" ? "Josh" : activeConversation.leadName} · {message.timestampLabel}
-                          </p>
-                        </div>
-                        {message.direction === "outbound" ? (
-                          <div className="flex h-7 w-7 items-center justify-center rounded-full bg-brand-50 text-brand-700">
-                            <Bot className="h-3.5 w-3.5" />
-                          </div>
-                        ) : null}
-                      </div>
-                    ))
+                    <>
+                      {activeThreadItems.map((item) =>
+                        item.type === "date" ? (
+                          <MessageDateSeparator key={item.id} label={item.label} />
+                        ) : (
+                          <ConversationMessageGroup
+                            key={item.id}
+                            conversation={activeConversation}
+                            group={item}
+                          />
+                        ),
+                      )}
+                      {joshIsTyping ? <JoshTypingIndicator /> : null}
+                    </>
                   ) : (
                     <div className="flex h-full items-center justify-center p-6 md:p-10">
                       <div className="mx-auto max-w-md text-center animate-pop-in">
@@ -839,6 +1012,122 @@ function EmptyProfilePanel() {
         </div>
       </div>
     </>
+  );
+}
+
+
+function MessageDateSeparator({ label }: { label: string }) {
+  return (
+    <div className="my-5 flex items-center gap-4">
+      <div className="h-px flex-1 bg-ink-100" />
+      <span className="rounded-full border border-ink-100 bg-white px-3 py-1 text-[11px] font-bold uppercase tracking-[0.12em] text-ink-400 shadow-sm">
+        {label}
+      </span>
+      <div className="h-px flex-1 bg-ink-100" />
+    </div>
+  );
+}
+
+function ConversationMessageGroup({
+  conversation,
+  group,
+}: {
+  conversation: LiveConversation;
+  group: ThreadMessageGroup;
+}) {
+  const isOutbound = group.direction === "outbound";
+
+  return (
+    <div className={cn("animate-fade-in flex flex-col", isOutbound ? "items-end" : "items-start")}>
+      {group.messages.map((message, index) => {
+        const position = getBubblePosition(index, group.messages.length);
+        const showAvatar = position === "solo" || position === "last";
+        const showReceipt = isOutbound && isLastOutboundMessage(conversation, message.id) && showAvatar;
+
+        return (
+          <div
+            key={message.id}
+            className={cn(
+              "group/message flex w-full items-end gap-2 py-0.5 transition-all duration-300 ease-out",
+              isOutbound ? "justify-end animate-[fade-in_0.18s_ease-out_both]" : "justify-start animate-[fade-in_0.18s_ease-out_both]",
+            )}
+          >
+            {!isOutbound ? (
+              <div className="w-8 shrink-0">
+                {showAvatar ? <LeadAvatar conversation={conversation} className="h-8 w-8 shadow-sm ring-2 ring-white" /> : null}
+              </div>
+            ) : null}
+
+            <div className={cn("flex max-w-[78%] flex-col", isOutbound ? "items-end" : "items-start")}>
+              <div
+                className={cn(
+                  "px-3.5 py-2.5 text-[15px] leading-6 shadow-sm transition-transform duration-200 group-hover/message:-translate-y-0.5",
+                  bubbleRadiusClass(group.direction, position),
+                  isOutbound
+                    ? "bg-brand-500 text-white shadow-brand-900/10"
+                    : "border border-ink-100 bg-ink-100 text-ink-800 shadow-ink-200/40",
+                )}
+              >
+                <p className="whitespace-pre-wrap break-words">{message.content}</p>
+                <p className={cn("mt-1.5 text-[10px] font-medium uppercase tracking-[0.12em]", isOutbound ? "text-white/70" : "text-ink-400")}>
+                  {message.timestampLabel}
+                </p>
+              </div>
+              {showReceipt ? (
+                <OutboundReceipt
+                  conversation={conversation}
+                  message={message}
+                />
+              ) : null}
+            </div>
+
+            {isOutbound ? (
+              <div className="w-8 shrink-0">
+                {showAvatar ? <JoshAvatar className="h-8 w-8 shadow-sm ring-2 ring-white" /> : null}
+              </div>
+            ) : null}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function OutboundReceipt({ conversation, message }: { conversation: LiveConversation; message: LiveConversationMessage }) {
+  const read = hasInboundAfterMessage(conversation, message);
+
+  return (
+    <div className="mt-1 flex items-center gap-1.5 pr-1 text-[11px] font-medium text-ink-400">
+      {read ? <CheckCheck className="h-3.5 w-3.5 text-brand-500" /> : <Check className="h-3.5 w-3.5" />}
+      <span>{read ? `Read by ${conversation.leadName.split(" ")[0] || conversation.leadName}` : "Delivered"}</span>
+    </div>
+  );
+}
+
+function JoshTypingIndicator() {
+  return (
+    <div className="animate-fade-in mt-4 flex items-end gap-2">
+      <JoshAvatar className="h-8 w-8 shadow-sm ring-2 ring-white" />
+      <div className="flex flex-col">
+        <span className="mb-1 ml-3 text-[12px] font-medium text-ink-400">Josh is typing</span>
+        <div className="flex w-16 items-center justify-center gap-1 rounded-[20px_20px_20px_6px] border border-ink-100 bg-white px-4 py-3 shadow-sm">
+          <span className="dot-1 h-1.5 w-1.5 rounded-full bg-ink-400" />
+          <span className="dot-2 h-1.5 w-1.5 rounded-full bg-ink-400" />
+          <span className="dot-3 h-1.5 w-1.5 rounded-full bg-ink-400" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function JoshAvatar({ className }: { className?: string }) {
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src="/josh-avatar.jpg?v=3"
+      alt="Josh for Sales"
+      className={cn("shrink-0 rounded-full object-cover", className)}
+    />
   );
 }
 
