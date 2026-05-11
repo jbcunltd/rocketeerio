@@ -7,7 +7,7 @@
  * reinforce a professional live-operations workspace grounded in real activity.
  */
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Bot,
   Contact,
@@ -34,6 +34,11 @@ type JoshLiveInboxProps = {
   pagePictureUrl?: string | null;
   conversations?: LiveConversation[];
   dbUnavailable?: boolean;
+};
+
+type JoshLiveInboxPollResponse = {
+  conversations: LiveConversation[];
+  dbUnavailable: boolean;
 };
 
 const panelTabs: Array<{ id: InboxPanel; label: string; icon: LucideIcon }> = [
@@ -64,6 +69,13 @@ type LiveStat = {
   icon: LucideIcon;
   tone: "neutral" | "brand" | "hot" | "qualified";
 };
+
+function areConversationsEqual(
+  currentConversations: LiveConversation[],
+  nextConversations: LiveConversation[],
+) {
+  return JSON.stringify(currentConversations) === JSON.stringify(nextConversations);
+}
 
 function buildLiveStats(conversations: LiveConversation[]): LiveStat[] {
   const activeCount = conversations.filter((conversation) =>
@@ -117,11 +129,66 @@ export function JoshLiveInbox({
   const [searchQuery, setSearchQuery] = useState("");
   const [filtersOpen, setFiltersOpen] = useState(true);
   const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
+  const [liveConversations, setLiveConversations] = useState(conversations);
+  const [liveDbUnavailable, setLiveDbUnavailable] = useState(dbUnavailable);
 
-  const liveStats = useMemo(() => buildLiveStats(conversations), [conversations]);
+  useEffect(() => {
+    setLiveConversations((currentConversations) =>
+      areConversationsEqual(currentConversations, conversations) ? currentConversations : conversations,
+    );
+  }, [conversations]);
+
+  useEffect(() => {
+    setLiveDbUnavailable((currentDbUnavailable) =>
+      currentDbUnavailable === dbUnavailable ? currentDbUnavailable : dbUnavailable,
+    );
+  }, [dbUnavailable]);
+
+  useEffect(() => {
+    let cancelled = false;
+    let refreshInFlight = false;
+
+    async function refreshLiveInbox() {
+      if (refreshInFlight) return;
+      refreshInFlight = true;
+
+      try {
+        const response = await fetch("/api/dashboard/josh-live-inbox", {
+          cache: "no-store",
+        });
+
+        if (!response.ok) return;
+
+        const data = (await response.json()) as JoshLiveInboxPollResponse;
+        if (cancelled) return;
+
+        setLiveDbUnavailable((currentDbUnavailable) =>
+          currentDbUnavailable === data.dbUnavailable ? currentDbUnavailable : data.dbUnavailable,
+        );
+        setLiveConversations((currentConversations) =>
+          areConversationsEqual(currentConversations, data.conversations)
+            ? currentConversations
+            : data.conversations,
+        );
+      } catch (error) {
+        console.warn("[josh inbox] live inbox polling failed", error);
+      } finally {
+        refreshInFlight = false;
+      }
+    }
+
+    const pollingInterval = window.setInterval(refreshLiveInbox, 5000);
+
+    return () => {
+      cancelled = true;
+      window.clearInterval(pollingInterval);
+    };
+  }, []);
+
+  const liveStats = useMemo(() => buildLiveStats(liveConversations), [liveConversations]);
 
   const visibleConversations = useMemo(() => {
-    const sortedConversations = [...conversations].sort(
+    const sortedConversations = [...liveConversations].sort(
       (a, b) => Number(Boolean(b.isHot)) - Number(Boolean(a.isHot)),
     );
     const normalizedQuery = searchQuery.trim().toLowerCase();
@@ -159,19 +226,19 @@ export function JoshLiveInbox({
     }
 
     return searchedConversations;
-  }, [activeFilter, conversations, searchQuery]);
+  }, [activeFilter, liveConversations, searchQuery]);
 
   const activeConversation = useMemo(() => {
     if (activeConversationId) {
-      const selected = conversations.find((conversation) => conversation.id === activeConversationId);
+      const selected = liveConversations.find((conversation) => conversation.id === activeConversationId);
       if (selected) return selected;
     }
 
     return visibleConversations[0] ?? null;
-  }, [activeConversationId, conversations, visibleConversations]);
+  }, [activeConversationId, liveConversations, visibleConversations]);
 
   const hasConversations = visibleConversations.length > 0;
-  const hasAnyConversations = conversations.length > 0;
+  const hasAnyConversations = liveConversations.length > 0;
   const isSearchActive = searchQuery.trim().length > 0;
 
   function selectConversation(conversation: LiveConversation, panel: InboxPanel = "thread") {
@@ -220,7 +287,7 @@ export function JoshLiveInbox({
         </div>
       </header>
 
-      {dbUnavailable ? (
+      {liveDbUnavailable ? (
         <div className="rounded-2xl border border-amber/30 bg-amber/10 px-4 py-3 text-sm text-ink-700">
           We could not confirm the connected Page from the database. Josh can still show the live inbox shell, but the Page name may use a fallback until the database is reachable.
         </div>
