@@ -8,6 +8,7 @@
  */
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import {
   Bot,
   Check,
@@ -319,6 +320,9 @@ export function JoshLiveInbox({
     latestMessageSignatureRef.current = nextSignature;
   }, [liveConversations]);
 
+  const searchParams = useSearchParams();
+  const selectedPageId = searchParams.get("pageId");
+
   useEffect(() => {
     let cancelled = false;
     let refreshInFlight = false;
@@ -328,7 +332,11 @@ export function JoshLiveInbox({
       refreshInFlight = true;
 
       try {
-        const response = await fetch("/api/dashboard/josh-live-inbox", {
+        const url = new URL("/api/dashboard/josh-live-inbox", window.location.origin);
+        if (selectedPageId) {
+          url.searchParams.set("pageId", selectedPageId);
+        }
+        const response = await fetch(url.toString(), {
           cache: "no-store",
         });
 
@@ -358,7 +366,7 @@ export function JoshLiveInbox({
       cancelled = true;
       window.clearInterval(pollingInterval);
     };
-  }, []);
+  }, [selectedPageId]);
 
   const liveStats = useMemo(() => buildLiveStats(liveConversations), [liveConversations]);
 

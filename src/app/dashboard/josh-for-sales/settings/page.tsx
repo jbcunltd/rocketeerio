@@ -7,12 +7,19 @@
 
 import { Settings } from "lucide-react";
 import { JoshSettingsPanel } from "@/components/dashboard/josh-settings-panel";
-import { getFirstConnectedFacebookPage } from "@/lib/handbook-page-context";
+import { getConnectedFacebookPage } from "@/lib/handbook-page-context";
 
 export const dynamic = "force-dynamic";
 
-export default async function JoshSettingsPage() {
-  const { pageId, pageName, pagePictureUrl, dbUnavailable } = await getFirstConnectedFacebookPage();
+export default async function JoshSettingsPage(props: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const searchParams = await props.searchParams;
+  const selectedPageId =
+    typeof searchParams.pageId === "string" ? searchParams.pageId : null;
+
+  const { pageId, pageName, pagePictureUrl, dbUnavailable } =
+    await getConnectedFacebookPage(selectedPageId);
 
   return (
     <div className="space-y-5">

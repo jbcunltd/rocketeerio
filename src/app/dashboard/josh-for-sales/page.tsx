@@ -14,9 +14,15 @@ import type { LiveConversation } from "@/lib/josh-live-inbox-types";
 
 export const dynamic = "force-dynamic";
 
-export default async function JoshForSalesPage() {
+export default async function JoshForSalesPage(props: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
   const { user } = await getCurrentSession();
   if (!user) redirect("/login");
+
+  const searchParams = await props.searchParams;
+  const selectedPageId =
+    typeof searchParams.pageId === "string" ? searchParams.pageId : null;
 
   let pageId: string | null = null;
   let pageName = "your connected Page";
@@ -25,8 +31,16 @@ export default async function JoshForSalesPage() {
   let conversations: LiveConversation[] = [];
 
   const pageLoad = await loadDashboardConnectedPages(user.id);
-  const activePage = pageLoad.pages[0] ?? null;
   dbUnavailable = pageLoad.unavailable;
+
+  // Use selected page if available, otherwise fall back to first page
+  let activePage = null;
+  if (selectedPageId) {
+    activePage = pageLoad.pages.find((p) => p.pageId === selectedPageId) ?? null;
+  }
+  if (!activePage) {
+    activePage = pageLoad.pages[0] ?? null;
+  }
 
   if (activePage) {
     pageId = activePage.pageId;

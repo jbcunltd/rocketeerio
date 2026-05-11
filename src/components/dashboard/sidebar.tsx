@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { UpgradeModal } from "@/components/dashboard/upgrade-modal";
+import { SidebarPageSwitcher } from "@/components/dashboard/sidebar-page-switcher";
 import { cn } from "@/lib/utils";
 
 const NAV = [
@@ -40,25 +41,27 @@ const NAV = [
   { href: "/dashboard/settings", label: "Settings", icon: Settings, avatar: null },
 ];
 
-function SidebarBrand({ activePageName }: { activePageName?: string | null }) {
+function SidebarBrand({ pages }: { pages: DashboardPage[] }) {
   return (
-    <div className="flex flex-col items-start gap-1.5">
+    <div className="flex flex-col items-start gap-3">
       <Logo href="/dashboard" />
-      {activePageName ? (
-        <div className="ml-10 flex max-w-[11rem] items-center gap-1.5 text-xs font-medium text-ink-500">
-          <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-500" aria-hidden="true" />
-          <span className="truncate" title={activePageName}>
-            {activePageName}
-          </span>
-        </div>
-      ) : null}
+      {pages.length > 0 && <SidebarPageSwitcher pages={pages} />}
     </div>
   );
+}
+
+interface DashboardPage {
+  id: number;
+  pageId: string;
+  name: string;
+  pictureUrl: string | null;
+  isActive: boolean;
 }
 
 interface SidebarProps {
   user: { name?: string | null; email?: string | null; avatarUrl?: string | null };
   activePageName?: string | null;
+  pages: DashboardPage[];
   onLogout: () => Promise<void>;
 }
 
@@ -180,7 +183,7 @@ function UserBlock({
   );
 }
 
-export function Sidebar({ user, activePageName, onLogout }: SidebarProps) {
+export function Sidebar({ user, pages, onLogout }: SidebarProps) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
 
@@ -202,7 +205,7 @@ export function Sidebar({ user, activePageName, onLogout }: SidebarProps) {
       {/* Desktop sidebar */}
       <aside className="hidden h-screen w-64 shrink-0 flex-col border-r border-ink-100 bg-white md:sticky md:top-0 md:flex">
         <div className="flex min-h-20 items-center px-5 py-4">
-          <SidebarBrand activePageName={activePageName} />
+          <SidebarBrand pages={pages} />
         </div>
         <NavList pathname={pathname} />
         <SidebarUpgradePrompt />
@@ -218,7 +221,7 @@ export function Sidebar({ user, activePageName, onLogout }: SidebarProps) {
           />
           <div className="absolute left-0 top-0 flex h-full w-72 flex-col bg-white shadow-xl">
             <div className="flex min-h-16 items-center justify-between border-b border-ink-100 px-4 py-3">
-              <SidebarBrand activePageName={activePageName} />
+              <SidebarBrand pages={pages} />
               <button
                 type="button"
                 aria-label="Close menu"

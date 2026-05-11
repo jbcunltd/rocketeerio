@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { getCurrentSession } from "@/lib/auth/cookies";
 import { loadDashboardConnectedPages } from "@/lib/dashboard-data";
 import { loadLiveInboxConversations } from "@/lib/josh-live-inbox-data";
@@ -13,12 +13,14 @@ type JoshLiveInboxResponse = {
   dbUnavailable: boolean;
 };
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   const { user } = await getCurrentSession();
 
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+
+  const selectedPageId = request.nextUrl.searchParams.get("pageId");
 
   let pageId: string | null = null;
   let pageName = "your connected Page";
@@ -27,8 +29,16 @@ export async function GET() {
   let conversations: LiveConversation[] = [];
 
   const pageLoad = await loadDashboardConnectedPages(user.id);
-  const activePage = pageLoad.pages[0] ?? null;
   dbUnavailable = pageLoad.unavailable;
+
+  // Use selected page if available, otherwise fall back to first page
+  let activePage = null;
+  if (selectedPageId) {
+    activePage = pageLoad.pages.find((p) => p.pageId === selectedPageId) ?? null;
+  }
+  if (!activePage) {
+    activePage = pageLoad.pages[0] ?? null;
+  }
 
   if (activePage) {
     pageId = activePage.pageId;

@@ -8,7 +8,9 @@ export type HandbookPageContext = {
   dbUnavailable: boolean;
 };
 
-export async function getFirstConnectedFacebookPage(): Promise<HandbookPageContext> {
+export async function getConnectedFacebookPage(
+  selectedPageId?: string | null,
+): Promise<HandbookPageContext> {
   const { user } = await getCurrentSession();
   if (!user) {
     return {
@@ -20,7 +22,15 @@ export async function getFirstConnectedFacebookPage(): Promise<HandbookPageConte
   }
 
   const pageLoad = await loadDashboardConnectedPages(user.id);
-  const activePage = pageLoad.pages[0] ?? null;
+
+  // If a specific page is selected, use it; otherwise use the first page
+  let activePage = null;
+  if (selectedPageId) {
+    activePage = pageLoad.pages.find((p) => p.pageId === selectedPageId) ?? null;
+  }
+  if (!activePage) {
+    activePage = pageLoad.pages[0] ?? null;
+  }
 
   return {
     pageId: activePage?.pageId ?? null,
@@ -28,4 +38,8 @@ export async function getFirstConnectedFacebookPage(): Promise<HandbookPageConte
     pagePictureUrl: activePage?.pictureUrl ?? null,
     dbUnavailable: pageLoad.unavailable,
   };
+}
+
+export async function getFirstConnectedFacebookPage(): Promise<HandbookPageContext> {
+  return getConnectedFacebookPage();
 }
