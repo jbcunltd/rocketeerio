@@ -299,7 +299,7 @@ export default function HomePage() {
                 AI sales agent for Messenger leads
               </div>
 
-              <h1 className="mt-6 max-w-4xl text-[2.65rem] font-black leading-[0.98] tracking-[-0.055em] text-ink-900 text-balance sm:text-6xl lg:text-[5.35rem]">
+              <h1 className="mt-6 max-w-4xl text-[2.65rem] font-bold leading-[0.98] tracking-[-0.055em] text-ink-900 text-balance sm:text-6xl lg:text-[5.35rem]">
                 Turn Facebook messages into qualified leads, even while you sleep.
               </h1>
 
