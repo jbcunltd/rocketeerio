@@ -57,10 +57,11 @@ type Objection = {
 
 type KnowledgeItem = {
   id: string;
-  type: "file" | "url" | "youtube" | string;
+  type: "file" | "url" | "youtube" | "text" | string;
   title: string;
   url?: string;
   fileName?: string;
+  contentText?: string;
   status: HandbookStatus;
   createdAt?: string;
 };
@@ -108,6 +109,15 @@ type EscalationSettings = {
   notificationMethod: "In-app" | "Email" | "Both";
 };
 
+type BehaviorSettings = {
+  tone: string;
+  rules: string[];
+  pricingPosture: string;
+  shippingPolicy: string;
+  defaultHeroProduct: string;
+  leadQualificationRule: string;
+};
+
 type LearningEvent = {
   id: string;
   title: string;
@@ -121,7 +131,7 @@ type ToastState = {
   message: string;
 };
 
-type SaveKey = "personality" | "qualification" | "flow" | "escalation" | "knowledge" | "skills";
+type SaveKey = "personality" | "qualification" | "flow" | "escalation" | "behavior" | "knowledge" | "skills";
 
 const acceptedSources = [
   { label: "PDF", icon: FileText },
@@ -180,6 +190,9 @@ export function HandbookSections({ scope, pageId, pageName, dbUnavailable = fals
   const [customCriterion, setCustomCriterion] = useState("");
   const [newQuestion, setNewQuestion] = useState("");
   const [newObjection, setNewObjection] = useState({ objection: "", response: "" });
+  const [newBehaviorRule, setNewBehaviorRule] = useState("");
+  const [newKnowledgeTitle, setNewKnowledgeTitle] = useState("");
+  const [newKnowledgeContent, setNewKnowledgeContent] = useState("");
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const skillFileInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -204,6 +217,14 @@ export function HandbookSections({ scope, pageId, pageName, dbUnavailable = fals
     },
     vipKeywords: "owner, enterprise, urgent, partnership",
     notificationMethod: "In-app",
+  });
+  const [behavior, setBehavior] = useState<BehaviorSettings>({
+    tone: "Warm, helpful, confident, and consultative.",
+    rules: ["Answer from the handbook first.", "Ask one clear qualifying question when the lead is vague."],
+    pricingPosture: "Share pricing clearly when asked and guide the lead to the next step.",
+    shippingPolicy: "Explain shipping or fulfillment using the business-specific handbook details.",
+    defaultHeroProduct: "Use the business handbook to choose the best default recommendation.",
+    leadQualificationRule: "Qualify the lead with the strongest buying-intent signal before handoff.",
   });
   const [learningEvents, setLearningEvents] = useState<LearningEvent[]>([]);
 
@@ -262,6 +283,7 @@ export function HandbookSections({ scope, pageId, pageName, dbUnavailable = fals
         setQualification,
         setFlow,
         setEscalation,
+        setBehavior,
         setLearningEvents,
       });
     } catch (err) {
@@ -310,6 +332,57 @@ export function HandbookSections({ scope, pageId, pageName, dbUnavailable = fals
       source: url,
     });
     setUrlValue("");
+  }
+
+  async function addKnowledgeTextItem() {
+    const title = newKnowledgeTitle.trim() || "Josh handbook note";
+    const contentText = newKnowledgeContent.trim();
+    if (!contentText) return;
+    await addKnowledgeItem({
+      type: "text",
+      title,
+      contentText,
+      content_text: contentText,
+    });
+    setNewKnowledgeTitle("");
+    setNewKnowledgeContent("");
+  }
+
+  function editKnowledgeItem(id: string, updates: Partial<KnowledgeItem>) {
+    setKnowledgeItems((items) => items.map((item) => (item.id === id ? { ...item, ...updates } : item)));
+  }
+
+  async function saveKnowledgeItem(item: KnowledgeItem) {
+    if (!pageId || disabledReason) {
+      showToast({ type: "error", message: disabledReason ?? "No handbook scope is available." });
+      return;
+    }
+    setSavingKey("knowledge", true);
+    try {
+      await requestJson<Record<string, unknown>>(`/api/handbook/${encodeURIComponent(pageId)}/knowledge`, {
+        method: "POST",
+        body: JSON.stringify({
+          scope,
+          action: "update",
+          id: item.id,
+          type: item.type,
+          title: item.title,
+          url: item.url,
+          source: item.url,
+          fileName: item.fileName,
+          contentText: item.contentText ?? "",
+          content_text: item.contentText ?? "",
+          status: item.status,
+        }),
+      });
+      showToast({ type: "success", message: "Knowledge item saved." });
+      await loadHandbook();
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Unable to save knowledge item.";
+      showToast({ type: "error", message });
+    } finally {
+      setSavingKey("knowledge", false);
+    }
   }
 
   async function addKnowledgeItem(payload: Record<string, unknown>) {
@@ -498,6 +571,17 @@ export function HandbookSections({ scope, pageId, pageName, dbUnavailable = fals
       notificationMethod: nextEscalation.notificationMethod,
     });
 
+  const saveBehavior = (nextBehavior = behavior) =>
+    saveSection("behavior", "behavior", {
+      scope,
+      tone: nextBehavior.tone,
+      rules: nextBehavior.rules.filter((rule) => rule.trim()),
+      pricingPosture: nextBehavior.pricingPosture,
+      shippingPolicy: nextBehavior.shippingPolicy,
+      defaultHeroProduct: nextBehavior.defaultHeroProduct,
+      leadQualificationRule: nextBehavior.leadQualificationRule,
+    });
+
   function toggleCriterion(id: string) {
     const next = {
       criteria: qualification.criteria.map((criterion) =>
@@ -580,6 +664,29 @@ export function HandbookSections({ scope, pageId, pageName, dbUnavailable = fals
     const next = { ...flow, objections: flow.objections.filter((item) => item.id !== id) };
     setFlow(next);
     void saveFlow(next);
+  }
+
+
+  function updateBehaviorRule(index: number, value: string) {
+    setBehavior((current) => ({
+      ...current,
+      rules: current.rules.map((rule, currentIndex) => (currentIndex === index ? value : rule)),
+    }));
+  }
+
+  function addBehaviorRule() {
+    const rule = newBehaviorRule.trim();
+    if (!rule) return;
+    const next = { ...behavior, rules: [...behavior.rules, rule] };
+    setBehavior(next);
+    setNewBehaviorRule("");
+    void saveBehavior(next);
+  }
+
+  function removeBehaviorRule(index: number) {
+    const next = { ...behavior, rules: behavior.rules.filter((_, currentIndex) => currentIndex !== index) };
+    setBehavior(next);
+    void saveBehavior(next);
   }
 
   if (loading) {
@@ -697,6 +804,28 @@ export function HandbookSections({ scope, pageId, pageName, dbUnavailable = fals
             </label>
 
             <div className="rounded-2xl border border-ink-100 bg-white p-4">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <h3 className="text-sm font-semibold text-ink-900">Add plain-text knowledge</h3>
+                  <p className="mt-1 text-xs leading-5 text-ink-500">Paste FAQs, product catalog details, policies, or exact talking points Josh should know.</p>
+                </div>
+                <SaveButton saving={saving.knowledge} onClick={() => void addKnowledgeTextItem()} compact />
+              </div>
+              <input
+                value={newKnowledgeTitle}
+                onChange={(event) => setNewKnowledgeTitle(event.target.value)}
+                placeholder="Title, for example: Garden Park PH Product FAQs"
+                className="mt-3 w-full rounded-xl border border-ink-100 bg-ink-50 px-3 py-2 text-sm text-ink-800 outline-none focus:border-brand-200 focus:bg-white"
+              />
+              <textarea
+                value={newKnowledgeContent}
+                onChange={(event) => setNewKnowledgeContent(event.target.value)}
+                placeholder="Write what Josh should know here."
+                className="mt-2 min-h-28 w-full resize-y rounded-xl border border-ink-100 bg-ink-50 px-3 py-2.5 text-sm leading-6 text-ink-800 outline-none focus:border-brand-200 focus:bg-white focus:ring-2 focus:ring-brand-500/10"
+              />
+            </div>
+
+            <div className="rounded-2xl border border-ink-100 bg-white p-4">
               <div className="flex items-center justify-between gap-3">
                 <div>
                   <h3 className="text-sm font-semibold text-ink-900">Uploaded items</h3>
@@ -707,20 +836,19 @@ export function HandbookSections({ scope, pageId, pageName, dbUnavailable = fals
               {knowledgeItems.length === 0 ? (
                 <EmptyPanel
                   icon={FileText}
-                  title="No knowledge files yet"
-                  description="Add files or URLs above to build the searchable knowledge base."
+                  title="No knowledge items yet"
+                  description="Add files, URLs, or plain text notes to build the searchable knowledge base."
                 />
               ) : (
-                <div className="mt-4 space-y-2">
+                <div className="mt-4 space-y-3">
                   {knowledgeItems.map((item) => (
-                    <SourceItemRow
+                    <KnowledgeItemCard
                       key={item.id}
-                      title={item.title}
-                      subtitle={item.url || item.fileName || item.type}
-                      icon={item.type === "youtube" ? Youtube : item.type === "url" ? Globe : FileText}
-                      status={item.status}
+                      item={item}
+                      saving={saving.knowledge}
+                      onChange={(updates) => editKnowledgeItem(item.id, updates)}
+                      onSave={() => void saveKnowledgeItem(item)}
                       onDelete={() => void deleteKnowledgeItem(item.id)}
-                      disabled={saving.knowledge}
                     />
                   ))}
                 </div>
@@ -1067,6 +1195,87 @@ export function HandbookSections({ scope, pageId, pageName, dbUnavailable = fals
       </SectionCard>
 
       <SectionCard
+        icon={Settings2}
+        eyebrow="Response behavior"
+        title="Behavior Rules"
+        description={`Show exactly what ${owner} is currently configured to do, say, prioritize, and avoid.`}
+        defaultOpen
+      >
+        <div className="grid gap-4 lg:grid-cols-2">
+          <TextAreaField
+            label="Tone Josh should use"
+            value={behavior.tone}
+            onChange={(value) => setBehavior((current) => ({ ...current, tone: value }))}
+            onBlur={() => void saveBehavior()}
+          />
+          <TextAreaField
+            label="Pricing posture"
+            value={behavior.pricingPosture}
+            onChange={(value) => setBehavior((current) => ({ ...current, pricingPosture: value }))}
+            onBlur={() => void saveBehavior()}
+          />
+          <TextAreaField
+            label="Shipping / fulfillment policy"
+            value={behavior.shippingPolicy}
+            onChange={(value) => setBehavior((current) => ({ ...current, shippingPolicy: value }))}
+            onBlur={() => void saveBehavior()}
+          />
+          <TextAreaField
+            label="Default hero product or recommendation"
+            value={behavior.defaultHeroProduct}
+            onChange={(value) => setBehavior((current) => ({ ...current, defaultHeroProduct: value }))}
+            onBlur={() => void saveBehavior()}
+          />
+          <TextAreaField
+            label="Lead qualification rule"
+            value={behavior.leadQualificationRule}
+            onChange={(value) => setBehavior((current) => ({ ...current, leadQualificationRule: value }))}
+            onBlur={() => void saveBehavior()}
+          />
+
+          <div className="rounded-2xl border border-ink-100 bg-white p-4">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <h3 className="text-sm font-semibold text-ink-900">Do / don&apos;t rules</h3>
+                <p className="text-xs text-ink-500">Editable instructions Josh should follow in every conversation.</p>
+              </div>
+              <SaveButton saving={saving.behavior} onClick={() => void saveBehavior()} compact />
+            </div>
+            <div className="mt-4 space-y-2">
+              {behavior.rules.map((rule, index) => (
+                <div key={`${index}-${rule.slice(0, 12)}`} className="flex items-start gap-2 rounded-xl border border-ink-100 bg-ink-50 p-2">
+                  <span className="mt-2 text-xs font-semibold text-ink-400">{index + 1}</span>
+                  <textarea
+                    value={rule}
+                    onChange={(event) => updateBehaviorRule(index, event.target.value)}
+                    onBlur={() => void saveBehavior()}
+                    className="min-h-14 flex-1 resize-y rounded-lg border border-ink-100 bg-white px-3 py-2 text-sm leading-6 text-ink-800 outline-none focus:border-brand-200"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => removeBehaviorRule(index)}
+                    className="rounded-lg p-2 text-ink-300 hover:bg-white hover:text-rose"
+                    aria-label="Remove behavior rule"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </div>
+              ))}
+              <div className="flex gap-2 rounded-xl border border-dashed border-ink-200 bg-white px-3 py-2">
+                <input
+                  value={newBehaviorRule}
+                  onChange={(event) => setNewBehaviorRule(event.target.value)}
+                  placeholder="Add another behavior rule"
+                  className="min-w-0 flex-1 text-sm outline-none"
+                />
+                <button type="button" onClick={addBehaviorRule} className="text-xs font-semibold text-brand-700">Add</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </SectionCard>
+
+      <SectionCard
         icon={Bell}
         eyebrow="Human handoff"
         title="Escalation Rules"
@@ -1280,34 +1489,70 @@ function StatusBadge({ status }: { status: HandbookStatus }) {
   );
 }
 
-function SourceItemRow({
-  title,
-  subtitle,
-  icon: Icon,
-  status,
+function KnowledgeItemCard({
+  item,
+  saving,
+  onChange,
+  onSave,
   onDelete,
-  disabled,
 }: {
-  title: string;
-  subtitle?: string;
-  icon: LucideIcon;
-  status: HandbookStatus;
+  item: KnowledgeItem;
+  saving?: boolean;
+  onChange: (updates: Partial<KnowledgeItem>) => void;
+  onSave: () => void;
   onDelete: () => void;
-  disabled?: boolean;
 }) {
+  const Icon = item.type === "youtube" ? Youtube : item.type === "url" ? Globe : FileText;
+  const subtitle = item.url || item.fileName || (item.type === "text" ? "Plain-text knowledge" : item.type);
+
   return (
-    <div className="flex items-center gap-3 rounded-2xl border border-ink-100 bg-ink-50 p-3">
-      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-brand-700">
-        <Icon className="h-5 w-5" />
+    <div className="rounded-2xl border border-ink-100 bg-ink-50 p-3">
+      <div className="flex items-start gap-3">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-brand-700">
+          <Icon className="h-5 w-5" />
+        </div>
+        <div className="min-w-0 flex-1 space-y-3">
+          <div className="flex flex-wrap items-center gap-2">
+            <StatusBadge status={item.status} />
+            <span className="rounded-full bg-white px-2.5 py-1 text-xs font-semibold text-ink-500">{subtitle}</span>
+            {item.createdAt ? <span className="rounded-full bg-white px-2.5 py-1 text-xs font-semibold text-ink-400">{formatDate(item.createdAt)}</span> : null}
+          </div>
+          <label className="block">
+            <span className="text-xs font-semibold uppercase tracking-[0.14em] text-ink-400">Knowledge title</span>
+            <input
+              value={item.title}
+              onChange={(event) => onChange({ title: event.target.value })}
+              className="mt-1 w-full rounded-xl border border-ink-100 bg-white px-3 py-2 text-sm font-semibold text-ink-900 outline-none focus:border-brand-200"
+            />
+          </label>
+          {item.url ? (
+            <label className="block">
+              <span className="text-xs font-semibold uppercase tracking-[0.14em] text-ink-400">Source URL</span>
+              <input
+                type="url"
+                value={item.url}
+                onChange={(event) => onChange({ url: event.target.value })}
+                className="mt-1 w-full rounded-xl border border-ink-100 bg-white px-3 py-2 text-sm text-ink-700 outline-none focus:border-brand-200"
+              />
+            </label>
+          ) : null}
+          <label className="block">
+            <span className="text-xs font-semibold uppercase tracking-[0.14em] text-ink-400">What Josh knows from this item</span>
+            <textarea
+              value={item.contentText ?? ""}
+              onChange={(event) => onChange({ contentText: event.target.value })}
+              placeholder={item.type === "text" ? "Paste the exact knowledge Josh should use." : "No extracted text is available yet for this item."}
+              className="mt-1 min-h-36 w-full resize-y rounded-xl border border-ink-100 bg-white px-3 py-2.5 text-sm leading-6 text-ink-800 outline-none focus:border-brand-200 focus:ring-2 focus:ring-brand-500/10"
+            />
+          </label>
+        </div>
+        <div className="flex shrink-0 flex-col gap-2">
+          <SaveButton saving={saving} onClick={onSave} compact />
+          <button type="button" disabled={saving} onClick={onDelete} className="inline-flex items-center justify-center rounded-xl border border-ink-100 bg-white px-3 py-2 text-xs font-semibold text-ink-400 hover:border-rose/20 hover:text-rose disabled:opacity-40" aria-label="Delete item">
+            <Trash2 className="h-4 w-4" />
+          </button>
+        </div>
       </div>
-      <div className="min-w-0 flex-1">
-        <p className="truncate text-sm font-semibold text-ink-900">{title}</p>
-        {subtitle ? <p className="truncate text-xs text-ink-500">{subtitle}</p> : null}
-      </div>
-      <StatusBadge status={status} />
-      <button type="button" disabled={disabled} onClick={onDelete} className="rounded-lg p-2 text-ink-300 hover:bg-white hover:text-rose disabled:opacity-40" aria-label="Delete item">
-        <Trash2 className="h-4 w-4" />
-      </button>
     </div>
   );
 }
@@ -1380,14 +1625,16 @@ function hydrateFromPayload(
     setQualification: React.Dispatch<React.SetStateAction<QualificationSettings>>;
     setFlow: React.Dispatch<React.SetStateAction<FlowSettings>>;
     setEscalation: React.Dispatch<React.SetStateAction<EscalationSettings>>;
+    setBehavior: React.Dispatch<React.SetStateAction<BehaviorSettings>>;
     setLearningEvents: (items: LearningEvent[]) => void;
   },
 ) {
   const root = isRecord(data.data) ? data.data : data;
+  const settings = isRecord(root.settings) ? root.settings : root;
   setters.setKnowledgeItems(toArray(root.knowledge ?? root.knowledgeBase ?? root.knowledgeItems).map(normalizeKnowledgeItem));
   setters.setSkills(toArray(root.skills ?? root.salesSkills).map(normalizeSkillItem).sort((a, b) => a.priority - b.priority));
 
-  const personality = isRecord(root.personality) ? root.personality : isRecord(root.personalityTone) ? root.personalityTone : null;
+  const personality = isRecord(settings.personality) ? settings.personality : isRecord(settings.personalityTone) ? settings.personalityTone : null;
   if (personality) {
     setters.setPersonality({
       instructions: toStringValue(personality.instructions ?? personality.tone ?? personality.description, setters.personalityPlaceholder),
@@ -1396,13 +1643,13 @@ function hydrateFromPayload(
     });
   }
 
-  const qualification = isRecord(root.qualification) ? root.qualification : isRecord(root.qualificationCriteria) ? root.qualificationCriteria : null;
+  const qualification = isRecord(settings.qualification) ? settings.qualification : isRecord(settings.qualificationCriteria) ? settings.qualificationCriteria : null;
   if (qualification) {
     const criteria = toArray(qualification.criteria ?? qualification.items).map(normalizeCriterion);
     setters.setQualification({ criteria: criteria.length ? criteria : defaultCriteria });
   }
 
-  const flow = isRecord(root.flow) ? root.flow : isRecord(root.conversationFlow) ? root.conversationFlow : null;
+  const flow = isRecord(settings.flow) ? settings.flow : isRecord(settings.conversationFlow) ? settings.conversationFlow : null;
   if (flow) {
     setters.setFlow({
       openingMessage: toStringValue(flow.openingMessage ?? flow.opening, "Hi! Thanks for messaging us. I'm Josh — I can help you find the best option and connect you with the team if needed."),
@@ -1413,7 +1660,7 @@ function hydrateFromPayload(
     });
   }
 
-  const escalation = isRecord(root.escalation) ? root.escalation : isRecord(root.escalationRules) ? root.escalationRules : null;
+  const escalation = isRecord(settings.escalation) ? settings.escalation : isRecord(settings.escalationRules) ? settings.escalationRules : null;
   if (escalation) {
     const alerts = isRecord(escalation.alerts) ? escalation.alerts : escalation;
     setters.setEscalation({
@@ -1429,6 +1676,18 @@ function hydrateFromPayload(
     });
   }
 
+  const behavior = isRecord(settings.behavior) ? settings.behavior : isRecord(settings.responseBehavior) ? settings.responseBehavior : null;
+  if (behavior) {
+    setters.setBehavior({
+      tone: toStringValue(behavior.tone ?? behavior.instructions ?? behavior.description, "Warm, helpful, confident, and consultative."),
+      rules: toArray(behavior.rules ?? behavior.customRules).map((rule) => toStringValue(rule, "")).filter(Boolean),
+      pricingPosture: toStringValue(behavior.pricingPosture ?? behavior.pricingRule, "Share pricing clearly when asked and guide the lead to the next step."),
+      shippingPolicy: toStringValue(behavior.shippingPolicy ?? behavior.fulfillmentPolicy, "Explain shipping or fulfillment using the business-specific handbook details."),
+      defaultHeroProduct: toStringValue(behavior.defaultHeroProduct ?? behavior.heroProduct ?? behavior.defaultRecommendation, "Use the business handbook to choose the best default recommendation."),
+      leadQualificationRule: toStringValue(behavior.leadQualificationRule ?? behavior.qualificationRule, "Qualify the lead with the strongest buying-intent signal before handoff."),
+    });
+  }
+
   setters.setLearningEvents(toArray(root.learningEvents ?? root.learningLog ?? root.events).map(normalizeLearningEvent));
 }
 
@@ -1438,8 +1697,9 @@ function normalizeKnowledgeItem(value: unknown, index: number): KnowledgeItem {
     id: toStringValue(item.id ?? item._id, `knowledge-${index}`),
     type: toStringValue(item.type ?? item.sourceType, "file"),
     title: toStringValue(item.title ?? item.name ?? item.url ?? item.fileName, "Untitled knowledge item"),
-    url: optionalString(item.url ?? item.source),
+    url: optionalString(item.url ?? item.source ?? item.source_url),
     fileName: optionalString(item.fileName ?? item.filename),
+    contentText: optionalString(item.contentText ?? item.content_text ?? item.content ?? item.text),
     status: normalizeStatus(item.status),
     createdAt: optionalString(item.createdAt ?? item.created_at),
   };
