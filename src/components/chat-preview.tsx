@@ -13,11 +13,11 @@ export function ChatPreview() {
         <div className="rounded-2xl bg-ink-50/80 p-4 sm:p-5">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <span className="grid h-9 w-9 place-items-center rounded-full bg-brand-500 text-sm font-bold text-white">
+              <span className="grid h-9 w-9 place-items-center rounded-full bg-brand-500 text-sm font-semibold text-white">
                 J
               </span>
               <div>
-                <p className="text-sm font-semibold text-ink-900">
+                <p className="text-sm font-medium text-ink-900">
                   Josh working Acme Roofing
                 </p>
                 <p className="inline-flex items-center gap-1 text-[11px] text-mint">
@@ -26,7 +26,7 @@ export function ChatPreview() {
                 </p>
               </div>
             </div>
-            <span className="rounded-full bg-brand-50 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-brand-700">
+            <span className="rounded-full bg-brand-50 px-2.5 py-1 text-[10px] font-medium uppercase tracking-wider text-brand-700">
               Messenger
             </span>
           </div>
@@ -60,7 +60,7 @@ export function ChatPreview() {
               <Zap className="h-3.5 w-3.5" />
             </span>
             <div>
-              <p className="text-sm font-semibold text-ink-900">
+              <p className="text-sm font-medium text-ink-900">
                 Hot lead alert
               </p>
               <p className="text-xs text-ink-600">
@@ -68,7 +68,7 @@ export function ChatPreview() {
               </p>
             </div>
           </div>
-          <span className="hidden rounded-md bg-ink-900 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-white sm:inline">
+          <span className="hidden rounded-md bg-ink-900 px-2.5 py-1 text-[10px] font-medium uppercase tracking-wider text-white sm:inline">
             Notified
           </span>
         </div>
@@ -105,7 +105,7 @@ function Bubble({
             : "rounded-bl-sm border border-ink-100 bg-white text-ink-800"
         }`}
       >
-        <p className={`mb-0.5 text-[10px] font-semibold uppercase tracking-wider ${right ? "text-white/80" : "text-ink-400"}`}>
+        <p className={`mb-0.5 text-[10px] font-medium uppercase tracking-wider ${right ? "text-white/80" : "text-ink-400"}`}>
           {name}{timestamp ? ` · ${timestamp}` : ""}
         </p>
         <p>{children}</p>

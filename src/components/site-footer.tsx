@@ -57,7 +57,7 @@ export function SiteFooter() {
               />
               <button
                 type="submit"
-                className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700"
+                className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700"
               >
                 Get the guide
               </button>
@@ -119,7 +119,7 @@ function FooterCol({
 }) {
   return (
     <div>
-      <h4 className="text-xs font-semibold uppercase tracking-wider text-ink-900">
+      <h4 className="text-xs font-medium uppercase tracking-wider text-ink-900">
         {title}
       </h4>
       <ul className="mt-4 space-y-2.5">

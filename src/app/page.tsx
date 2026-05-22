@@ -150,7 +150,7 @@ function PrimaryCTA({ label = "Hire Josh for Sales" }: { label?: string }) {
   return (
     <a
       href={FACEBOOK_AUTH_HREF}
-      className="group inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-brand-600 px-6 py-4 text-base font-bold text-white shadow-xl shadow-brand-500/30 transition-all hover:-translate-y-0.5 hover:bg-brand-700 hover:shadow-2xl hover:shadow-brand-500/40 focus:outline-none focus:ring-2 focus:ring-brand-500/40 sm:w-auto"
+      className="group inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-brand-600 px-6 py-4 text-base font-semibold text-white shadow-xl shadow-brand-500/30 transition-all hover:-translate-y-0.5 hover:bg-brand-700 hover:shadow-2xl hover:shadow-brand-500/40 focus:outline-none focus:ring-2 focus:ring-brand-500/40 sm:w-auto"
     >
       <Facebook className="h-5 w-5" aria-hidden />
       {label}
@@ -163,7 +163,7 @@ function SecondaryCTA({ href, label }: { href: string; label: string }) {
   return (
     <a
       href={href}
-      className="inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-ink-200 bg-white/90 px-6 py-4 text-base font-bold text-ink-900 shadow-sm transition-all hover:-translate-y-0.5 hover:border-brand-300 hover:bg-brand-50 focus:outline-none focus:ring-2 focus:ring-brand-500/30 sm:w-auto"
+      className="inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-ink-200 bg-white/90 px-6 py-4 text-base font-medium text-ink-900 shadow-sm transition-all hover:-translate-y-0.5 hover:border-brand-300 hover:bg-brand-50 focus:outline-none focus:ring-2 focus:ring-brand-500/30 sm:w-auto"
     >
       <PlayCircle className="h-5 w-5 text-brand-600" aria-hidden />
       {label}
@@ -173,7 +173,7 @@ function SecondaryCTA({ href, label }: { href: string; label: string }) {
 
 function ProofItem({ children }: { children: string }) {
   return (
-    <div className="flex items-center justify-center gap-2 rounded-full border border-ink-100 bg-white px-4 py-2 text-sm font-semibold text-ink-700 shadow-sm">
+    <div className="flex items-center justify-center gap-2 rounded-full border border-ink-100 bg-white px-4 py-2 text-sm font-medium text-ink-700 shadow-sm">
       <CheckCircle2 className="h-4 w-4 flex-none text-mint" aria-hidden />
       <span>{children}</span>
     </div>
@@ -192,7 +192,7 @@ function FeatureCard({ Icon, title, desc }: { Icon: LucideIcon; title: string; d
   return (
     <article className="group rounded-[1.75rem] border border-ink-100 bg-white p-7 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-brand-200 hover:shadow-xl hover:shadow-brand-900/10">
       <IconBadge Icon={Icon} />
-      <h3 className="mt-5 text-xl font-bold tracking-tight text-ink-900">{title}</h3>
+      <h3 className="mt-5 text-xl font-semibold tracking-tight text-ink-900">{title}</h3>
       <p className="mt-3 leading-relaxed text-ink-600">{desc}</p>
     </article>
   );
@@ -208,12 +208,12 @@ function StepCard({ n, Icon, title, body, featured }: { n: string; Icon: LucideI
       }`}
     >
       <div className="flex items-center justify-between gap-4">
-        <span className={featured ? "text-sm font-black text-white/70" : "text-sm font-black text-brand-200"}>{n}</span>
+        <span className={featured ? "text-sm font-medium text-white/70" : "text-sm font-medium text-brand-200"}>{n}</span>
         <span className={featured ? "grid h-12 w-12 place-items-center rounded-2xl bg-white/15" : "grid h-12 w-12 place-items-center rounded-2xl bg-white/10 text-brand-200"}>
           <Icon className="h-6 w-6" aria-hidden />
         </span>
       </div>
-      <h3 className="mt-8 text-2xl font-black tracking-tight">{title}</h3>
+      <h3 className="mt-8 text-2xl font-semibold tracking-tight">{title}</h3>
       <p className={featured ? "mt-3 leading-relaxed text-white/85" : "mt-3 leading-relaxed text-white/70"}>{body}</p>
     </article>
   );
@@ -229,14 +229,14 @@ function PricingCard({ plan }: { plan: (typeof PRICING)[number] }) {
       }`}
     >
       <div className="flex items-center justify-between gap-3">
-        <h3 className="text-2xl font-black tracking-tight text-ink-900">{plan.name}</h3>
-        <span className="rounded-full bg-brand-50 px-3 py-1 text-xs font-black uppercase tracking-[0.16em] text-brand-700">
+        <h3 className="text-2xl font-semibold tracking-tight text-ink-900">{plan.name}</h3>
+        <span className="rounded-full bg-brand-50 px-3 py-1 text-xs font-medium uppercase tracking-[0.16em] text-brand-700">
           {plan.badge}
         </span>
       </div>
       <div className="mt-6 flex items-end gap-1">
-        <span className="text-5xl font-black tracking-tight text-ink-900">{plan.price}</span>
-        <span className="pb-2 text-sm font-bold text-ink-500">{plan.cadence}</span>
+        <span className="text-5xl font-bold tracking-tight text-ink-900">{plan.price}</span>
+        <span className="pb-2 text-sm font-medium text-ink-500">{plan.cadence}</span>
       </div>
       <p className="mt-4 min-h-16 leading-relaxed text-ink-600">{plan.description}</p>
       <ul className="mt-6 space-y-3 text-sm font-medium text-ink-700">
@@ -294,7 +294,7 @@ export default function HomePage() {
         <div className="relative mx-auto max-w-7xl px-4 pb-16 pt-10 sm:px-6 sm:pb-20 sm:pt-16 lg:px-8 lg:pb-28 lg:pt-20">
           <div className="grid items-center gap-10 lg:grid-cols-12 lg:gap-14">
             <div className="lg:col-span-7">
-              <div className="inline-flex items-center gap-2 rounded-full border border-brand-200 bg-white/80 px-3 py-1.5 text-xs font-black uppercase tracking-[0.18em] text-brand-700 shadow-sm">
+              <div className="inline-flex items-center gap-2 rounded-full border border-brand-200 bg-white/80 px-3 py-1.5 text-xs font-medium uppercase tracking-[0.18em] text-brand-700 shadow-sm">
                 <Rocket className="h-3.5 w-3.5" aria-hidden />
                 AI sales agent for Messenger leads
               </div>
@@ -312,7 +312,7 @@ export default function HomePage() {
                 <SecondaryCTA href="#how-it-works" label="See how it works" />
               </div>
 
-              <div className="mt-5 flex flex-wrap gap-2 text-sm font-semibold text-ink-700">
+              <div className="mt-5 flex flex-wrap gap-2 text-sm font-medium text-ink-700">
                 {PROOF_POINTS.map((point) => (
                   <ProofItem key={point}>{point}</ProofItem>
                 ))}
@@ -336,16 +336,16 @@ export default function HomePage() {
       <section className="border-y border-ink-100 bg-white py-8" aria-label="Conversion proof points">
         <div className="mx-auto grid max-w-7xl gap-4 px-4 sm:px-6 md:grid-cols-3 lg:px-8">
           <div className="rounded-3xl bg-ink-50 p-6 text-center">
-            <p className="text-3xl font-black tracking-tight text-ink-900">24/7</p>
-            <p className="mt-1 text-sm font-semibold text-ink-600">Messenger coverage without hiring night shift staff.</p>
+            <p className="text-3xl font-bold tracking-tight text-ink-900">24/7</p>
+            <p className="mt-1 text-sm font-normal text-ink-600">Messenger coverage without hiring night shift staff.</p>
           </div>
           <div className="rounded-3xl bg-brand-600 p-6 text-center text-white shadow-xl shadow-brand-500/25">
-            <p className="text-3xl font-black tracking-tight">Free</p>
-            <p className="mt-1 text-sm font-semibold text-white/85">Tier available so owners can try Josh first.</p>
+            <p className="text-3xl font-bold tracking-tight">Free</p>
+            <p className="mt-1 text-sm font-normal text-white/85">Tier available so owners can try Josh first.</p>
           </div>
           <div className="rounded-3xl bg-ink-50 p-6 text-center">
-            <p className="text-3xl font-black tracking-tight text-ink-900">FB-first</p>
-            <p className="mt-1 text-sm font-semibold text-ink-600">Built for leads that start in Facebook Messenger.</p>
+            <p className="text-3xl font-bold tracking-tight text-ink-900">FB-first</p>
+            <p className="mt-1 text-sm font-normal text-ink-600">Built for leads that start in Facebook Messenger.</p>
           </div>
         </div>
       </section>
@@ -356,11 +356,11 @@ export default function HomePage() {
         <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="grid gap-10 lg:grid-cols-12 lg:items-end">
             <div className="lg:col-span-7">
-              <p className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1 text-xs font-black uppercase tracking-[0.18em] text-brand-200">
+              <p className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1 text-xs font-medium uppercase tracking-[0.18em] text-brand-200">
                 <MousePointerClick className="h-3.5 w-3.5" aria-hidden />
                 How it works
               </p>
-              <h2 className="mt-5 text-4xl font-black tracking-[-0.045em] sm:text-5xl lg:text-6xl">
+              <h2 className="mt-5 text-4xl font-bold tracking-[-0.045em] sm:text-5xl lg:text-6xl">
                 Connect Facebook once. Let Josh qualify leads every day.
               </h2>
             </div>
@@ -380,8 +380,8 @@ export default function HomePage() {
       <section id="features" className="bg-white py-20 sm:py-28">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="max-w-3xl">
-            <p className="text-sm font-black uppercase tracking-[0.2em] text-brand-700">Feature breakdown</p>
-            <h2 className="mt-4 text-4xl font-black tracking-[-0.045em] text-ink-900 sm:text-5xl">
+            <p className="text-sm font-medium uppercase tracking-[0.2em] text-brand-700">Feature breakdown</p>
+            <h2 className="mt-4 text-4xl font-bold tracking-[-0.045em] text-ink-900 sm:text-5xl">
               Everything Josh does is built to convert Messenger inquiries faster.
             </h2>
             <p className="mt-5 text-lg leading-8 text-ink-600">
@@ -400,8 +400,8 @@ export default function HomePage() {
       <section className="border-y border-ink-100 bg-ink-50/70 py-20 sm:py-28">
         <div className="mx-auto grid max-w-7xl gap-10 px-4 sm:px-6 lg:grid-cols-12 lg:px-8">
           <div className="lg:col-span-5">
-            <p className="text-sm font-black uppercase tracking-[0.2em] text-brand-700">Built for Philippine SMBs</p>
-            <h2 className="mt-4 text-4xl font-black tracking-[-0.045em] text-ink-900 sm:text-5xl">
+            <p className="text-sm font-medium uppercase tracking-[0.2em] text-brand-700">Built for Philippine SMBs</p>
+            <h2 className="mt-4 text-4xl font-bold tracking-[-0.045em] text-ink-900 sm:text-5xl">
               If your customers DM before they buy, Josh can protect the sale.
             </h2>
             <p className="mt-5 text-lg leading-8 text-ink-600">
@@ -413,7 +413,7 @@ export default function HomePage() {
               <article key={audience.label} className="flex gap-5 rounded-[1.75rem] border border-ink-100 bg-white p-6 shadow-sm">
                 <IconBadge Icon={audience.icon} />
                 <div>
-                  <h3 className="text-xl font-black tracking-tight text-ink-900">{audience.label}</h3>
+                  <h3 className="text-xl font-semibold tracking-tight text-ink-900">{audience.label}</h3>
                   <p className="mt-2 leading-relaxed text-ink-600">{audience.copy}</p>
                 </div>
               </article>
@@ -435,14 +435,14 @@ export default function HomePage() {
                 priority
               />
               <div className="absolute inset-x-5 bottom-5 rounded-3xl border border-white/40 bg-white/90 p-5 shadow-xl backdrop-blur">
-                <p className="text-xs font-black uppercase tracking-[0.2em] text-brand-700">Your AI sales agent</p>
-                <p className="mt-1 text-xl font-black text-ink-900">Josh is ready to work the inbox.</p>
+                <p className="text-xs font-medium uppercase tracking-[0.2em] text-brand-700">Your AI sales agent</p>
+                <p className="mt-1 text-xl font-semibold text-ink-900">Josh is ready to work the inbox.</p>
               </div>
             </div>
           </div>
           <div className="lg:col-span-7">
-            <p className="text-sm font-black uppercase tracking-[0.2em] text-brand-700">Meet Josh</p>
-            <h2 className="mt-4 text-4xl font-black tracking-[-0.045em] text-ink-900 sm:text-5xl">
+            <p className="text-sm font-medium uppercase tracking-[0.2em] text-brand-700">Meet Josh</p>
+            <h2 className="mt-4 text-4xl font-bold tracking-[-0.045em] text-ink-900 sm:text-5xl">
               A professional first responder for every Facebook lead.
             </h2>
             <div className="mt-6 space-y-4 text-lg leading-8 text-ink-700">
@@ -454,8 +454,8 @@ export default function HomePage() {
               </p>
             </div>
             <div className="mt-8 rounded-[1.75rem] border border-brand-100 bg-brand-50 p-6">
-              <p className="text-sm font-black uppercase tracking-[0.18em] text-brand-700">Josh is responsible for</p>
-              <ul className="mt-4 grid gap-3 text-sm font-semibold text-ink-700 sm:grid-cols-2">
+              <p className="text-sm font-medium uppercase tracking-[0.18em] text-brand-700">Josh is responsible for</p>
+              <ul className="mt-4 grid gap-3 text-sm font-medium text-ink-700 sm:grid-cols-2">
                 {[
                   "Fast first replies",
                   "Qualification questions",
@@ -476,8 +476,8 @@ export default function HomePage() {
       <section id="pricing" className="bg-[linear-gradient(180deg,#f4f8ff_0%,#ffffff_100%)] py-20 sm:py-28">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-3xl text-center">
-            <p className="text-sm font-black uppercase tracking-[0.2em] text-brand-700">Pricing</p>
-            <h2 className="mt-4 text-4xl font-black tracking-[-0.045em] text-ink-900 sm:text-5xl">
+            <p className="text-sm font-medium uppercase tracking-[0.2em] text-brand-700">Pricing</p>
+            <h2 className="mt-4 text-4xl font-bold tracking-[-0.045em] text-ink-900 sm:text-5xl">
               Start free, then scale when Josh is helping you win more leads.
             </h2>
             <p className="mt-5 text-lg leading-8 text-ink-600">
@@ -496,8 +496,8 @@ export default function HomePage() {
       <section id="faq" className="py-20 sm:py-28">
         <div className="mx-auto grid max-w-7xl gap-10 px-4 sm:px-6 lg:grid-cols-12 lg:px-8">
           <div className="lg:col-span-5">
-            <p className="text-sm font-black uppercase tracking-[0.2em] text-brand-700">FAQ</p>
-            <h2 className="mt-4 text-4xl font-black tracking-[-0.045em] text-ink-900 sm:text-5xl">
+            <p className="text-sm font-medium uppercase tracking-[0.2em] text-brand-700">FAQ</p>
+            <h2 className="mt-4 text-4xl font-bold tracking-[-0.045em] text-ink-900 sm:text-5xl">
               Clear answers before you connect your Page.
             </h2>
             <p className="mt-5 text-lg leading-8 text-ink-600">
@@ -516,11 +516,11 @@ export default function HomePage() {
       <section id="cta" className="px-4 pb-20 sm:px-6 sm:pb-28 lg:px-8">
         <div className="mx-auto max-w-7xl overflow-hidden rounded-[2.5rem] bg-ink-900 px-6 py-14 text-center text-white shadow-2xl shadow-ink-900/30 sm:px-12 sm:py-20">
           <div className="mx-auto max-w-3xl">
-            <p className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-black uppercase tracking-[0.18em] text-brand-200">
+            <p className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-medium uppercase tracking-[0.18em] text-brand-200">
               <Zap className="h-3.5 w-3.5" aria-hidden />
               Stop letting warm leads go cold
             </p>
-            <h2 className="mt-5 text-4xl font-black tracking-[-0.045em] sm:text-5xl">
+            <h2 className="mt-5 text-4xl font-bold tracking-[-0.045em] sm:text-5xl">
               Hire Josh today and give every Messenger lead a fast first reply.
             </h2>
             <p className="mx-auto mt-5 max-w-2xl text-lg leading-8 text-white/72">
@@ -529,7 +529,7 @@ export default function HomePage() {
             <div className="mt-8 flex justify-center">
               <PrimaryCTA label="Hire Josh for Sales" />
             </div>
-            <p className="mt-5 text-sm font-semibold text-white/75">Facebook Login signup · Free tier available · Built for Messenger leads</p>
+            <p className="mt-5 text-sm font-medium text-white/75">Facebook Login signup · Free tier available · Built for Messenger leads</p>
           </div>
         </div>
       </section>

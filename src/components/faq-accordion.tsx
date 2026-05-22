@@ -19,7 +19,7 @@ export function FAQAccordion({ items }: { items: FAQItem[] }) {
               className="flex w-full items-center justify-between gap-4 py-5 text-left"
               aria-expanded={isOpen}
             >
-              <span className="text-base sm:text-lg font-semibold text-ink-900">
+              <span className="text-base font-medium text-ink-900 sm:text-lg">
                 {item.q}
               </span>
               <span

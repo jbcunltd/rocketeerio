@@ -56,7 +56,7 @@ export function SiteHeader() {
           </Link>
           <Link
             href="/api/auth/facebook"
-            className="inline-flex items-center justify-center rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm shadow-brand-500/30 hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-brand-500/40 transition-all hover:shadow-md hover:shadow-brand-500/40"
+            className="inline-flex items-center justify-center rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm shadow-brand-500/30 hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-brand-500/40 transition-all hover:shadow-md hover:shadow-brand-500/40"
           >
             Hire Josh for Sales
           </Link>
@@ -90,14 +90,14 @@ export function SiteHeader() {
               <Link
                 href="/login"
                 onClick={() => setOpen(false)}
-                className="rounded-lg border border-ink-200 px-4 py-2.5 text-center text-sm font-semibold text-ink-700"
+                className="rounded-lg border border-ink-200 px-4 py-2.5 text-center text-sm font-medium text-ink-700"
               >
                 Log in
               </Link>
               <Link
                 href="/api/auth/facebook"
                 onClick={() => setOpen(false)}
-                className="rounded-lg bg-brand-600 px-4 py-2.5 text-center text-sm font-semibold text-white hover:bg-brand-700"
+                className="rounded-lg bg-brand-600 px-4 py-2.5 text-center text-sm font-medium text-white hover:bg-brand-700"
               >
                 Hire Josh for Sales
               </Link>

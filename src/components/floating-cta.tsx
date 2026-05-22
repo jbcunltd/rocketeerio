@@ -25,7 +25,7 @@ export function FloatingCTA() {
     >
       <Link
         href="/api/auth/facebook"
-        className="group inline-flex items-center gap-2 rounded-full bg-brand-600 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-brand-500/35 hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-brand-500/40"
+        className="group inline-flex items-center gap-2 rounded-full bg-brand-600 px-5 py-3 text-sm font-medium text-white shadow-lg shadow-brand-500/35 hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-brand-500/40"
       >
         Hire Josh for Sales
         <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />

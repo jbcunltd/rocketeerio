@@ -83,7 +83,7 @@ export function SecuritySection({ className = "" }: { className?: string }) {
     <section className={`py-16 sm:py-20 bg-ink-50/60 border-y border-ink-100 ${className}`}>
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="text-center">
-          <span className="inline-flex items-center gap-2 rounded-full border border-brand-100 bg-brand-50 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-brand-700">
+          <span className="inline-flex items-center gap-2 rounded-full border border-brand-100 bg-brand-50 px-3 py-1 text-xs font-medium uppercase tracking-wider text-brand-700">
             <ShieldCheck className="h-3.5 w-3.5" />
             Security &amp; trust
           </span>
@@ -104,7 +104,7 @@ export function SecuritySection({ className = "" }: { className?: string }) {
               <span className="inline-grid h-11 w-11 place-items-center rounded-xl bg-brand-50 text-brand-700">
                 <Icon className="h-5 w-5" />
               </span>
-              <h3 className="mt-4 text-base font-bold text-ink-900">{title}</h3>
+              <h3 className="mt-4 text-base font-semibold text-ink-900">{title}</h3>
               <p className="mt-2 text-sm text-ink-600 leading-relaxed">{body}</p>
             </div>
           ))}
