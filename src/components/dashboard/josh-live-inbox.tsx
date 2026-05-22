@@ -10,21 +10,24 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import {
+  ArrowLeft,
   Bot,
   Check,
   CheckCheck,
-  Contact,
+  ChevronUp,
+  Clock3,
   FileText,
   Flame,
   Inbox,
   MessageCircle,
-  PanelLeft,
   Search,
   ShieldCheck,
   SlidersHorizontal,
+  Sparkles,
   Tags,
   UserRound,
   Users,
+  X,
   type LucideIcon,
 } from "lucide-react";
 import type { LeadTemperature, LiveConversation, LiveConversationMessage, MessageDirection } from "@/lib/josh-live-inbox-types";
@@ -48,26 +51,22 @@ type JoshLiveInboxPollResponse = {
   dbUnavailable: boolean;
 };
 
-const panelTabs: Array<{ id: InboxPanel; label: string; icon: LucideIcon }> = [
-  { id: "list", label: "Inbox", icon: PanelLeft },
-  { id: "thread", label: "Thread", icon: MessageCircle },
-  { id: "profile", label: "Profile", icon: Contact },
+const filters: Array<{ id: InboxFilter; label: string; description: string }> = [
+  { id: "all", label: "All", description: "Every lead" },
+  { id: "active", label: "Active", description: "New + qualifying" },
+  { id: "hot", label: "Hot", description: "High-intent signals" },
+  { id: "qualified", label: "Qualified", description: "Ready follow-up" },
 ];
 
-const filters: Array<{ id: InboxFilter; label: string }> = [
-  { id: "all", label: "All" },
-  { id: "active", label: "Active" },
-  { id: "hot", label: "Hot" },
-  { id: "qualified", label: "Qualified" },
-];
-
-const profileFields: Array<{ key: "budget" | "authority" | "need" | "timeline" | "location"; label: string }> = [
-  { key: "budget", label: "Budget" },
-  { key: "authority", label: "Authority" },
+const profileFields: Array<{ key: "need" | "budget" | "timeline" | "authority" | "location"; label: string }> = [
   { key: "need", label: "Need" },
+  { key: "budget", label: "Budget" },
   { key: "timeline", label: "Timeline" },
+  { key: "authority", label: "Authority" },
   { key: "location", label: "Location" },
 ];
+
+const expectedProfileFieldKeys = profileFields.map((field) => field.key);
 
 type LiveStat = {
   label: string;
@@ -94,13 +93,19 @@ type ThreadItem = ThreadDateItem | ThreadMessageGroup;
 
 type BubblePosition = "solo" | "first" | "middle" | "last";
 
+type ConversationSection = {
+  id: string;
+  title: string;
+  count: number;
+  conversations: LiveConversation[];
+};
+
 function areConversationsEqual(
   currentConversations: LiveConversation[],
   nextConversations: LiveConversation[],
 ) {
   return JSON.stringify(currentConversations) === JSON.stringify(nextConversations);
 }
-
 
 function getConversationSortTime(conversation: LiveConversation) {
   const lastMessage = conversation.messages.at(-1);
@@ -409,6 +414,8 @@ export function JoshLiveInbox({
             conversation.leadTemperature ?? "",
             conversation.decision?.leadStage ?? "",
             conversation.decision?.nextAction ?? "",
+            ...Object.values(conversation.decision?.qualificationFields ?? {}).map((value) => value ?? ""),
+            ...(conversation.decision?.missingFields ?? []),
             ...(conversation.decision?.riskFlags ?? []),
           ]
             .join(" ")
@@ -435,6 +442,11 @@ export function JoshLiveInbox({
 
     return searchedConversations;
   }, [activeFilter, liveConversations, searchQuery]);
+
+  const conversationSections = useMemo(
+    () => buildConversationSections(visibleConversations),
+    [visibleConversations],
+  );
 
   const activeConversation = useMemo(() => {
     if (activeConversationId) {
@@ -478,7 +490,7 @@ export function JoshLiveInbox({
           </p>
         </div>
 
-        <div className="flex items-center gap-3 rounded-2xl border border-ink-100 bg-white px-4 py-3 shadow-sm">
+        <div className="flex min-h-14 items-center gap-3 rounded-2xl border border-ink-100 bg-white px-4 py-3 shadow-sm">
           {livePagePictureUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
@@ -502,38 +514,16 @@ export function JoshLiveInbox({
 
       {liveDbUnavailable ? (
         <div className="rounded-2xl border border-amber/30 bg-amber/10 px-4 py-3 text-sm text-ink-700">
-          We could not confirm the connected Page from the database. Josh can still show the live inbox shell, but the Page name may use a fallback until the database is reachable.
+          We could not confirm the connected Page from the database. Josh can still show live conversations returned by the inbox endpoint, but Page metadata may use a fallback until the database is reachable.
         </div>
       ) : null}
 
-      <div className="grid grid-cols-3 gap-2 rounded-2xl border border-ink-100 bg-white p-1 shadow-sm lg:hidden">
-        {panelTabs.map((tab) => {
-          const Icon = tab.icon;
-          return (
-            <button
-              key={tab.id}
-              type="button"
-              onClick={() => setActivePanel(tab.id)}
-              className={cn(
-                "inline-flex items-center justify-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold transition-all",
-                activePanel === tab.id
-                  ? "bg-brand-600 text-white shadow-sm shadow-brand-500/25"
-                  : "text-ink-500 hover:bg-ink-50 hover:text-ink-800",
-              )}
-            >
-              <Icon className="h-3.5 w-3.5" />
-              {tab.label}
-            </button>
-          );
-        })}
-      </div>
-
-      <section className="overflow-hidden rounded-3xl border border-ink-100 bg-white shadow-sm shadow-ink-100/60">
+      <section className="overflow-hidden rounded-[28px] border border-ink-100 bg-white shadow-sm shadow-ink-100/60">
         <div className="grid grid-cols-2 gap-px border-b border-ink-100 bg-ink-100 lg:grid-cols-4">
           {liveStats.map((stat) => {
             const Icon = stat.icon;
             return (
-              <div key={stat.label} className="bg-white p-4">
+              <div key={stat.label} className="bg-white p-3.5 sm:p-4">
                 <div className="flex items-center justify-between gap-3">
                   <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-ink-500">
                     {stat.label}
@@ -569,318 +559,495 @@ export function JoshLiveInbox({
           })}
         </div>
 
-        <div className="grid min-h-[680px] grid-cols-1 lg:grid-cols-[300px_minmax(0,1fr)_300px] xl:grid-cols-[320px_minmax(0,1fr)_320px]">
+        <div className="relative grid h-[calc(100svh-230px)] min-h-[680px] grid-cols-1 overflow-hidden lg:h-[760px] lg:grid-cols-[minmax(280px,340px)_minmax(0,1fr)_minmax(300px,360px)] xl:grid-cols-[360px_minmax(0,1fr)_360px]">
           <aside
             className={cn(
-              "border-ink-100 bg-white lg:block lg:border-r",
-              activePanel === "list" ? "block" : "hidden",
+              "min-h-0 flex-col border-ink-100 bg-white lg:flex lg:border-r",
+              activePanel === "list" ? "flex" : "hidden",
             )}
           >
-            <div className="border-b border-ink-100 p-4">
-              <div className="flex items-center justify-between gap-3">
-                <div>
-                  <h2 className="text-sm font-semibold text-ink-900">
-                    Conversations
-                  </h2>
-                  <p className="text-xs text-ink-500">Real leads only</p>
-                </div>
-                <button
-                  type="button"
-                  aria-label={filtersOpen ? "Hide conversation filters" : "Show conversation filters"}
-                  aria-expanded={filtersOpen}
-                  aria-controls="live-inbox-filters"
-                  onClick={() => setFiltersOpen((open) => !open)}
-                  className={cn(
-                    "rounded-xl border p-2 transition-colors",
-                    filtersOpen || activeFilter !== "all"
-                      ? "border-brand-100 bg-brand-50 text-brand-700"
-                      : "border-ink-100 text-ink-500 hover:border-brand-100 hover:bg-brand-50 hover:text-brand-700",
-                  )}
-                >
-                  <SlidersHorizontal className="h-4 w-4" />
-                </button>
-              </div>
-
-              <label className="mt-4 flex items-center gap-2 rounded-2xl border border-ink-100 bg-ink-50 px-3 py-2.5 text-sm text-ink-500 focus-within:border-brand-200 focus-within:bg-white focus-within:ring-2 focus-within:ring-brand-500/10">
-                <Search className="h-4 w-4" />
-                <input
-                  type="search"
-                  placeholder="Search live conversations"
-                  value={searchQuery}
-                  onChange={(event) => setSearchQuery(event.target.value)}
-                  className="w-full bg-transparent text-sm text-ink-900 outline-none placeholder:text-ink-400"
-                  aria-label="Search live conversations"
-                />
-              </label>
-
-              {filtersOpen ? (
-                <div id="live-inbox-filters" className="mt-3 grid grid-cols-4 gap-1 rounded-2xl bg-ink-50 p-1">
-                  {filters.map((filter) => (
-                    <button
-                      key={filter.id}
-                      type="button"
-                      onClick={() => setActiveFilter(filter.id)}
-                      className={cn(
-                        "rounded-xl px-2 py-1.5 text-xs font-semibold transition-all",
-                        activeFilter === filter.id
-                          ? filter.id === "hot"
-                            ? "bg-amber/20 text-orange-700 shadow-sm"
-                            : "bg-white text-ink-900 shadow-sm"
-                          : filter.id === "hot"
-                            ? "text-orange-600 hover:bg-amber/10"
-                            : "text-ink-500 hover:text-ink-800",
-                      )}
-                    >
-                      {filter.label}
-                    </button>
-                  ))}
-                </div>
-              ) : null}
-            </div>
-
-            <div
-              className={cn(
-                "min-h-[498px]",
-                hasConversations
-                  ? "divide-y divide-ink-100"
-                  : "flex flex-col items-center justify-center px-5 py-10 text-center",
-              )}
-            >
-              {hasConversations ? (
-                visibleConversations.map((conversation) => {
-                  const selected = activeConversation?.id === conversation.id;
-                  const latestMessage = conversation.messages.at(-1);
-                  const unreadStyle = latestMessage?.direction === "inbound";
-
-                  return (
-                    <button
-                      key={conversation.id}
-                      type="button"
-                      onClick={() => selectConversation(conversation)}
-                      className={cn(
-                        "group flex w-full items-start gap-3 px-3 py-3 text-left transition-all hover:bg-ink-50",
-                        selected ? "bg-brand-50/80" : conversation.isHot ? "bg-amber/10 hover:bg-amber/15" : "bg-white",
-                      )}
-                    >
-                      <span className="relative shrink-0">
-                        <LeadAvatar conversation={conversation} className="h-11 w-11 ring-2 ring-white shadow-sm" />
-                        {unreadStyle ? <span className="absolute -right-0.5 -top-0.5 h-3 w-3 rounded-full border-2 border-white bg-brand-500" /> : null}
-                      </span>
-                      <span className={cn("min-w-0 flex-1 rounded-2xl px-2 py-1 transition", selected && "bg-white shadow-sm ring-1 ring-brand-100")}>
-                        <span className="flex items-center justify-between gap-3">
-                          <span className="flex min-w-0 items-center gap-2">
-                            <span className={cn("truncate text-sm text-ink-900", unreadStyle ? "font-extrabold" : "font-semibold")}>
-                              {conversation.leadName}
-                            </span>
-                            {conversation.isHot ? (
-                              <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-amber/20 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.1em] text-orange-700">
-                                <Flame className="h-3 w-3" />
-                                Hot
-                              </span>
-                            ) : null}
-                          </span>
-                          <span className={cn("shrink-0 text-[11px]", unreadStyle ? "font-bold text-brand-600" : "text-ink-400")}>
-                            {conversation.timestampLabel}
-                          </span>
-                        </span>
-                        <span className={cn("mt-1 flex items-center gap-1.5 text-xs leading-5", unreadStyle ? "font-semibold text-ink-700" : "text-ink-500")}>
-                          {latestMessage?.direction === "outbound" ? <CheckCheck className="h-3.5 w-3.5 shrink-0 text-brand-500" /> : null}
-                          <span className="line-clamp-2">{conversation.lastMessagePreview}</span>
-                        </span>
-                        <span className="mt-2 flex flex-wrap items-center gap-1.5">
-                          <span
-                            className={cn(
-                              "inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em]",
-                              statusBadgeClass(conversation.qualificationStatus),
-                            )}
-                          >
-                            {conversation.qualificationStatus}
-                          </span>
-                          {conversation.leadTemperature ? (
-                            <span className={cn("inline-flex rounded-full border px-2 py-0.5 text-[10px] font-semibold", temperatureClass(conversation.leadTemperature))}>
-                              {conversation.leadTemperature}
-                            </span>
-                          ) : null}
-                        </span>
-                      </span>
-                    </button>
-                  );
-                })
-              ) : (
-                <div className="animate-fade-in">
-                  <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-ink-50 text-ink-400">
-                    <Inbox className="h-5 w-5" />
-                  </div>
-                  <p className="mt-4 text-sm font-semibold text-ink-900">
-                    {hasAnyConversations ? "No conversations match" : "No live conversations yet"}
-                  </p>
-                  <p className="mt-1.5 text-xs leading-relaxed text-ink-500">
-                    {hasAnyConversations
-                      ? isSearchActive
-                        ? "Try searching another name or message, or clear the current search."
-                        : "Try a different conversation filter to see more leads."
-                      : "Real Messenger conversations will appear here as the webhook receives them. Hot leads will be pinned to the top automatically."}
-                  </p>
-                </div>
-              )}
-            </div>
+            <ConversationListPanel
+              activeConversationId={activeConversation?.id ?? null}
+              activeFilter={activeFilter}
+              conversationSections={conversationSections}
+              filtersOpen={filtersOpen}
+              hasAnyConversations={hasAnyConversations}
+              hasConversations={hasConversations}
+              isSearchActive={isSearchActive}
+              searchQuery={searchQuery}
+              onFilterChange={setActiveFilter}
+              onFiltersToggle={() => setFiltersOpen((open) => !open)}
+              onSearchChange={setSearchQuery}
+              onSelectConversation={selectConversation}
+            />
           </aside>
 
           <main
             className={cn(
-              "min-h-[680px] bg-gradient-to-b from-white to-ink-50/60 lg:block",
-              activePanel === "thread" ? "block" : "hidden",
+              "min-h-0 bg-gradient-to-b from-white to-ink-50/70 lg:flex",
+              activePanel === "thread" ? "flex" : "hidden",
             )}
           >
-            <div className="flex h-full min-h-[680px] flex-col">
-              <div className="border-b border-ink-100 bg-white/90 px-5 py-4 backdrop-blur">
-                <div className="flex items-center justify-between gap-4">
-                  <div className="flex min-w-0 items-center gap-3">
-                    {activeConversation ? <LeadAvatar conversation={activeConversation} className="h-10 w-10" /> : null}
-                    <div className="min-w-0">
-                      <p className="truncate text-sm font-semibold text-ink-900">
-                        {activeConversation ? activeConversation.leadName : "Waiting for first lead"}
-                      </p>
-                      <p className="text-xs text-ink-500">
-                        {activeConversation
-                          ? `${activeConversation.messages.length} Messenger message${activeConversation.messages.length === 1 ? "" : "s"} · ${activeConversation.qualificationStatus}`
-                          : "Josh is handling incoming conversations automatically."}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="hidden items-center gap-2 rounded-full bg-brand-50 px-3 py-1.5 text-xs font-semibold text-brand-700 sm:inline-flex">
-                    <Bot className="h-3.5 w-3.5" />
-                    Josh is online
-                  </div>
-                </div>
-              </div>
-
-              {activeConversation ? (
-                <div className="max-h-[calc(100vh-300px)] min-h-0 flex-1 space-y-4 overflow-y-auto px-5 py-6 md:px-8">
-                  {activeConversation.messages.length > 0 ? (
-                    <>
-                      {activeThreadItems.map((item) =>
-                        item.type === "date" ? (
-                          <MessageDateSeparator key={item.id} label={item.label} />
-                        ) : (
-                          <ConversationMessageGroup
-                            key={item.id}
-                            conversation={activeConversation}
-                            group={item}
-                          />
-                        ),
-                      )}
-                      {joshIsTyping ? <JoshTypingIndicator /> : null}
-                    </>
-                  ) : (
-                    <div className="flex h-full items-center justify-center p-6 md:p-10">
-                      <div className="mx-auto max-w-md text-center animate-pop-in">
-                        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-ink-50 text-ink-400">
-                          <MessageCircle className="h-6 w-6" />
-                        </div>
-                        <h2 className="mt-5 text-lg font-bold tracking-tight text-ink-900">
-                          No stored messages for this lead yet
-                        </h2>
-                        <p className="mt-2 text-sm leading-6 text-ink-600">
-                          The conversation exists, but the middleware did not return message bodies for this thread.
-                        </p>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <div className="flex flex-1 items-center justify-center p-6 md:p-10">
-                  <div className="mx-auto max-w-md text-center animate-pop-in">
-                    <div className="relative mx-auto h-24 w-24">
-                      <div className="absolute inset-0 rounded-full bg-brand-100 blur-2xl" />
-                      <div className="relative flex h-24 w-24 items-center justify-center rounded-full border-4 border-white bg-brand-50 shadow-xl shadow-brand-900/10">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                          src="/josh-avatar.jpg?v=3"
-                          alt="Josh for Sales"
-                          className="h-full w-full rounded-full object-cover"
-                        />
-                        <span className="absolute bottom-1 right-1 flex h-6 w-6 items-center justify-center rounded-full border-4 border-white bg-mint">
-                          <span className="absolute h-4 w-4 animate-ping rounded-full bg-mint opacity-60" />
-                        </span>
-                      </div>
-                    </div>
-
-                    <h2 className="mt-6 text-xl font-bold tracking-tight text-ink-900">
-                      Josh is online and waiting for leads on {livePageName}.
-                    </h2>
-                    <p className="mt-3 text-sm leading-6 text-ink-600">
-                      Conversations will appear here in real-time as they come in.
-                    </p>
-
-                    <div className="mt-7 inline-flex items-center gap-2 rounded-full border border-ink-100 bg-white px-4 py-2 text-xs font-semibold text-ink-500 shadow-sm">
-                      <span className="relative flex h-2 w-2">
-                        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-mint opacity-60" />
-                        <span className="relative inline-flex h-2 w-2 rounded-full bg-mint" />
-                      </span>
-                      Listening for webhook events
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              <div className="border-t border-ink-100 bg-white/80 px-5 py-4">
-                <div className="rounded-2xl border border-dashed border-ink-200 bg-white px-4 py-3 text-sm text-ink-500">
-                  {activeConversation
-                    ? "Josh sends replies through the middleware. Manual takeover controls can be enabled when the owner handoff flow is ready."
-                    : "The reply composer will activate when a real conversation is selected."}
-                </div>
-              </div>
-            </div>
+            <ThreadPanel
+              activeConversation={activeConversation}
+              activeThreadItems={activeThreadItems}
+              joshIsTyping={joshIsTyping}
+              livePageName={livePageName}
+              onBackToList={() => setActivePanel("list")}
+              onOpenProfile={() => setActivePanel("profile")}
+            />
           </main>
 
-          <aside
-            className={cn(
-              "border-ink-100 bg-white lg:block lg:border-l",
-              activePanel === "profile" ? "block" : "hidden",
-            )}
-          >
+          <aside className="hidden min-h-0 border-l border-ink-100 bg-white lg:flex lg:flex-col">
             {activeConversation ? (
               <LeadProfilePanel conversation={activeConversation} />
             ) : (
               <EmptyProfilePanel />
             )}
           </aside>
+
+          {activePanel === "profile" ? (
+            <div className="absolute inset-0 z-40 flex items-end bg-ink-900/30 backdrop-blur-[2px] lg:hidden" role="dialog" aria-modal="true" aria-label="Lead profile">
+              <button
+                type="button"
+                aria-label="Close lead profile"
+                className="absolute inset-0 cursor-default"
+                onClick={() => setActivePanel(activeConversation ? "thread" : "list")}
+              />
+              <aside className="relative flex max-h-[88%] w-full animate-pop-in flex-col overflow-hidden rounded-t-[28px] border border-ink-100 bg-white shadow-2xl shadow-ink-900/20">
+                <div className="flex min-h-12 items-center justify-center border-b border-ink-100 bg-white px-4 py-2">
+                  <span className="h-1.5 w-12 rounded-full bg-ink-200" />
+                  <button
+                    type="button"
+                    aria-label="Close lead profile"
+                    onClick={() => setActivePanel(activeConversation ? "thread" : "list")}
+                    className="absolute right-3 top-2 flex h-10 w-10 items-center justify-center rounded-full text-ink-500 hover:bg-ink-50 hover:text-ink-900"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+                {activeConversation ? (
+                  <LeadProfilePanel conversation={activeConversation} compact />
+                ) : (
+                  <EmptyProfilePanel />
+                )}
+              </aside>
+            </div>
+          ) : null}
         </div>
       </section>
     </div>
   );
 }
 
-function LeadProfilePanel({ conversation }: { conversation: LiveConversation }) {
-  const decision = conversation.decision;
-  const confidence = decision?.confidence ?? null;
-  const availableFields = profileFields.filter(({ key }) => decision?.qualificationFields[key]);
-  const tags = buildProfileTags(conversation);
+function ConversationListPanel({
+  activeConversationId,
+  activeFilter,
+  conversationSections,
+  filtersOpen,
+  hasAnyConversations,
+  hasConversations,
+  isSearchActive,
+  searchQuery,
+  onFilterChange,
+  onFiltersToggle,
+  onSearchChange,
+  onSelectConversation,
+}: {
+  activeConversationId: string | null;
+  activeFilter: InboxFilter;
+  conversationSections: ConversationSection[];
+  filtersOpen: boolean;
+  hasAnyConversations: boolean;
+  hasConversations: boolean;
+  isSearchActive: boolean;
+  searchQuery: string;
+  onFilterChange: (filter: InboxFilter) => void;
+  onFiltersToggle: () => void;
+  onSearchChange: (query: string) => void;
+  onSelectConversation: (conversation: LiveConversation, panel?: InboxPanel) => void;
+}) {
+  return (
+    <div className="flex min-h-0 flex-1 flex-col">
+      <div className="border-b border-ink-100 bg-white p-4">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <h2 className="text-sm font-semibold text-ink-900">Conversations</h2>
+            <p className="text-xs text-ink-500">Live Messenger leads only</p>
+          </div>
+          <button
+            type="button"
+            aria-label={filtersOpen ? "Hide conversation filters" : "Show conversation filters"}
+            aria-expanded={filtersOpen}
+            aria-controls="live-inbox-filters"
+            onClick={onFiltersToggle}
+            className={cn(
+              "flex h-11 w-11 items-center justify-center rounded-2xl border transition-colors",
+              filtersOpen || activeFilter !== "all"
+                ? "border-brand-100 bg-brand-50 text-brand-700"
+                : "border-ink-100 text-ink-500 hover:border-brand-100 hover:bg-brand-50 hover:text-brand-700",
+            )}
+          >
+            <SlidersHorizontal className="h-4 w-4" />
+          </button>
+        </div>
+
+        <label className="mt-4 flex min-h-11 items-center gap-2 rounded-2xl border border-ink-100 bg-ink-50 px-3 text-sm text-ink-500 focus-within:border-brand-200 focus-within:bg-white focus-within:ring-2 focus-within:ring-brand-500/10">
+          <Search className="h-4 w-4" />
+          <input
+            type="search"
+            placeholder="Search by name, message, field, or tag"
+            value={searchQuery}
+            onChange={(event) => onSearchChange(event.target.value)}
+            className="w-full bg-transparent text-sm text-ink-900 outline-none placeholder:text-ink-400"
+            aria-label="Search live conversations"
+          />
+        </label>
+
+        {filtersOpen ? (
+          <div id="live-inbox-filters" className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-2 xl:grid-cols-4">
+            {filters.map((filter) => (
+              <button
+                key={filter.id}
+                type="button"
+                onClick={() => onFilterChange(filter.id)}
+                className={cn(
+                  "min-h-11 rounded-2xl border px-3 py-2 text-left transition-all",
+                  activeFilter === filter.id
+                    ? filter.id === "hot"
+                      ? "border-amber/30 bg-amber/15 text-orange-700 shadow-sm"
+                      : "border-brand-100 bg-brand-50 text-brand-700 shadow-sm"
+                    : "border-ink-100 bg-white text-ink-500 hover:border-brand-100 hover:bg-brand-50/60 hover:text-ink-900",
+                )}
+              >
+                <span className="block text-xs font-bold">{filter.label}</span>
+                <span className="mt-0.5 hidden text-[10px] leading-4 opacity-80 xl:block">{filter.description}</span>
+              </button>
+            ))}
+          </div>
+        ) : null}
+      </div>
+
+      <div
+        className={cn(
+          "min-h-0 flex-1 overflow-y-auto bg-white",
+          hasConversations
+            ? "pb-3"
+            : "flex flex-col items-center justify-center px-5 py-10 text-center",
+        )}
+      >
+        {hasConversations ? (
+          <div className="space-y-2 py-3">
+            {conversationSections.map((section) => (
+              <div key={section.id}>
+                <div className="sticky top-0 z-10 flex items-center justify-between border-y border-ink-100 bg-ink-50/95 px-4 py-2 backdrop-blur">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-ink-500">{section.title}</p>
+                  <p className="text-[10px] font-semibold text-ink-400">{section.count}</p>
+                </div>
+                <div className="divide-y divide-ink-100">
+                  {section.conversations.map((conversation) => (
+                    <ConversationListRow
+                      key={conversation.id}
+                      conversation={conversation}
+                      selected={activeConversationId === conversation.id}
+                      onSelect={() => onSelectConversation(conversation)}
+                    />
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <EmptyConversationState
+            hasAnyConversations={hasAnyConversations}
+            isSearchActive={isSearchActive}
+          />
+        )}
+      </div>
+    </div>
+  );
+}
+
+function ConversationListRow({
+  conversation,
+  selected,
+  onSelect,
+}: {
+  conversation: LiveConversation;
+  selected: boolean;
+  onSelect: () => void;
+}) {
+  const latestMessage = conversation.messages.at(-1);
+  const needsResponse = latestMessage?.direction === "inbound";
+  const preview = latestMessage?.direction === "outbound"
+    ? `Josh: ${stripExistingJoshPrefix(conversation.lastMessagePreview)}`
+    : conversation.lastMessagePreview;
+  const statusTags = buildCompactTags(conversation).slice(0, 3);
 
   return (
-    <>
-      <div className="border-b border-ink-100 p-5">
-        <div className="flex items-center gap-3">
-          <LeadAvatar conversation={conversation} className="h-12 w-12" />
-          <div className="min-w-0">
-            <h2 className="truncate text-sm font-semibold text-ink-900">
+    <button
+      type="button"
+      onClick={onSelect}
+      className={cn(
+        "group flex min-h-[84px] w-full items-start gap-3 px-3 py-3 text-left transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/30",
+        selected ? "bg-brand-50/90" : conversation.isHot ? "bg-amber/10 hover:bg-amber/15" : "bg-white hover:bg-ink-50",
+      )}
+    >
+      <span className="relative shrink-0 pt-0.5">
+        <LeadAvatar conversation={conversation} className="h-12 w-12 ring-2 ring-white shadow-sm" />
+        {needsResponse ? <span className="absolute -right-0.5 -top-0.5 h-3.5 w-3.5 rounded-full border-2 border-white bg-brand-500" /> : null}
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="flex min-w-0 items-start justify-between gap-3">
+          <span className="min-w-0">
+            <span className={cn("block truncate text-sm text-ink-900", needsResponse ? "font-extrabold" : "font-semibold")}>
               {conversation.leadName}
-            </h2>
-            <p className="text-xs text-ink-500">
-              {decision?.leadStage ? humanize(decision.leadStage) : conversation.qualificationStatus}
-            </p>
+            </span>
+            <span className="mt-0.5 flex flex-wrap items-center gap-1.5">
+              {conversation.isHot ? (
+                <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-amber/20 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.1em] text-orange-700">
+                  <Flame className="h-3 w-3" />
+                  Hot
+                </span>
+              ) : null}
+              <span className={cn("inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em]", statusBadgeClass(conversation.qualificationStatus))}>
+                {conversation.qualificationStatus}
+              </span>
+            </span>
+          </span>
+          <span className={cn("shrink-0 pt-0.5 text-[11px]", needsResponse ? "font-bold text-brand-600" : "text-ink-400")}>
+            {conversation.timestampLabel}
+          </span>
+        </span>
+        <span className={cn("mt-1.5 flex min-w-0 items-start gap-1.5 text-xs leading-5", needsResponse ? "font-semibold text-ink-700" : "text-ink-500")}>
+          {latestMessage?.direction === "outbound" ? <CheckCheck className="mt-0.5 h-3.5 w-3.5 shrink-0 text-brand-500" /> : null}
+          <span className="line-clamp-2 break-words">{preview}</span>
+        </span>
+        <span className="mt-2 flex flex-wrap items-center gap-1.5">
+          {statusTags.map((tag) => (
+            <span key={tag} className="rounded-full border border-ink-100 bg-white/80 px-2 py-0.5 text-[10px] font-semibold text-ink-500">
+              {tag}
+            </span>
+          ))}
+        </span>
+      </span>
+    </button>
+  );
+}
+
+function EmptyConversationState({ hasAnyConversations, isSearchActive }: { hasAnyConversations: boolean; isSearchActive: boolean }) {
+  return (
+    <div className="animate-fade-in max-w-xs">
+      <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-ink-50 text-ink-400">
+        <Inbox className="h-5 w-5" />
+      </div>
+      <p className="mt-4 text-sm font-semibold text-ink-900">
+        {hasAnyConversations ? "No conversations match" : "No live conversations yet"}
+      </p>
+      <p className="mt-1.5 text-xs leading-relaxed text-ink-500">
+        {hasAnyConversations
+          ? isSearchActive
+            ? "Try searching another name, message, qualification field, or tag."
+            : "Try a different conversation filter to see more leads."
+          : "Real Messenger conversations will appear here as the webhook receives them. Hot leads are promoted automatically."}
+      </p>
+    </div>
+  );
+}
+
+function ThreadPanel({
+  activeConversation,
+  activeThreadItems,
+  joshIsTyping,
+  livePageName,
+  onBackToList,
+  onOpenProfile,
+}: {
+  activeConversation: LiveConversation | null;
+  activeThreadItems: ThreadItem[];
+  joshIsTyping: boolean;
+  livePageName: string;
+  onBackToList: () => void;
+  onOpenProfile: () => void;
+}) {
+  return (
+    <div className="flex min-h-0 flex-1 flex-col">
+      <div className="sticky top-0 z-20 border-b border-ink-100 bg-white/95 px-3 py-3 backdrop-blur sm:px-5 lg:static">
+        <div className="flex min-h-12 items-center justify-between gap-3">
+          <div className="flex min-w-0 items-center gap-2 sm:gap-3">
+            <button
+              type="button"
+              aria-label="Back to conversations"
+              onClick={onBackToList}
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl text-ink-500 hover:bg-ink-50 hover:text-ink-900 lg:hidden"
+            >
+              <ArrowLeft className="h-5 w-5" />
+            </button>
+            {activeConversation ? <LeadAvatar conversation={activeConversation} className="h-11 w-11" /> : null}
+            <div className="min-w-0">
+              <p className="truncate text-sm font-semibold text-ink-900">
+                {activeConversation ? activeConversation.leadName : "Waiting for first lead"}
+              </p>
+              <p className="truncate text-xs text-ink-500">
+                {activeConversation
+                  ? `${activeConversation.messages.length} Messenger message${activeConversation.messages.length === 1 ? "" : "s"} · ${activeConversation.qualificationStatus}`
+                  : `Josh is listening on ${livePageName}.`}
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="hidden items-center gap-2 rounded-full bg-brand-50 px-3 py-1.5 text-xs font-semibold text-brand-700 sm:inline-flex">
+              <Bot className="h-3.5 w-3.5" />
+              Josh online
+            </div>
+            {activeConversation ? (
+              <button
+                type="button"
+                onClick={onOpenProfile}
+                className="flex min-h-11 items-center gap-1.5 rounded-2xl border border-ink-100 bg-white px-3 text-xs font-bold text-ink-700 shadow-sm hover:border-brand-100 hover:bg-brand-50 hover:text-brand-700 lg:hidden"
+              >
+                <ChevronUp className="h-4 w-4" />
+                Lead
+              </button>
+            ) : null}
           </div>
         </div>
       </div>
 
-      <div className="space-y-5 p-5">
-        {!decision ? (
-          <div className="rounded-2xl border border-dashed border-ink-200 bg-ink-50/70 p-4 text-sm leading-6 text-ink-500">
-            Structured decision data has not been recorded for this lead yet. The profile is using message-derived status until Josh writes an agent decision.
+      {activeConversation ? (
+        <>
+          <div className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain px-3 py-5 sm:px-5 md:px-8">
+            {activeConversation.messages.length > 0 ? (
+              <>
+                {activeThreadItems.map((item) =>
+                  item.type === "date" ? (
+                    <MessageDateSeparator key={item.id} label={item.label} />
+                  ) : (
+                    <ConversationMessageGroup
+                      key={item.id}
+                      conversation={activeConversation}
+                      group={item}
+                    />
+                  ),
+                )}
+                {joshIsTyping ? <JoshTypingIndicator /> : null}
+              </>
+            ) : (
+              <div className="flex h-full items-center justify-center p-6 md:p-10">
+                <div className="mx-auto max-w-md text-center animate-pop-in">
+                  <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-ink-50 text-ink-400">
+                    <MessageCircle className="h-6 w-6" />
+                  </div>
+                  <h2 className="mt-5 text-lg font-bold tracking-tight text-ink-900">
+                    Conversation selected
+                  </h2>
+                  <p className="mt-2 text-sm leading-6 text-ink-600">
+                    This lead exists in the live inbox, but the endpoint did not return stored message bodies for this thread.
+                  </p>
+                </div>
+              </div>
+            )}
           </div>
-        ) : null}
+          <JoshStatusBar conversation={activeConversation} />
+        </>
+      ) : (
+        <div className="flex flex-1 items-center justify-center p-6 md:p-10">
+          <div className="mx-auto max-w-md text-center animate-pop-in">
+            <div className="relative mx-auto h-24 w-24">
+              <div className="absolute inset-0 rounded-full bg-brand-100 blur-2xl" />
+              <div className="relative flex h-24 w-24 items-center justify-center rounded-full border-4 border-white bg-brand-50 shadow-xl shadow-brand-900/10">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src="/josh-avatar.jpg?v=3"
+                  alt="Josh for Sales"
+                  className="h-full w-full rounded-full object-cover"
+                />
+                <span className="absolute bottom-1 right-1 flex h-6 w-6 items-center justify-center rounded-full border-4 border-white bg-mint">
+                  <span className="absolute h-4 w-4 animate-ping rounded-full bg-mint opacity-60" />
+                </span>
+              </div>
+            </div>
 
+            <h2 className="mt-6 text-xl font-bold tracking-tight text-ink-900">
+              Josh is online and waiting for leads on {livePageName}.
+            </h2>
+            <p className="mt-3 text-sm leading-6 text-ink-600">
+              Conversations appear here in real time as they arrive from the webhook.
+            </p>
+
+            <div className="mt-7 inline-flex items-center gap-2 rounded-full border border-ink-100 bg-white px-4 py-2 text-xs font-semibold text-ink-500 shadow-sm">
+              <span className="relative flex h-2 w-2">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-mint opacity-60" />
+                <span className="relative inline-flex h-2 w-2 rounded-full bg-mint" />
+              </span>
+              Listening for webhook events
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function JoshStatusBar({ conversation }: { conversation: LiveConversation }) {
+  const nextAction = conversation.decision?.nextAction ? humanize(conversation.decision.nextAction) : null;
+  const missingCount = getMissingFieldLabels(conversation).length;
+  const lastInbound = conversation.messages.at(-1)?.direction === "inbound";
+
+  return (
+    <div className="sticky bottom-0 z-20 border-t border-ink-100 bg-white/95 px-3 py-3 backdrop-blur sm:px-5">
+      <div className="flex min-h-14 items-center gap-3 rounded-2xl border border-ink-100 bg-ink-50/80 px-3 py-2.5">
+        <JoshAvatar className="h-9 w-9 shadow-sm ring-2 ring-white" />
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-sm font-semibold text-ink-900">
+            {lastInbound ? "Josh is qualifying this lead" : "Josh sent the latest reply"}
+          </p>
+          <p className="truncate text-xs leading-5 text-ink-500">
+            {nextAction ?? (missingCount > 0 ? `${missingCount} qualification field${missingCount === 1 ? "" : "s"} still missing` : "Live thread is synchronized from the middleware database")}
+          </p>
+        </div>
+        <span className="hidden rounded-full bg-brand-50 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-brand-700 sm:inline-flex">
+          Auto
+        </span>
+      </div>
+    </div>
+  );
+}
+
+function LeadProfilePanel({ conversation, compact = false }: { conversation: LiveConversation; compact?: boolean }) {
+  const decision = conversation.decision;
+  const confidence = decision?.confidence ?? null;
+  const availableFields = profileFields.filter(({ key }) => decision?.qualificationFields[key]);
+  const missingFields = getMissingFieldLabels(conversation);
+  const tags = buildProfileTags(conversation);
+
+  return (
+    <div className="flex min-h-0 flex-1 flex-col">
+      <div className={cn("border-b border-ink-100", compact ? "p-4" : "p-5")}>
+        <div className="flex items-start gap-3">
+          <LeadAvatar conversation={conversation} className="h-12 w-12" />
+          <div className="min-w-0 flex-1">
+            <h2 className="truncate text-sm font-semibold text-ink-900">
+              {conversation.leadName}
+            </h2>
+            <p className="mt-0.5 text-xs text-ink-500">
+              {decision?.leadStage ? humanize(decision.leadStage) : conversation.qualificationStatus}
+            </p>
+            <div className="mt-2 flex flex-wrap gap-1.5">
+              <span className={cn("rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.12em]", statusBadgeClass(conversation.qualificationStatus))}>
+                {conversation.qualificationStatus}
+              </span>
+              {conversation.leadTemperature ? (
+                <span className={cn("rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.12em]", temperatureClass(conversation.leadTemperature))}>
+                  {conversation.leadTemperature}
+                </span>
+              ) : null}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className={cn("min-h-0 flex-1 space-y-4 overflow-y-auto", compact ? "p-4 pb-6" : "p-5")}>
         <div className="rounded-2xl border border-ink-100 bg-white p-4">
           <div className="flex items-center justify-between gap-3">
             <div>
@@ -888,7 +1055,7 @@ function LeadProfilePanel({ conversation }: { conversation: LiveConversation }) 
                 Lead Temperature
               </p>
               <p className="mt-1 text-xs leading-5 text-ink-500">
-                Based on structured confidence, stage, owner alert, and qualification signals.
+                Based on real qualification status, confidence, owner alert, and hot-lead signals.
               </p>
             </div>
             <Flame className="h-4 w-4 text-orange-500" />
@@ -959,18 +1126,30 @@ function LeadProfilePanel({ conversation }: { conversation: LiveConversation }) 
               ))
             ) : (
               <p className="rounded-xl bg-ink-50 px-3 py-3 text-sm leading-6 text-ink-500">
-                Josh has not collected budget, authority, need, timeline, or location yet.
+                No structured qualification fields have been saved for this lead in the current decision record.
               </p>
             )}
           </div>
-          {decision?.missingFields.length ? (
-            <div className="mt-3 rounded-xl border border-amber/20 bg-amber/10 px-3 py-2">
-              <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-amber">Missing</p>
-              <p className="mt-1 text-xs leading-5 text-ink-600">
-                {decision.missingFields.map(humanize).join(", ")}
-              </p>
-            </div>
-          ) : null}
+        </div>
+
+        <div className="rounded-2xl border border-ink-100 bg-white p-4">
+          <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-ink-400">
+            <Clock3 className="h-3.5 w-3.5" />
+            Missing fields
+          </div>
+          <div className="mt-4 flex flex-wrap gap-2">
+            {missingFields.length > 0 ? (
+              missingFields.map((field) => (
+                <span key={field} className="rounded-full border border-amber/30 bg-amber/10 px-2.5 py-1 text-[11px] font-semibold text-amber">
+                  {field}
+                </span>
+              ))
+            ) : (
+              <span className="rounded-full border border-mint/20 bg-mint/10 px-2.5 py-1 text-[11px] font-semibold text-emerald-700">
+                No missing qualification fields detected
+              </span>
+            )}
+          </div>
         </div>
 
         <div className="rounded-2xl border border-ink-100 bg-white p-4">
@@ -979,15 +1158,11 @@ function LeadProfilePanel({ conversation }: { conversation: LiveConversation }) 
             Tags
           </div>
           <div className="mt-4 flex flex-wrap gap-2">
-            {tags.length > 0 ? (
-              tags.map((tag) => (
-                <span key={tag} className="rounded-full border border-ink-100 bg-ink-50 px-2.5 py-1 text-[11px] font-semibold text-ink-600">
-                  {tag}
-                </span>
-              ))
-            ) : (
-              <p className="text-sm text-ink-500">No structured tags yet.</p>
-            )}
+            {tags.map((tag) => (
+              <span key={tag} className="rounded-full border border-ink-100 bg-ink-50 px-2.5 py-1 text-[11px] font-semibold text-ink-600">
+                {tag}
+              </span>
+            ))}
           </div>
         </div>
 
@@ -998,32 +1173,38 @@ function LeadProfilePanel({ conversation }: { conversation: LiveConversation }) 
           </div>
         ) : null}
 
-        <button
-          type="button"
-          disabled
-          className="w-full rounded-xl bg-ink-100 px-4 py-3 text-sm font-semibold text-ink-400"
-        >
-          Take over conversation
-        </button>
+        {decision?.ownerAlert || decision?.riskFlags.length ? (
+          <div className="rounded-2xl border border-rose/15 bg-rose/5 p-4">
+            <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-rose">
+              <Sparkles className="h-3.5 w-3.5" />
+              Attention signals
+            </div>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {decision.ownerAlert ? (
+                <span className="rounded-full border border-rose/20 bg-white px-2.5 py-1 text-[11px] font-semibold text-rose">Owner alert</span>
+              ) : null}
+              {decision.riskFlags.map((flag) => (
+                <span key={flag} className="rounded-full border border-rose/20 bg-white px-2.5 py-1 text-[11px] font-semibold text-rose">
+                  {humanize(flag)}
+                </span>
+              ))}
+            </div>
+          </div>
+        ) : null}
 
-        <div>
-          <label className="text-xs font-semibold uppercase tracking-[0.16em] text-ink-400">
-            Notes
-          </label>
-          <textarea
-            disabled
-            placeholder="Notes become available once manual owner handoff is enabled."
-            className="mt-2 h-28 w-full resize-none rounded-2xl border border-ink-100 bg-ink-50 px-3 py-3 text-sm text-ink-500 outline-none placeholder:text-ink-400"
-          />
-        </div>
+        {decision?.updatedAtLabel ? (
+          <p className="px-1 text-[11px] font-medium text-ink-400">
+            Decision updated {decision.updatedAtLabel}
+          </p>
+        ) : null}
       </div>
-    </>
+    </div>
   );
 }
 
 function EmptyProfilePanel() {
   return (
-    <>
+    <div className="flex min-h-0 flex-1 flex-col">
       <div className="border-b border-ink-100 p-5">
         <div className="flex items-center gap-3">
           <div className="flex h-12 w-12 items-center justify-center rounded-full bg-ink-50 text-ink-300">
@@ -1039,13 +1220,12 @@ function EmptyProfilePanel() {
       </div>
       <div className="p-5">
         <div className="rounded-2xl border border-dashed border-ink-200 bg-ink-50/70 p-4 text-sm text-ink-500">
-          Select a lead to view profile details from Josh&apos;s structured decisions.
+          Select a lead to view qualification details from Josh&apos;s live decision records.
         </div>
       </div>
-    </>
+    </div>
   );
 }
-
 
 function MessageDateSeparator({ label }: { label: string }) {
   return (
@@ -1089,14 +1269,14 @@ function ConversationMessageGroup({
               </div>
             ) : null}
 
-            <div className={cn("flex max-w-[78%] flex-col", isOutbound ? "items-end" : "items-start")}>
+            <div className={cn("flex max-w-[78%] flex-col sm:max-w-[72%]", isOutbound ? "items-end" : "items-start")}>
               <div
                 className={cn(
                   "px-3.5 py-2.5 text-[15px] leading-6 shadow-sm transition-transform duration-200 group-hover/message:-translate-y-0.5",
                   bubbleRadiusClass(group.direction, position),
                   isOutbound
                     ? "bg-brand-500 text-white shadow-brand-900/10"
-                    : "border border-ink-100 bg-ink-100 text-ink-800 shadow-ink-200/40",
+                    : "border border-ink-100 bg-white text-ink-800 shadow-ink-200/40",
                 )}
               >
                 <p className="whitespace-pre-wrap break-words">{message.content}</p>
@@ -1130,7 +1310,7 @@ function OutboundReceipt({ conversation, message }: { conversation: LiveConversa
   return (
     <div className="mt-1 flex items-center gap-1.5 pr-1 text-[11px] font-medium text-ink-400">
       {read ? <CheckCheck className="h-3.5 w-3.5 text-brand-500" /> : <Check className="h-3.5 w-3.5" />}
-      <span>{read ? `Read by ${conversation.leadName.split(" ")[0] || conversation.leadName}` : "Delivered"}</span>
+      <span>{read ? `Lead replied after this Josh message` : "Sent by Josh"}</span>
     </div>
   );
 }
@@ -1171,10 +1351,36 @@ function LeadAvatar({ conversation, className }: { conversation: LiveConversatio
       className={cn("shrink-0 rounded-full object-cover", className)}
     />
   ) : (
-    <div className={cn("flex shrink-0 items-center justify-center rounded-full bg-ink-50 text-ink-400", className)}>
-      <UserRound className="h-4 w-4" />
+    <div className={cn("flex shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-brand-50 to-ink-50 text-sm font-bold text-brand-700", className)} aria-hidden="true">
+      {getInitials(conversation.leadName)}
     </div>
   );
+}
+
+function buildConversationSections(conversations: LiveConversation[]): ConversationSection[] {
+  const usedIds = new Set<string>();
+  const createSection = (id: string, title: string, predicate: (conversation: LiveConversation) => boolean): ConversationSection | null => {
+    const sectionConversations = conversations.filter((conversation) => {
+      if (usedIds.has(conversation.id) || !predicate(conversation)) return false;
+      usedIds.add(conversation.id);
+      return true;
+    });
+
+    if (sectionConversations.length === 0) return null;
+    return {
+      id,
+      title,
+      count: sectionConversations.length,
+      conversations: sectionConversations,
+    };
+  };
+
+  return [
+    createSection("hot", "Hot leads", (conversation) => Boolean(conversation.isHot)),
+    createSection("active", "Active conversations", (conversation) => ["New", "Qualifying"].includes(conversation.qualificationStatus)),
+    createSection("qualified", "Qualified", (conversation) => conversation.qualificationStatus === "Qualified"),
+    createSection("other", "Other conversations", () => true),
+  ].filter((section): section is ConversationSection => Boolean(section));
 }
 
 function buildProfileTags(conversation: LiveConversation) {
@@ -1185,6 +1391,49 @@ function buildProfileTags(conversation: LiveConversation) {
   if (conversation.decision?.ownerAlert) tags.add("Owner alert");
   for (const flag of conversation.decision?.riskFlags ?? []) tags.add(`Risk: ${humanize(flag)}`);
   return [...tags];
+}
+
+function buildCompactTags(conversation: LiveConversation) {
+  const tags = new Set<string>();
+  if (conversation.leadTemperature) tags.add(conversation.leadTemperature);
+  if (conversation.decision?.leadStage) tags.add(humanize(conversation.decision.leadStage));
+  if (conversation.decision?.missingFields.length) tags.add(`${conversation.decision.missingFields.length} missing`);
+  if (conversation.decision?.ownerAlert) tags.add("Owner alert");
+  return [...tags];
+}
+
+function getMissingFieldLabels(conversation: LiveConversation) {
+  const fields = conversation.decision?.qualificationFields ?? {};
+  const explicitMissing = conversation.decision?.missingFields ?? [];
+  const missing = new Set<string>();
+
+  for (const field of explicitMissing) {
+    const normalized = field.trim();
+    if (normalized) missing.add(humanize(normalized));
+  }
+
+  for (const fieldKey of expectedProfileFieldKeys) {
+    if (!fields[fieldKey]) missing.add(humanize(fieldKey));
+  }
+
+  return [...missing];
+}
+
+function stripExistingJoshPrefix(value: string) {
+  return value.replace(/^\s*josh\s*:\s*/i, "");
+}
+
+function getInitials(name: string) {
+  const parts = name
+    .split(/\s+/)
+    .map((part) => part.trim())
+    .filter(Boolean);
+
+  if (parts.length === 0) return "?";
+  return parts
+    .slice(0, 2)
+    .map((part) => part.charAt(0).toUpperCase())
+    .join("");
 }
 
 function scoreFallback(status: LiveConversation["qualificationStatus"]) {
