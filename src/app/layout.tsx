@@ -9,6 +9,7 @@ import { ExitIntentPopup } from "@/components/exit-intent-popup";
 import { ConditionalChrome } from "@/components/conditional-chrome";
 import { RevealOnScroll } from "@/components/reveal-on-scroll";
 import { MessengerChatPlugin } from "@/components/messenger-chat-plugin";
+import { PwaManager } from "@/components/pwa/pwa-manager";
 import { SkipToContent } from "@/components/skip-to-content";
 
 const inter = Inter({
@@ -99,7 +100,12 @@ export const metadata: Metadata = {
     ],
     apple: [{ url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
   },
-  manifest: "/site.webmanifest",
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    title: "Rocketeerio",
+    statusBarStyle: "black-translucent",
+  },
   verification: {
     google: "_Kq_4GEBvuLla0OqTCLNjvYB1hkl19fUWpOupXJ-8YY",
   },
@@ -151,6 +157,11 @@ export default function RootLayout({
     <html lang="en" className={`${inter.variable} h-full antialiased`}>
       <head>
         {/* Performance: preconnect + DNS prefetch hints for external origins */}
+        <link rel="manifest" href="/manifest.json" />
+        <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        <meta name="theme-color" content="#0084FF" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link rel="dns-prefetch" href="https://www.facebook.com" />
@@ -165,6 +176,7 @@ export default function RootLayout({
         />
       </head>
       <body className="min-h-full flex flex-col bg-white text-ink-900 font-sans">
+        <PwaManager />
         <SkipToContent />
         <ConditionalChrome>
           <SiteHeader />

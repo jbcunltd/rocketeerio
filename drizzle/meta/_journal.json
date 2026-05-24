@@ -15,6 +15,13 @@
       "when": 1778305436481,
       "tag": "0001_add_josh_agent_settings",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1779593521437,
+      "tag": "0002_add_push_subscriptions",
+      "breakpoints": true
     }
   ]
 }

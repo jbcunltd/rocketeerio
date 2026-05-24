@@ -30,6 +30,7 @@ import {
   X,
   type LucideIcon,
 } from "lucide-react";
+import { PushNotificationsButton } from "@/components/pwa/push-notifications-button";
 import type { LeadTemperature, LiveConversation, LiveConversationMessage, MessageDirection } from "@/lib/josh-live-inbox-types";
 import { cn } from "@/lib/utils";
 
@@ -511,6 +512,8 @@ export function JoshLiveInbox({
           </div>
         </div>
       </header>
+
+      <PushNotificationsButton pageId={pollingPageId ?? null} pageName={livePageName} />
 
       {liveDbUnavailable ? (
         <div className="rounded-2xl border border-amber/30 bg-amber/10 px-4 py-3 text-sm text-ink-700">

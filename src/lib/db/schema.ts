@@ -188,6 +188,40 @@ export const leadCaptureTable = pgTable(
 
 export type DbLeadCapture = typeof leadCaptureTable.$inferSelect;
 
+/**
+ * Browser push subscriptions for dashboard users. Subscriptions are scoped to a
+ * Facebook Page so hot-lead alerts only go to users watching that Page.
+ */
+export const pushSubscriptionTable = pgTable(
+  "push_subscriptions",
+  {
+    id: serial("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => userTable.id, { onDelete: "cascade" }),
+    pageId: text("page_id").notNull(),
+    endpoint: text("endpoint").notNull(),
+    p256dh: text("p256dh").notNull(),
+    auth: text("auth").notNull(),
+    userAgent: text("user_agent"),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    lastSentAt: timestamp("last_sent_at", { withTimezone: true }),
+  },
+  (t) => ({
+    endpointUnique: uniqueIndex("push_subscriptions_endpoint_unique").on(t.endpoint),
+    userPageIdx: index("push_subscriptions_user_page_idx").on(t.userId, t.pageId),
+    pageIdx: index("push_subscriptions_page_idx").on(t.pageId),
+  }),
+);
+
+export type DbPushSubscription = typeof pushSubscriptionTable.$inferSelect;
+export type NewDbPushSubscription = typeof pushSubscriptionTable.$inferInsert;
+
 export type JoshAgentMode = "paused" | "testing" | "live";
 export type JoshPersonalityTone =
   | "friendly_casual"
@@ -283,6 +317,7 @@ export const tables = {
   facebookPageTable,
   oauthStateTable,
   leadCaptureTable,
+  pushSubscriptionTable,
   joshAgentSettingsTable,
 };
 
