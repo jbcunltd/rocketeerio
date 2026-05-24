@@ -527,13 +527,13 @@ export function JoshLiveInbox({
             const Icon = stat.icon;
             return (
               <div key={stat.label} className="bg-white p-3.5 sm:p-4">
-                <div className="flex items-center justify-between gap-3">
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-ink-500">
+                <div className="flex items-start justify-between gap-3">
+                  <p className="min-w-0 text-[11px] font-extrabold uppercase tracking-[0.14em] text-ink-700 sm:text-xs">
                     {stat.label}
                   </p>
                   <span
                     className={cn(
-                      "flex h-8 w-8 items-center justify-center rounded-xl",
+                      "flex h-8 w-8 shrink-0 items-center justify-center rounded-xl",
                       stat.tone === "hot"
                         ? "bg-amber/15 text-orange-600"
                         : stat.tone === "qualified"
@@ -562,7 +562,7 @@ export function JoshLiveInbox({
           })}
         </div>
 
-        <div className="relative grid h-[calc(100svh-230px)] min-h-[680px] grid-cols-1 overflow-hidden lg:h-[760px] lg:grid-cols-[minmax(280px,340px)_minmax(0,1fr)_minmax(300px,360px)] xl:grid-cols-[360px_minmax(0,1fr)_360px]">
+        <div className="relative grid h-[calc(100svh-230px)] min-h-[680px] grid-cols-1 overflow-hidden lg:h-[760px] lg:grid-cols-[minmax(280px,340px)_minmax(0,1fr)_minmax(300px,360px)] xl:grid-cols-[360px_minmax(0,1fr)_360px] [&>*]:min-w-0">
           <aside
             className={cn(
               "min-h-0 flex-col border-ink-100 bg-white lg:flex lg:border-r",
@@ -587,7 +587,7 @@ export function JoshLiveInbox({
 
           <main
             className={cn(
-              "min-h-0 bg-gradient-to-b from-white to-ink-50/70 lg:flex",
+              "min-h-0 min-w-0 overflow-hidden bg-gradient-to-b from-white to-ink-50/70 lg:flex",
               activePanel === "thread" ? "flex" : "hidden",
             )}
           >
@@ -873,11 +873,25 @@ function ThreadPanel({
   onBackToList: () => void;
   onOpenProfile: () => void;
 }) {
+  const messageListRef = useRef<HTMLDivElement | null>(null);
+  const activeConversationId = activeConversation?.id ?? null;
+
+  useEffect(() => {
+    const messageList = messageListRef.current;
+    if (!messageList || !activeConversationId) return;
+
+    const frame = window.requestAnimationFrame(() => {
+      messageList.scrollTop = 0;
+    });
+
+    return () => window.cancelAnimationFrame(frame);
+  }, [activeConversationId]);
+
   return (
-    <div className="flex min-h-0 flex-1 flex-col">
+    <div className="flex min-h-0 w-full min-w-0 flex-1 flex-col overflow-hidden">
       <div className="sticky top-0 z-20 border-b border-ink-100 bg-white/95 px-3 py-3 backdrop-blur sm:px-5 lg:static">
         <div className="flex min-h-12 items-center justify-between gap-3">
-          <div className="flex min-w-0 items-center gap-2 sm:gap-3">
+          <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">
             <button
               type="button"
               aria-label="Back to conversations"
@@ -887,22 +901,24 @@ function ThreadPanel({
               <ArrowLeft className="h-5 w-5" />
             </button>
             {activeConversation ? <LeadAvatar conversation={activeConversation} className="h-11 w-11" /> : null}
-            <div className="min-w-0">
+            <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-semibold text-ink-900">
                 {activeConversation ? activeConversation.leadName : "Waiting for first lead"}
               </p>
-              <p className="truncate text-xs text-ink-500">
-                {activeConversation
-                  ? `${activeConversation.messages.length} Messenger message${activeConversation.messages.length === 1 ? "" : "s"} · ${activeConversation.qualificationStatus}`
-                  : `Josh is listening on ${livePageName}.`}
-              </p>
+              <div className="mt-1 flex min-w-0 flex-wrap items-center gap-1.5 text-xs leading-5 text-ink-500">
+                <span className="truncate">
+                  {activeConversation
+                    ? `${activeConversation.messages.length} Messenger message${activeConversation.messages.length === 1 ? "" : "s"} · ${activeConversation.qualificationStatus}`
+                    : `Josh is listening on ${livePageName}.`}
+                </span>
+                <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-brand-50 px-2 py-0.5 text-[11px] font-bold text-brand-700">
+                  <Bot className="h-3 w-3" />
+                  Josh online
+                </span>
+              </div>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <div className="hidden items-center gap-2 rounded-full bg-brand-50 px-3 py-1.5 text-xs font-semibold text-brand-700 sm:inline-flex">
-              <Bot className="h-3.5 w-3.5" />
-              Josh online
-            </div>
+          <div className="flex shrink-0 items-center gap-2">
             {activeConversation ? (
               <button
                 type="button"
@@ -919,7 +935,11 @@ function ThreadPanel({
 
       {activeConversation ? (
         <>
-          <div className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain px-3 py-5 sm:px-5 md:px-8">
+          <div
+            key={activeConversation.id}
+            ref={messageListRef}
+            className="min-h-0 flex-1 scroll-py-6 space-y-4 overflow-y-auto overscroll-contain px-3 pb-5 pt-6 sm:px-5 md:px-8"
+          >
             {activeConversation.messages.length > 0 ? (
               <>
                 {activeThreadItems.map((item) =>
