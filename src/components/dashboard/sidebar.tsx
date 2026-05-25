@@ -71,7 +71,7 @@ interface SidebarProps {
 
 function buildPageAwareHref(href: string, selectedPageId: string | null) {
   if (!selectedPageId) return href;
-  if (!href.startsWith("/dashboard") || href === "/dashboard/pages") return href;
+  if (!href.startsWith("/dashboard")) return href;
   return `${href}?pageId=${encodeURIComponent(selectedPageId)}`;
 }
 
